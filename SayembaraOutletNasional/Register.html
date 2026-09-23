@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <base target="_top">
+  <meta charset="utf-8">
+  <?!= include('Styles'); ?>
+</head>
+<body>
+  <div class="app mobile">
+    <div class="topbar">
+      <div class="brand">
+        <div class="logo">S</div>
+        <div>
+          <h1>Sayembara Outlet Nasional</h1>
+          <small>Registrasi Outlet</small>
+        </div>
+      </div>
+    </div>
+    <div class="gold-line"></div>
+
+    <div id="loading" class="card"><div class="empty"><span class="spinner" style="border-color:#ccc;border-top-color:#14315e;"></span> Memuat data outlet...</div></div>
+
+    <!-- Invalid token -->
+    <div class="card" id="invalidCard" style="display:none;">
+      <h2>Tautan Bermasalah</h2>
+      <p class="muted" id="invalidMsg">Tautan tidak valid.</p>
+    </div>
+
+    <!-- Registration form -->
+    <div id="formWrap" style="display:none;">
+      <div class="card">
+        <h2>Data Outlet</h2>
+        <div class="hint">Data berikut sudah terhubung otomatis dengan outlet Anda (read-only).</div>
+        <div class="kv" style="margin-top:10px;">
+          <div class="k">Nama Outlet</div><div class="v" id="oName">—</div>
+          <div class="k">Outlet ID</div><div class="v" id="oId">—</div>
+          <div class="k">Depo</div><div class="v" id="oDepo">—</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Lengkapi Data</h2>
+        <label for="phone">Nomor WhatsApp Aktif</label>
+        <input type="tel" id="phone" placeholder="08xxxxxxxxxx" inputmode="numeric">
+        <div class="hint">Gunakan nomor WhatsApp aktif untuk verifikasi.</div>
+
+        <label for="npwp">NPWP</label>
+        <input type="text" id="npwp" placeholder="15 atau 16 digit" inputmode="numeric">
+        <div class="hint">Boleh dengan atau tanpa titik/strip.</div>
+
+        <label style="display:flex; gap:10px; align-items:flex-start; font-weight:500; margin-top:16px;">
+          <input type="checkbox" id="consent" style="width:auto; margin-top:3px;">
+          <span class="muted" style="font-size:12px;">Saya menyetujui data yang saya berikan digunakan untuk keperluan verifikasi program Sayembara Outlet Nasional.</span>
+        </label>
+
+        <button class="btn gold block" id="btnSubmit" style="margin-top:18px;">Kirim Registrasi</button>
+      </div>
+    </div>
+
+    <!-- Success + WA verify -->
+    <div class="card" id="successCard" style="display:none;">
+      <h2>Registrasi Terkirim</h2>
+      <div class="kv">
+        <div class="k">Submission ID</div><div class="v" id="sId">—</div>
+        <div class="k">Status Awal</div><div class="v" id="sStatus">—</div>
+      </div>
+      <p class="muted" style="font-size:13px;">Langkah terakhir: verifikasi kepemilikan nomor WhatsApp Anda.</p>
+      <a class="btn wa block" id="btnWa" target="_blank" rel="noopener">Verify via WhatsApp</a>
+      <div class="hint">Anda akan diarahkan ke WhatsApp Business resmi dengan pesan terisi otomatis.</div>
+    </div>
+
+    <div class="footnote">Data Anda dilindungi · tidak ada data sensitif pada tautan</div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <?!= include('Scripts'); ?>
+  <script>
+    var TOKEN = <?= JSON.stringify(props.token) ?>;
+
+    function showInvalid(msg) {
+      $('#loading').style.display = 'none';
+      $('#invalidMsg').textContent = msg || 'Tautan tidak valid.';
+      $('#invalidCard').style.display = 'block';
+    }
+
+    function submit() {
+      var phone = $('#phone').value.trim();
+      var npwp = $('#npwp').value.trim();
+      var consent = $('#consent').checked;
+      if (!phone) return toast('Nomor WhatsApp wajib diisi.');
+      if (!npwp) return toast('NPWP wajib diisi.');
+      if (!consent) return toast('Centang persetujuan untuk melanjutkan.');
+
+      var btn = $('#btnSubmit');
+      setLoading(btn, true, 'Mengirim...');
+      call('api_submitRegistration', [{ token: TOKEN, phone: phone, npwp: npwp, consent: consent }])
+        .then(function (res) {
+          setLoading(btn, false);
+          $('#formWrap').style.display = 'none';
+          $('#sId').textContent = res.submission_id;
+          $('#sStatus').innerHTML = statusBadge(res.overall_status);
+          $('#btnWa').href = res.wa_link;
+          $('#successCard').style.display = 'block';
+          $('#successCard').scrollIntoView({ behavior: 'smooth' });
+        })
+        .catch(function (e) { setLoading(btn, false); toast(String(e.message || e)); });
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+      call('api_resolveToken', [TOKEN]).then(function (res) {
+        $('#loading').style.display = 'none';
+        if (!res.ok) { showInvalid(res.message); return; }
+        $('#oName').textContent = res.outlet_name;
+        $('#oId').textContent = res.outlet_id;
+        $('#oDepo').textContent = res.depo;
+        $('#formWrap').style.display = 'block';
+      }).catch(function (e) { showInvalid(String(e.message || e)); });
+
+      $('#btnSubmit').addEventListener('click', submit);
+    });
+  </script>
+</body>
+</html>

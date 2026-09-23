@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <base target="_top">
+  <meta charset="utf-8">
+  <?!= include('Styles'); ?>
+</head>
+<body>
+  <div class="app">
+    <div class="topbar">
+      <div class="brand">
+        <div class="logo">S</div>
+        <div>
+          <h1>Sayembara Outlet Nasional</h1>
+          <small>Admin Console</small>
+        </div>
+      </div>
+      <div class="who">Internal use only</div>
+    </div>
+    <div class="gold-line"></div>
+
+    <div class="mock-banner">
+      ⚠ MOCK ENVIRONMENT — Simulator WhatsApp di bawah ini BUKAN validasi produksi.
+      Jangan anggap hasil MOCK sebagai verifikasi resmi WhatsApp Business Platform.
+    </div>
+
+    <div class="card">
+      <h2>Mock WhatsApp Webhook Simulator</h2>
+      <p class="muted" style="font-size:13px;">
+        Mensimulasikan pesan masuk <code>VERIFY {submission_id} {token}</code>.
+        <code>phone_verified</code> hanya menjadi <strong>true</strong> jika nomor pengirim
+        sama persis dengan nomor yang terdaftar di submission.
+      </p>
+      <label for="selSub">Pilih Submission</label>
+      <select id="selSub" style="width:100%; padding:12px 14px; border:1px solid var(--line); border-radius:10px; font-size:14px;"></select>
+
+      <label for="fromNum">Nomor Pengirim (WhatsApp)</label>
+      <input type="tel" id="fromNum" placeholder="628xxxxxxxxxx">
+      <div class="hint">Isi dengan nomor terdaftar untuk sukses, atau nomor berbeda untuk menguji penolakan.</div>
+
+      <div class="row" style="margin-top:14px;">
+        <button class="btn gold" id="btnMatch">Simulasikan (Nomor Terdaftar)</button>
+        <button class="btn ghost" id="btnMock">Simulasikan (Nomor Kustom)</button>
+      </div>
+      <div id="mockResult" style="margin-top:14px;"></div>
+    </div>
+
+    <div class="card">
+      <h2>Submission Log (masked)</h2>
+      <table>
+        <thead><tr><th>ID</th><th>Outlet</th><th>Phone</th><th>NPWP</th><th>WA</th><th>NPWP Official</th><th>Status</th><th>Risk</th></tr></thead>
+        <tbody id="subBody"></tbody>
+      </table>
+      <div class="hint">NPWP official = PENDING_OFFICIAL_VALIDATION sampai integrasi resmi DJP aktif.</div>
+    </div>
+
+    <div class="footnote">Placeholder <code>validateNpwpOfficial()</code> & webhook WhatsApp — siap dihubungkan ke API resmi.</div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <?!= include('Scripts'); ?>
+  <script>
+    var SUBS = [];
+
+    function waBadge(v) { return v ? '<span class="badge ok">VERIFIED</span>' : '<span class="badge warn">PENDING</span>'; }
+    function riskBadge(score) {
+      var cls = score >= 60 ? 'bad' : (score >= 30 ? 'warn' : 'ok');
+      return '<span class="badge ' + cls + '">' + score + '</span>';
+    }
+
+    function renderSubs() {
+      var sel = $('#selSub');
+      sel.innerHTML = SUBS.map(function (s) {
+        return '<option value="' + esc(s.submission_id) + '">' + esc(s.submission_id) + ' · ' + esc(s.outlet_id) + ' · ' + esc(s.overall_status) + '</option>';
+      }).join('');
+      $('#subBody').innerHTML = SUBS.length ? SUBS.map(function (s) {
+        return '<tr><td>' + esc(s.submission_id) + '</td><td>' + esc(s.outlet_id) + '</td>' +
+          '<td>' + esc(s.phone_masked) + '</td><td>' + esc(s.npwp_masked) + '</td>' +
+          '<td>' + waBadge(s.phone_verified) + '</td>' +
+          '<td><span class="badge neutral">' + esc(s.npwp_official_status) + '</span></td>' +
+          '<td>' + statusBadge(s.overall_status) + '</td>' +
+          '<td title="' + esc(s.risk_reason) + '">' + riskBadge(s.risk_score) + '</td></tr>';
+      }).join('') : '<tr><td colspan="8" class="empty">Belum ada submission.</td></tr>';
+    }
+
+    function currentSub() {
+      var id = $('#selSub').value;
+      return SUBS.filter(function (s) { return s.submission_id === id; })[0];
+    }
+
+    function simulate(useRegistered) {
+      var s = currentSub();
+      if (!s) return toast('Pilih submission dulu.');
+      var from = useRegistered ? s.phone_full_for_mock : $('#fromNum').value.trim();
+      if (!from) return toast('Isi nomor pengirim.');
+      var btn = useRegistered ? $('#btnMatch') : $('#btnMock');
+      setLoading(btn, true, 'Mensimulasikan...');
+      call('admin_mockWhatsAppInbound', [from, s.submission_id, s.token]).then(function (res) {
+        setLoading(btn, false);
+        var ok = res.ok && res.phone_verified;
+        $('#mockResult').innerHTML =
+          '<div class="mock-banner">' + esc(res.notice || 'MOCK') + '</div>' +
+          '<div class="kv">' +
+          '<div class="k">Hasil</div><div class="v">' + (ok ? '<span class="badge ok">phone_verified = true</span>' : '<span class="badge bad">phone_verified = false</span>') + '</div>' +
+          '<div class="k">Pesan</div><div class="v">' + esc(res.error || ('Status: ' + (res.overall_status || '—'))) + '</div>' +
+          '</div>';
+        load();
+      }).catch(function (e) { setLoading(btn, false); toast(String(e.message || e)); });
+    }
+
+    function load() {
+      call('admin_listSubmissions', []).then(function (list) {
+        SUBS = list; renderSubs();
+      }).catch(function (e) { toast(String(e.message || e)); });
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+      load();
+      $('#btnMatch').addEventListener('click', function () { simulate(true); });
+      $('#btnMock').addEventListener('click', function () { simulate(false); });
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <base target="_top">
+  <meta charset="utf-8">
+  <?!= include('Styles'); ?>
+</head>
+<body>
+  <div class="app mobile">
+    <div class="topbar">
+      <div class="brand">
+        <div class="logo">S</div>
+        <div>
+          <h1>Sayembara Outlet Nasional</h1>
+          <small>Sales Portal</small>
+        </div>
+      </div>
+      <div class="who" id="who">—</div>
+    </div>
+    <div class="gold-line"></div>
+
+    <!-- Search -->
+    <div class="card">
+      <h2>Cari Outlet Saya</h2>
+      <input type="search" id="q" placeholder="Cari berdasarkan Outlet ID / Nama / Kode Toko" autocomplete="off">
+      <div class="hint">Hanya menampilkan outlet yang menjadi tanggung jawab Anda.</div>
+      <div id="results" style="margin-top:14px;"></div>
+    </div>
+
+    <!-- Detail + QR -->
+    <div class="card" id="detailCard" style="display:none;">
+      <h2 id="detailName">Outlet</h2>
+      <div class="kv">
+        <div class="k">Kode Toko</div><div class="v" id="dKode">—</div>
+        <div class="k">Outlet ID</div><div class="v" id="dId">—</div>
+        <div class="k">Depo</div><div class="v" id="dDepo">—</div>
+        <div class="k">Status WA</div><div class="v" id="dWa">—</div>
+        <div class="k">Status NPWP</div><div class="v" id="dNpwp">—</div>
+      </div>
+      <div class="row" style="margin-top:14px;">
+        <button class="btn gold" id="btnGen">Generate QR</button>
+        <button class="btn ghost" id="btnCopy" disabled>Copy Registration Link</button>
+      </div>
+
+      <div id="qrArea" style="display:none; margin-top:16px;">
+        <div class="qr-box"><img id="qrImg" alt="QR Registrasi"></div>
+        <div class="hint" style="text-align:center;">QR hanya berisi tautan aman <code>?t={token}</code> — tanpa data sensitif.</div>
+        <div class="link-row">
+          <input type="text" id="regLink" readonly>
+          <button class="btn" id="btnCopy2">Copy</button>
+        </div>
+        <div class="hint" id="expInfo"></div>
+      </div>
+    </div>
+
+    <div class="footnote">Token acak · dapat kedaluwarsa · teraudit</div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <?!= include('Scripts'); ?>
+  <script>
+    var currentOutlet = null;
+
+    function badgeFor(v) {
+      var s = String(v || '').toUpperCase();
+      if (s === 'VERIFIED' || s === 'COMPLETE') return '<span class="badge ok">' + esc(s) + '</span>';
+      if (s === 'PENDING') return '<span class="badge warn">PENDING</span>';
+      return '<span class="badge neutral">' + esc(s || '—') + '</span>';
+    }
+
+    function renderResults(list) {
+      var box = $('#results');
+      if (!list.length) { box.innerHTML = '<div class="empty">Tidak ada outlet ditemukan.</div>'; return; }
+      box.innerHTML = list.map(function (o) {
+        return '<div class="outlet-item" data-id="' + esc(o.outlet_id) + '">' +
+          '<div><div class="name">' + esc(o.outlet_name) + '</div>' +
+          '<div class="sub">' + esc(o.kode_toko) + ' · ' + esc(o.depo) + '</div></div>' +
+          (o.eligible ? '<span class="badge ok">Eligible</span>' : '<span class="badge neutral">Non-eligible</span>') +
+          '</div>';
+      }).join('');
+      $all('.outlet-item', box).forEach(function (el) {
+        el.addEventListener('click', function () { selectOutlet(el.getAttribute('data-id'), list); });
+      });
+    }
+
+    function selectOutlet(id, list) {
+      var o = list.filter(function (x) { return x.outlet_id === id; })[0];
+      if (!o) return;
+      currentOutlet = o;
+      $('#detailName').textContent = o.outlet_name;
+      $('#dKode').textContent = o.kode_toko;
+      $('#dId').textContent = o.outlet_id;
+      $('#dDepo').textContent = o.depo;
+      $('#dWa').innerHTML = badgeFor(o.wa_status);
+      $('#dNpwp').innerHTML = badgeFor(o.npwp_status);
+      $('#qrArea').style.display = 'none';
+      $('#btnCopy').disabled = true;
+      $('#detailCard').style.display = 'block';
+      $('#detailCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    var searchTimer = null;
+    function doSearch() {
+      var q = $('#q').value;
+      clearTimeout(searchTimer);
+      searchTimer = setTimeout(function () {
+        call('api_searchOutlets', [q]).then(function (list) {
+          window._lastList = list; renderResults(list);
+        }).catch(function (e) { toast(String(e.message || e)); });
+      }, 220);
+    }
+
+    function generate() {
+      if (!currentOutlet) return;
+      var btn = $('#btnGen');
+      setLoading(btn, true, 'Membuat token...');
+      call('api_generateToken', [currentOutlet.outlet_id]).then(function (res) {
+        setLoading(btn, false);
+        $('#qrImg').src = res.qr;
+        $('#regLink').value = res.url;
+        $('#expInfo').textContent = 'Kedaluwarsa: ' + new Date(res.expired_at).toLocaleString('id-ID');
+        $('#qrArea').style.display = 'block';
+        $('#btnCopy').disabled = false;
+        window._regLink = res.url;
+        toast('QR & link berhasil dibuat');
+      }).catch(function (e) { setLoading(btn, false); toast(String(e.message || e)); });
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+      call('getCurrentSales', []).then(function (s) {
+        $('#who').textContent = (s.sales_id || '') + (s.email ? ' · ' + s.email : '');
+      }).catch(function () {});
+      $('#q').addEventListener('input', doSearch);
+      doSearch();
+      $('#btnGen').addEventListener('click', generate);
+      $('#btnCopy').addEventListener('click', function () { if (window._regLink) copyText(window._regLink); });
+      $('#btnCopy2').addEventListener('click', function () { if (window._regLink) copyText(window._regLink); });
+    });
+  </script>
+</body>
+</html>

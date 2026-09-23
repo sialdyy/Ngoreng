@@ -1,0 +1,65 @@
+<script>
+  /* ======================================================================
+     Shared client-side helpers. google.script.run wrappers + safe DOM.
+     ==================================================================== */
+
+  // HTML escape — always use before injecting server/user strings into DOM.
+  function esc(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  // Promise wrapper around google.script.run.
+  function call(fn, args) {
+    return new Promise(function (resolve, reject) {
+      google.script.run
+        .withSuccessHandler(resolve)
+        .withFailureHandler(function (err) { reject(err); })
+        [fn].apply(google.script.run, args || []);
+    });
+  }
+
+  function $(sel, root) { return (root || document).querySelector(sel); }
+  function $all(sel, root) { return Array.prototype.slice.call((root || document).querySelectorAll(sel)); }
+
+  function toast(msg) {
+    var t = $('#toast');
+    if (!t) return;
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(t._timer);
+    t._timer = setTimeout(function () { t.classList.remove('show'); }, 2400);
+  }
+
+  function statusBadge(status) {
+    var map = { VERIFIED: 'ok', REVIEW: 'warn', REJECTED: 'bad' };
+    return '<span class="badge ' + (map[status] || 'neutral') + '">' + esc(status) + '</span>';
+  }
+
+  function copyText(text) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(function () { toast('Disalin ke clipboard'); });
+    } else {
+      var ta = document.createElement('textarea');
+      ta.value = text; document.body.appendChild(ta); ta.select();
+      try { document.execCommand('copy'); toast('Disalin ke clipboard'); } catch (e) {}
+      document.body.removeChild(ta);
+    }
+  }
+
+  function setLoading(btn, on, label) {
+    if (!btn) return;
+    if (on) {
+      btn._label = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span> ' + (label || 'Memproses...');
+    } else {
+      btn.disabled = false;
+      if (btn._label) btn.innerHTML = btn._label;
+    }
+  }
+</script>
