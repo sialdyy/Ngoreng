@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Registrasi Outlet — Sayembara Outlet Nasional</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app mobile">
+    <div class="topbar">
+      <div class="brand">
+        <div class="logo">S</div>
+        <div><h1>Sayembara Outlet Nasional</h1><small>Registrasi Outlet</small></div>
+      </div>
+    </div>
+    <div class="gold-line"></div>
+
+    <div id="loading" class="card"><div class="empty"><span class="spinner" style="border-color:#ccc;border-top-color:#14315e;"></span> Memuat data outlet...</div></div>
+
+    <div class="card" id="invalidCard" style="display:none;">
+      <h2>Tautan Bermasalah</h2>
+      <p class="muted" id="invalidMsg"></p>
+    </div>
+
+    <div id="formWrap" style="display:none;">
+      <div class="card">
+        <h2>Data Outlet</h2>
+        <div class="hint">Terhubung otomatis dengan outlet Anda (read-only).</div>
+        <div class="kv" style="margin-top:10px;">
+          <div class="k">Nama Outlet</div><div class="v" id="oName">—</div>
+          <div class="k">Outlet ID</div><div class="v" id="oId">—</div>
+          <div class="k">Depo</div><div class="v" id="oDepo">—</div>
+        </div>
+      </div>
+      <div class="card">
+        <h2>Lengkapi Data</h2>
+        <label for="phone">Nomor WhatsApp Aktif</label>
+        <input type="tel" id="phone" placeholder="08xxxxxxxxxx" inputmode="numeric">
+        <label for="npwp">NPWP</label>
+        <input type="text" id="npwp" placeholder="15 atau 16 digit" inputmode="numeric">
+        <label style="display:flex; gap:10px; align-items:flex-start; font-weight:500; margin-top:16px;">
+          <input type="checkbox" id="consent" style="width:auto; margin-top:3px;">
+          <span class="muted" style="font-size:12px;">Saya menyetujui data ini digunakan untuk verifikasi program Sayembara Outlet Nasional.</span>
+        </label>
+        <button class="btn gold block" id="btnSubmit" style="margin-top:18px;">Kirim Registrasi</button>
+      </div>
+    </div>
+
+    <div class="card" id="successCard" style="display:none;">
+      <h2>Registrasi Terkirim</h2>
+      <div class="kv">
+        <div class="k">Submission ID</div><div class="v" id="sId">—</div>
+        <div class="k">Status Awal</div><div class="v" id="sStatus">—</div>
+      </div>
+      <p class="muted" style="font-size:13px;">Langkah terakhir: verifikasi nomor WhatsApp Anda.</p>
+      <a class="btn wa block" id="btnWa" target="_blank" rel="noopener">Verify via WhatsApp</a>
+      <div class="hint">Anda diarahkan ke WhatsApp Business resmi dengan pesan terisi otomatis.</div>
+    </div>
+    <div class="footnote">Data Anda dilindungi · tidak ada data sensitif pada tautan</div>
+  </div>
+  <div class="toast" id="toast"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+  <script>
+    var TOKEN = new URLSearchParams(location.search).get('t') || '';
+
+    function invalid(msg) {
+      $('#loading').style.display = 'none';
+      $('#invalidMsg').textContent = msg || 'Tautan tidak valid.';
+      $('#invalidCard').style.display = 'block';
+    }
+
+    function submit() {
+      var phone = $('#phone').value.trim(), npwp = $('#npwp').value.trim(), consent = $('#consent').checked;
+      if (!phone) return toast('Nomor WhatsApp wajib diisi.');
+      if (!npwp) return toast('NPWP wajib diisi.');
+      if (!consent) return toast('Centang persetujuan.');
+      var btn = $('#btnSubmit'); setLoading(btn, true, 'Mengirim...');
+      rpc('pub_submit_registration', { p_token: TOKEN, p_phone: phone, p_npwp: npwp, p_consent: consent })
+        .then(function (rows) {
+          setLoading(btn, false);
+          var r = rows[0];
+          $('#formWrap').style.display = 'none';
+          $('#sId').textContent = r.submission_code;
+          $('#sStatus').innerHTML = statusBadge(r.overall_status);
+          $('#btnWa').href = r.wa_link;
+          $('#successCard').style.display = 'block';
+          $('#successCard').scrollIntoView({ behavior: 'smooth' });
+        }).catch(function (e) { setLoading(btn, false); toast(String(e.message || e)); });
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+      if (!TOKEN) { invalid('Token tidak ada pada tautan.'); return; }
+      rpc('pub_resolve_token', { p_token: TOKEN }).then(function (rows) {
+        $('#loading').style.display = 'none';
+        var r = rows[0];
+        if (!r || !r.ok) { invalid(r ? r.message : 'Tautan tidak valid.'); return; }
+        $('#oName').textContent = r.outlet_name;
+        $('#oId').textContent = r.outlet_id;
+        $('#oDepo').textContent = r.depo;
+        $('#formWrap').style.display = 'block';
+      }).catch(function (e) { invalid(String(e.message || e)); });
+      $('#btnSubmit').addEventListener('click', submit);
+    });
+  </script>
+</body>
+</html>

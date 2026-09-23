@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Masuk — Sayembara Outlet Nasional</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="center-wrap">
+    <div class="app mobile auth-card">
+      <div class="topbar">
+        <div class="brand">
+          <div class="logo">S</div>
+          <div><h1>Sayembara Outlet Nasional</h1><small>Sales Portal</small></div>
+        </div>
+      </div>
+      <div class="gold-line"></div>
+
+      <!-- STEP 1: Depo login -->
+      <div class="card" id="stepDepo">
+        <h2>Login Depo</h2>
+        <label for="depo">Kode Depo / Email</label>
+        <input type="text" id="depo" placeholder="mis. DPJKT1" autocomplete="username">
+        <label for="pass">Password</label>
+        <input type="password" id="pass" autocomplete="current-password">
+        <button class="btn gold block" id="btnLogin" style="margin-top:16px;">Masuk</button>
+      </div>
+
+      <!-- STEP 2: Salesman picker -->
+      <div class="card" id="stepPicker" style="display:none;">
+        <h2>Pilih Profil Salesman</h2>
+        <div class="profiles" id="profiles"></div>
+        <button class="btn ghost block" id="btnLogout" style="margin-top:16px;">Ganti Depo</button>
+      </div>
+
+      <!-- STEP 3: PIN -->
+      <div class="card" id="stepPin" style="display:none;">
+        <h2 id="pinName">Masukkan PIN</h2>
+        <div class="pin-dots" id="pinDots"></div>
+        <div class="keypad" id="keypad"></div>
+        <button class="btn ghost block" id="btnBack" style="margin-top:14px;">Kembali</button>
+      </div>
+    </div>
+  </div>
+  <div class="toast" id="toast"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+  <script>
+    var salesmen = [], picked = null, pin = '';
+
+    function depoEmail(v) {
+      v = v.trim();
+      if (v.indexOf('@') !== -1) return v;
+      return v + '@' + (CFG.DEPO_EMAIL_DOMAIN || 'example.com');
+    }
+
+    function login() {
+      var btn = $('#btnLogin'); setLoading(btn, true, 'Masuk...');
+      SB.auth.signInWithPassword({ email: depoEmail($('#depo').value), password: $('#pass').value })
+        .then(function (r) {
+          setLoading(btn, false);
+          if (r.error) return toast('Login gagal: ' + r.error.message);
+          loadProfiles();
+        });
+    }
+
+    function loadProfiles() {
+      rpc('auth_list_salesmen').then(function (list) {
+        salesmen = list || [];
+        $('#stepDepo').style.display = 'none';
+        $('#stepPicker').style.display = 'block';
+        $('#profiles').innerHTML = salesmen.map(function (s) {
+          var initials = s.full_name.split(' ').map(function (w) { return w[0]; }).join('').slice(0, 2).toUpperCase();
+          return '<div class="profile ' + (s.locked ? 'locked' : '') + '" data-id="' + s.salesman_id + '">' +
+            '<div class="av">' + esc(initials) + '</div><div class="nm">' + esc(s.full_name) + '</div></div>';
+        }).join('') || '<div class="empty">Belum ada salesman di depo ini.</div>';
+        $all('.profile', $('#profiles')).forEach(function (el) {
+          if (el.classList.contains('locked')) return;
+          el.addEventListener('click', function () { pickProfile(el.getAttribute('data-id')); });
+        });
+      }).catch(function (e) { toast(String(e.message || e)); });
+    }
+
+    function pickProfile(id) {
+      picked = salesmen.filter(function (s) { return String(s.salesman_id) === String(id); })[0];
+      pin = '';
+      $('#pinName').textContent = 'PIN — ' + picked.full_name;
+      $('#stepPicker').style.display = 'none';
+      $('#stepPin').style.display = 'block';
+      renderPin();
+    }
+
+    function renderPin() {
+      $('#pinDots').innerHTML = [0,1,2,3,4,5].map(function (i) {
+        return '<span class="' + (i < pin.length ? 'on' : '') + '"></span>';
+      }).join('');
+      if (!$('#keypad').innerHTML) {
+        var keys = ['1','2','3','4','5','6','7','8','9','⌫','0','✓'];
+        $('#keypad').innerHTML = keys.map(function (k) {
+          return '<div class="key" data-k="' + k + '">' + k + '</div>';
+        }).join('');
+        $all('.key', $('#keypad')).forEach(function (el) {
+          el.addEventListener('click', function () { press(el.getAttribute('data-k')); });
+        });
+      }
+    }
+
+    function press(k) {
+      if (k === '⌫') { pin = pin.slice(0, -1); renderPin(); return; }
+      if (k === '✓') { submitPin(); return; }
+      if (pin.length < 6) { pin += k; renderPin(); }
+      if (pin.length >= 4 && k !== '⌫') { /* allow 4-6 */ }
+    }
+
+    function submitPin() {
+      if (pin.length < 4) return toast('PIN minimal 4 digit.');
+      rpc('auth_open_session', { p_salesman_id: picked.salesman_id, p_pin: pin })
+        .then(function (rows) {
+          var row = rows[0];
+          SalesSession.set(row.session_token);
+          location.href = 'sales.html';
+        })
+        .catch(function (e) { pin = ''; renderPin(); toast(String(e.message || e)); });
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+      $('#btnLogin').addEventListener('click', login);
+      $('#pass').addEventListener('keydown', function (e) { if (e.key === 'Enter') login(); });
+      $('#btnLogout').addEventListener('click', function () {
+        SB.auth.signOut().then(function () { location.reload(); });
+      });
+      $('#btnBack').addEventListener('click', function () {
+        $('#stepPin').style.display = 'none'; $('#stepPicker').style.display = 'block';
+      });
+      // If already logged in, skip to picker.
+      SB.auth.getSession().then(function (r) { if (r.data.session) loadProfiles(); });
+    });
+  </script>
+</body>
+</html>

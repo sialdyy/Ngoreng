@@ -466,6 +466,60 @@ begin
 end $$;
 
 -- ============================================================================
+--  ADMIN MOCK (prototype only) — depo-scoped WhatsApp simulator
+--  Clearly a MOCK: lets a logged-in depo simulate an inbound WA for one of its
+--  own submissions WITHOUT the raw token or service_role. Never treat as
+--  production verification. Real verification path = wa_apply_verification via
+--  the WhatsApp webhook Edge Function (service_role).
+-- ============================================================================
+create or replace function admin_mock_wa_verify(p_submission_code text, p_sender text)
+returns table (ok boolean, phone_verified boolean, overall_status submission_status, message text)
+language plpgsql volatile security definer set search_path = public as $$
+declare s submission%rowtype;
+begin
+  select * into s from submission
+    where submission_code = p_submission_code and depo_id = current_depo_id();
+  if not found then
+    return query select false, false, null::submission_status, 'Submission not in your depo';
+    return;
+  end if;
+
+  if hmac_hash(normalize_phone(p_sender)) <> s.phone_hash then
+    perform audit('mock', s.depo_id, 'WA_SENDER_MISMATCH_MOCK',
+                  jsonb_build_object('submission', p_submission_code));
+    return query select false, false, null::submission_status,
+                        'MOCK: sender does not match registered number';
+    return;
+  end if;
+
+  update submission set phone_verified = true, phone_verified_at = now() where id = s.id;
+  perform audit('mock', s.depo_id, 'WA_VERIFIED_MOCK',
+                jsonb_build_object('submission', p_submission_code));
+  perform run_validation_pipeline(s.id);
+
+  return query
+    select true, true, sub.overall_status, 'MOCK: verified (not production)'::text
+    from submission sub where sub.id = s.id;
+end $$;
+
+-- List recent submissions (masked) for the depo's admin/mock UI.
+create or replace function admin_list_submissions()
+returns table (submission_code text, outlet_id text, phone_masked text,
+               npwp_masked text, phone_verified boolean,
+               npwp_official npwp_official_status, overall_status submission_status,
+               risk_score int, risk_reason text)
+language sql stable security definer set search_path = public as $$
+  select s.submission_code, o.outlet_id,
+         mask_phone(s.phone_last3), mask_npwp(s.npwp_last3),
+         s.phone_verified, s.npwp_official, s.overall_status,
+         s.risk_score, s.risk_reason
+  from submission s join outlet_master o on o.id = s.outlet_ref
+  where s.depo_id = current_depo_id()
+  order by s.submitted_at desc
+  limit 25
+$$;
+
+-- ============================================================================
 --  DASHBOARD
 -- ============================================================================
 -- Latest submission per outlet (materialized-friendly view).
@@ -575,6 +629,8 @@ grant execute on function sales_search_outlets(text,text) to authenticated;
 grant execute on function sales_generate_token(text,text,int) to authenticated;
 grant execute on function dash_kpis() to authenticated;
 grant execute on function dash_leaderboard(text) to authenticated;
+grant execute on function admin_mock_wa_verify(text,text) to authenticated;
+grant execute on function admin_list_submissions() to authenticated;
 
 -- WhatsApp + compliance are service_role only (default: not granted to others).
 revoke all on function wa_apply_verification(text,text,text,boolean) from anon, authenticated;

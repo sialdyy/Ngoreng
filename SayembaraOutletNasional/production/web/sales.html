@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sales Portal — Sayembara Outlet Nasional</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app mobile">
+    <div class="topbar">
+      <div class="brand">
+        <div class="logo">S</div>
+        <div><h1>Sayembara Outlet Nasional</h1><small>Sales Portal</small></div>
+      </div>
+      <div class="who" id="who">—</div>
+    </div>
+    <div class="gold-line"></div>
+
+    <div class="card">
+      <h2>Cari Outlet Saya</h2>
+      <input type="search" id="q" placeholder="Cari Outlet ID / Nama / Kode Toko" autocomplete="off">
+      <div class="hint">Hanya outlet milik salesman aktif.</div>
+      <div id="results" style="margin-top:14px;"></div>
+    </div>
+
+    <div class="card" id="detailCard" style="display:none;">
+      <h2 id="dName">Outlet</h2>
+      <div class="kv">
+        <div class="k">Kode Toko</div><div class="v" id="dKode">—</div>
+        <div class="k">Outlet ID</div><div class="v" id="dId">—</div>
+        <div class="k">Depo</div><div class="v" id="dDepo">—</div>
+        <div class="k">Status WA</div><div class="v" id="dWa">—</div>
+        <div class="k">Status NPWP</div><div class="v" id="dNpwp">—</div>
+      </div>
+      <div class="row" style="margin-top:14px;">
+        <button class="btn gold" id="btnGen">Generate QR</button>
+        <button class="btn ghost" id="btnCopy" disabled>Copy Link</button>
+      </div>
+      <div id="qrArea" style="display:none; margin-top:16px;">
+        <div class="qr-box"><img id="qrImg" alt="QR"></div>
+        <div class="hint" style="text-align:center;">QR hanya berisi <code>?t={token}</code> — tanpa data sensitif.</div>
+        <div class="link-row"><input type="text" id="regLink" readonly><button class="btn" id="btnCopy2">Copy</button></div>
+        <div class="hint" id="expInfo"></div>
+      </div>
+    </div>
+
+    <button class="btn ghost block" id="btnExit">Keluar</button>
+    <div class="footnote">Token acak · expirable · auditable</div>
+  </div>
+  <div class="toast" id="toast"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+  <script>
+    var current = null, list = [], timer = null;
+
+    function badge(v) {
+      var s = String(v || '').toUpperCase();
+      if (s === 'VERIFIED' || s === 'COMPLETE') return '<span class="badge ok">' + esc(s) + '</span>';
+      if (s === 'PENDING') return '<span class="badge warn">PENDING</span>';
+      return '<span class="badge neutral">' + esc(s || '—') + '</span>';
+    }
+
+    function render() {
+      var box = $('#results');
+      if (!list.length) { box.innerHTML = '<div class="empty">Tidak ada outlet.</div>'; return; }
+      box.innerHTML = list.map(function (o) {
+        return '<div class="outlet-item" data-id="' + esc(o.outlet_id) + '">' +
+          '<div><div class="name">' + esc(o.outlet_name) + '</div>' +
+          '<div class="sub">' + esc(o.kode_toko) + ' · ' + esc(o.depo) + '</div></div>' +
+          (o.eligible ? '<span class="badge ok">Eligible</span>' : '<span class="badge neutral">Non</span>') + '</div>';
+      }).join('');
+      $all('.outlet-item', box).forEach(function (el) {
+        el.addEventListener('click', function () { select(el.getAttribute('data-id')); });
+      });
+    }
+
+    function select(id) {
+      current = list.filter(function (o) { return o.outlet_id === id; })[0];
+      $('#dName').textContent = current.outlet_name;
+      $('#dKode').textContent = current.kode_toko;
+      $('#dId').textContent = current.outlet_id;
+      $('#dDepo').textContent = current.depo;
+      $('#dWa').innerHTML = badge(current.wa_status);
+      $('#dNpwp').innerHTML = badge(current.npwp_status);
+      $('#qrArea').style.display = 'none'; $('#btnCopy').disabled = true;
+      $('#detailCard').style.display = 'block';
+      $('#detailCard').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function search() {
+      var tok = SalesSession.get();
+      clearTimeout(timer);
+      timer = setTimeout(function () {
+        rpc('sales_search_outlets', { p_session_token: tok, p_query: $('#q').value })
+          .then(function (rows) { list = rows || []; render(); })
+          .catch(function (e) {
+            toast(String(e.message || e));
+            if (String(e.message).indexOf('Sesi') !== -1) location.href = 'index.html';
+          });
+      }, 220);
+    }
+
+    function generate() {
+      if (!current) return;
+      var btn = $('#btnGen'); setLoading(btn, true, 'Membuat...');
+      rpc('sales_generate_token', { p_session_token: SalesSession.get(),
+          p_outlet_id: current.outlet_id, p_ttl_hours: 72 })
+        .then(function (rows) {
+          setLoading(btn, false);
+          var row = rows[0];
+          var url = publicBase() + '/register.html?t=' + encodeURIComponent(row.token);
+          window._link = url;
+          $('#qrImg').src = 'https://api.qrserver.com/v1/create-qr-code/?size=280x280&data=' + encodeURIComponent(url);
+          $('#regLink').value = url;
+          $('#expInfo').textContent = 'Kedaluwarsa: ' + new Date(row.expires_at).toLocaleString('id-ID');
+          $('#qrArea').style.display = 'block'; $('#btnCopy').disabled = false;
+          toast('QR & link dibuat');
+        }).catch(function (e) { setLoading(btn, false); toast(String(e.message || e)); });
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+      if (!SalesSession.get()) { location.href = 'index.html'; return; }
+      requireDepo().then(function () {
+        SB.auth.getUser().then(function (r) { $('#who').textContent = (r.data.user && r.data.user.email) || ''; });
+      });
+      $('#q').addEventListener('input', search); search();
+      $('#btnGen').addEventListener('click', generate);
+      $('#btnCopy').addEventListener('click', function () { if (window._link) copyText(window._link); });
+      $('#btnCopy2').addEventListener('click', function () { if (window._link) copyText(window._link); });
+      $('#btnExit').addEventListener('click', function () {
+        SalesSession.clear(); SB.auth.signOut().then(function () { location.href = 'index.html'; });
+      });
+    });
+  </script>
+</body>
+</html>

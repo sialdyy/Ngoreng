@@ -1,0 +1,2 @@
+# Never commit real keys. Copy config.example.js -> config.js locally / in host env.
+config.js

@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Admin — Sayembara Outlet Nasional</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app">
+    <div class="topbar">
+      <div class="brand">
+        <div class="logo">S</div>
+        <div><h1>Sayembara Outlet Nasional</h1><small>Admin Console</small></div>
+      </div>
+      <div class="who">Depo scope</div>
+    </div>
+    <div class="gold-line"></div>
+
+    <div class="mock-banner">
+      ⚠ MOCK — Simulator WhatsApp ini BUKAN validasi produksi. Produksi memakai
+      webhook WhatsApp Business Platform (Edge Function, service_role).
+    </div>
+
+    <div class="card">
+      <h2>Mock WhatsApp Verify</h2>
+      <p class="muted" style="font-size:13px;"><code>phone_verified</code> hanya true jika nomor pengirim = nomor terdaftar submission.</p>
+      <label for="selSub">Submission</label>
+      <select id="selSub" style="width:100%; padding:12px 14px; border:1px solid var(--line); border-radius:10px; font-size:14px;"></select>
+      <label for="fromNum">Nomor Pengirim</label>
+      <input type="tel" id="fromNum" placeholder="628xxxxxxxxxx">
+      <div class="hint">Isi nomor terdaftar untuk sukses, atau nomor lain untuk menguji penolakan.</div>
+      <div class="row" style="margin-top:14px;">
+        <button class="btn gold" id="btnMock">Simulasikan</button>
+      </div>
+      <div id="mockResult" style="margin-top:14px;"></div>
+    </div>
+
+    <div class="card">
+      <h2>Submission Log (masked)</h2>
+      <table>
+        <thead><tr><th>ID</th><th>Outlet</th><th>Phone</th><th>NPWP</th><th>WA</th><th>NPWP Official</th><th>Status</th><th>Risk</th></tr></thead>
+        <tbody id="subBody"></tbody>
+      </table>
+      <div class="hint">NPWP official = PENDING_OFFICIAL_VALIDATION sampai integrasi resmi DJP aktif.</div>
+    </div>
+    <div class="footnote">Reveal PII penuh hanya lewat <code>admin_reveal_pii</code> (service_role, teraudit).</div>
+  </div>
+  <div class="toast" id="toast"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+  <script>
+    var SUBS = [];
+    function waBadge(v) { return v ? '<span class="badge ok">VERIFIED</span>' : '<span class="badge warn">PENDING</span>'; }
+    function riskBadge(s) { var c = s >= 60 ? 'bad' : (s >= 30 ? 'warn' : 'ok'); return '<span class="badge ' + c + '">' + s + '</span>'; }
+
+    function render() {
+      $('#selSub').innerHTML = SUBS.map(function (s) {
+        return '<option value="' + esc(s.submission_code) + '">' + esc(s.submission_code) + ' · ' + esc(s.outlet_id) + ' · ' + esc(s.overall_status) + '</option>';
+      }).join('');
+      $('#subBody').innerHTML = SUBS.length ? SUBS.map(function (s) {
+        return '<tr><td>' + esc(s.submission_code) + '</td><td>' + esc(s.outlet_id) + '</td>' +
+          '<td>' + esc(s.phone_masked) + '</td><td>' + esc(s.npwp_masked) + '</td>' +
+          '<td>' + waBadge(s.phone_verified) + '</td>' +
+          '<td><span class="badge neutral">' + esc(s.npwp_official) + '</span></td>' +
+          '<td>' + statusBadge(s.overall_status) + '</td>' +
+          '<td title="' + esc(s.risk_reason) + '">' + riskBadge(s.risk_score) + '</td></tr>';
+      }).join('') : '<tr><td colspan="8" class="empty">Belum ada submission.</td></tr>';
+    }
+
+    function simulate() {
+      var code = $('#selSub').value, from = $('#fromNum').value.trim();
+      if (!code) return toast('Pilih submission.');
+      if (!from) return toast('Isi nomor pengirim.');
+      var btn = $('#btnMock'); setLoading(btn, true, 'Simulasi...');
+      rpc('admin_mock_wa_verify', { p_submission_code: code, p_sender: from }).then(function (rows) {
+        setLoading(btn, false);
+        var r = rows[0], ok = r.ok && r.phone_verified;
+        $('#mockResult').innerHTML = '<div class="mock-banner">MOCK — bukan validasi produksi.</div>' +
+          '<div class="kv"><div class="k">Hasil</div><div class="v">' +
+          (ok ? '<span class="badge ok">phone_verified = true</span>' : '<span class="badge bad">phone_verified = false</span>') +
+          '</div><div class="k">Pesan</div><div class="v">' + esc(r.message) + '</div></div>';
+        load();
+      }).catch(function (e) { setLoading(btn, false); toast(String(e.message || e)); });
+    }
+
+    function load() {
+      rpc('admin_list_submissions').then(function (list) { SUBS = list || []; render(); })
+        .catch(function (e) { toast(String(e.message || e)); });
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+      requireDepo().then(function () { load(); $('#btnMock').addEventListener('click', simulate); });
+    });
+  </script>
+</body>
+</html>
