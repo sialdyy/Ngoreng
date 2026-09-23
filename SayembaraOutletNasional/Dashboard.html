@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <base target="_top">
+  <meta charset="utf-8">
+  <?!= include('Styles'); ?>
+</head>
+<body>
+  <div class="app">
+    <div class="topbar">
+      <div class="brand">
+        <div class="logo">S</div>
+        <div>
+          <h1>Sayembara Outlet Nasional</h1>
+          <small>Executive Dashboard</small>
+        </div>
+      </div>
+      <div class="who">Verified = verified outlet / eligible outlet</div>
+    </div>
+    <div class="gold-line"></div>
+
+    <!-- KPI -->
+    <div class="kpi-grid" id="kpiGrid">
+      <div class="kpi"><div class="label">Eligible Outlet</div><div class="value" id="kEligible">—</div></div>
+      <div class="kpi"><div class="label">Submitted</div><div class="value" id="kSubmitted">—</div></div>
+      <div class="kpi"><div class="label">WhatsApp Verified</div><div class="value" id="kWa">—</div></div>
+      <div class="kpi"><div class="label">NPWP Complete</div><div class="value" id="kNpwp">—</div></div>
+      <div class="kpi accent"><div class="label">Fully Verified</div><div class="value" id="kVerified">—</div></div>
+      <div class="kpi"><div class="label">Review</div><div class="value" id="kReview">—</div></div>
+      <div class="kpi"><div class="label">Rejected</div><div class="value" id="kRejected">—</div></div>
+      <div class="kpi"><div class="label">Verified Completion</div><div class="value" id="kPct">—</div></div>
+    </div>
+
+    <div class="card" style="margin-top:16px;">
+      <h2>Verified Completion</h2>
+      <div class="progress"><span id="pctBar" style="width:0%"></span></div>
+      <div class="hint" id="pctLabel">—</div>
+    </div>
+
+    <div class="row" style="align-items:stretch;">
+      <!-- Leaderboard -->
+      <div class="card" style="flex:1 1 520px;">
+        <h2>Leaderboard</h2>
+        <div class="tabs" id="lbTabs"></div>
+        <table>
+          <thead><tr><th>#</th><th>Nama</th><th>Verified</th><th>Eligible</th><th>Rate</th></tr></thead>
+          <tbody id="lbBody"></tbody>
+        </table>
+      </div>
+
+      <!-- Recent -->
+      <div class="card" style="flex:1 1 340px;">
+        <h2>Submission Terbaru</h2>
+        <table>
+          <thead><tr><th>Outlet</th><th>Phone</th><th>NPWP</th><th>Status</th><th>Risk</th></tr></thead>
+          <tbody id="recentBody"></tbody>
+        </table>
+        <div class="hint">Phone & NPWP dimasking demi keamanan.</div>
+      </div>
+    </div>
+
+    <div class="footnote">Ranking berbasis rasio verified/eligible — bukan jumlah submission mentah.</div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <?!= include('Scripts'); ?>
+  <script>
+    var DIM_LABELS = { salesman: 'Salesman', ass: 'ASS', bm: 'BM', rbm: 'RBM', depo: 'Depo', area: 'Area' };
+    var DATA = null, activeDim = 'salesman';
+
+    function riskBadge(score) {
+      var cls = score >= 60 ? 'bad' : (score >= 30 ? 'warn' : 'ok');
+      return '<span class="badge ' + cls + '">' + score + '</span>';
+    }
+
+    function renderKpi(k) {
+      $('#kEligible').textContent = k.eligible;
+      $('#kSubmitted').textContent = k.submitted;
+      $('#kWa').textContent = k.wa_verified;
+      $('#kNpwp').textContent = k.npwp_complete;
+      $('#kVerified').textContent = k.fully_verified;
+      $('#kReview').textContent = k.review;
+      $('#kRejected').textContent = k.rejected;
+      $('#kPct').textContent = k.completion_pct + '%';
+      $('#pctBar').style.width = k.completion_pct + '%';
+      $('#pctLabel').textContent = k.fully_verified + ' dari ' + k.eligible + ' eligible outlet (' + k.completion_pct + '%)';
+    }
+
+    function renderTabs() {
+      var tabs = $('#lbTabs');
+      tabs.innerHTML = Object.keys(DIM_LABELS).map(function (d) {
+        return '<div class="tab ' + (d === activeDim ? 'active' : '') + '" data-dim="' + d + '">' + DIM_LABELS[d] + '</div>';
+      }).join('');
+      $all('.tab', tabs).forEach(function (t) {
+        t.addEventListener('click', function () { activeDim = t.getAttribute('data-dim'); renderTabs(); renderBoard(); });
+      });
+    }
+
+    function renderBoard() {
+      var rows = (DATA.leaderboards[activeDim] || []).slice(0, 15);
+      $('#lbBody').innerHTML = rows.length ? rows.map(function (r, i) {
+        return '<tr><td class="rank">' + (i + 1) + '</td><td>' + esc(r.name) + '</td>' +
+          '<td>' + r.verified + '</td><td>' + r.eligible + '</td>' +
+          '<td><strong>' + r.rate + '%</strong></td></tr>';
+      }).join('') : '<tr><td colspan="5" class="empty">Belum ada data.</td></tr>';
+    }
+
+    function renderRecent(list) {
+      $('#recentBody').innerHTML = list.length ? list.map(function (s) {
+        return '<tr><td>' + esc(s.outlet_id) + '</td><td>' + esc(s.phone_masked) + '</td>' +
+          '<td>' + esc(s.npwp_masked) + '</td><td>' + statusBadge(s.overall_status) + '</td>' +
+          '<td title="' + esc(s.risk_reason) + '">' + riskBadge(s.risk_score) + '</td></tr>';
+      }).join('') : '<tr><td colspan="5" class="empty">Belum ada submission.</td></tr>';
+    }
+
+    function load() {
+      call('api_getDashboard', []).then(function (d) {
+        DATA = d;
+        renderKpi(d.kpis);
+        renderTabs();
+        renderBoard();
+        renderRecent(d.recent);
+      }).catch(function (e) { toast(String(e.message || e)); });
+    }
+
+    document.addEventListener('DOMContentLoaded', load);
+  </script>
+</body>
+</html>
