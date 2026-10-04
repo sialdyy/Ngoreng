@@ -4,23 +4,24 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>NPL Atomic Launch Engine</title>
-<meta name="description" content="Atomic P&L decision engine for SIIP new-product launches: concept shortlist, capacity-aware COGM calculator, as-is/to-be reverse EBT, Nielsen market share, and an SKU-by-area launch ranking. Built on the real SIIP COGM workbook and Nielsen snack audit.">
+<meta name="description" content="Atomic P&L decision engine for SIIP new-product launches: editable COGM, as-is/to-be reverse EBT, Nielsen market share with a world map, and an SKU-by-area launch ranking with full scoring. Data is uploadable and persists in the browser.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/globe.gl@2.34.4/dist/globe.gl.min.js"></script>
 <style>
-  /* identity: executive navy + warm paper; Fraunces display, Inter body, JetBrains data.
-     layout: fixed top identity + subpage rail, one working column of cards per subpage. */
+  /* identity: executive navy + warm paper; Fraunces display, Inter body, JetBrains data. minimal motion. */
   :root{
     --navy:#122B46; --navy-2:#1C3D5E; --accent:#2F6BD8; --accent-soft:#EAF1FC; --accent-line:#C6DAF6;
     --gold:#B6873B; --gold-soft:#FAF3E6; --gold-line:#ECDBB8;
     --green:#1C8560; --green-soft:#E7F5EF; --green-line:#C2E6D5;
-    --amber:#B0781C; --amber-soft:#FbF2E0; --amber-line:#EFDCB2;
+    --amber:#B0781C; --amber-soft:#FBF2E0; --amber-line:#EFDCB2;
     --red:#C13A49; --red-soft:#FBEAEC; --red-line:#F1C6CB;
     --bg:#F5F6F4; --surface:#FFFFFF; --surface-2:#F0F1EE; --paper:#FBFAF7;
     --ink:#1A2230; --ink-2:#44506A; --muted:#6B7488; --border:#E0E2DD; --border-2:#D3D6CF;
-    --shadow:0 1px 2px rgba(18,43,70,.05), 0 3px 14px rgba(18,43,70,.07);
-    --maxw:1200px; --radius:14px;
+    --shadow:0 1px 2px rgba(18,43,70,.05), 0 2px 10px rgba(18,43,70,.06);
+    --maxw:1200px; --radius:12px;
     color-scheme: light;
   }
   @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
@@ -31,7 +32,7 @@
     --red:#E26C79; --red-soft:#2B1418; --red-line:#5A2930;
     --bg:#0A0E15; --surface:#111826; --surface-2:#19212F; --paper:#141B28;
     --ink:#EAEFF8; --ink-2:#C0CADC; --muted:#8992A6; --border:#262F40; --border-2:#313B4F;
-    --shadow:0 1px 2px rgba(0,0,0,.3), 0 3px 16px rgba(0,0,0,.4);
+    --shadow:0 1px 2px rgba(0,0,0,.3), 0 2px 12px rgba(0,0,0,.35);
     color-scheme: dark;
   }}
   :root[data-theme="dark"]{
@@ -42,108 +43,97 @@
     --red:#E26C79; --red-soft:#2B1418; --red-line:#5A2930;
     --bg:#0A0E15; --surface:#111826; --surface-2:#19212F; --paper:#141B28;
     --ink:#EAEFF8; --ink-2:#C0CADC; --muted:#8992A6; --border:#262F40; --border-2:#313B4F;
-    --shadow:0 1px 2px rgba(0,0,0,.3), 0 3px 16px rgba(0,0,0,.4);
+    --shadow:0 1px 2px rgba(0,0,0,.3), 0 2px 12px rgba(0,0,0,.35);
     color-scheme: dark;
   }
   *{box-sizing:border-box;}
   html,body{margin:0;padding:0;}
   body{background:var(--bg); color:var(--ink); font-family:"Inter",-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; font-size:13.5px; line-height:1.55; -webkit-font-smoothing:antialiased;}
-  h1,h2,h3,h4{margin:0; color:var(--ink); letter-spacing:-.01em; text-wrap:balance;}
-  h1,h2,h3{font-family:"Fraunces","Georgia",serif; font-weight:600;}
-  h4{font-family:"Inter",sans-serif; font-weight:700;}
+  h1,h2,h3,h4{margin:0; color:var(--ink); letter-spacing:-.01em;}
+  h1,h2{font-family:"Fraunces","Georgia",serif; font-weight:600;}
+  h3,h4{font-family:"Inter",sans-serif; font-weight:700;}
   .mono{font-family:"JetBrains Mono",monospace; font-variant-numeric:tabular-nums;}
   p{margin:0;} ul,ol{margin:0;padding:0;list-style:none;} button{font-family:inherit;cursor:pointer;}
-  :focus-visible{outline:2.5px solid var(--accent); outline-offset:2px; border-radius:4px;}
-  @media (prefers-reduced-motion: reduce){ *{transition-duration:.001ms !important;} }
+  :focus-visible{outline:2px solid var(--accent); outline-offset:2px; border-radius:4px;}
   .shell{max-width:var(--maxw); margin:0 auto; padding-left:22px; padding-right:22px;}
   @media (max-width:640px){ .shell{padding-left:14px; padding-right:14px;} }
 
-  /* top identity */
-  .topbar{background:linear-gradient(103deg,var(--navy),var(--navy-2)); color:#fff;}
-  .topbar-inner{max-width:var(--maxw); margin:0 auto; padding:16px 22px; display:flex; align-items:center; gap:18px; flex-wrap:wrap;}
-  .brand-mark{display:flex; align-items:center; gap:12px;}
-  .brand-logo{width:38px;height:38px;border-radius:10px; background:linear-gradient(135deg,var(--gold),#8a6327); display:flex;align-items:center;justify-content:center; font-family:"Fraunces",serif; font-weight:700; font-size:19px; color:#fff; flex:none;}
-  .brand-title{font-family:"Fraunces",serif; font-weight:600; font-size:20px; color:#fff; letter-spacing:-.01em; display:block; line-height:1.15;}
-  .brand-sub{font-size:11.5px; color:#AFC0DA; display:block; margin-top:1px;}
-  .top-right{margin-left:auto; display:flex; align-items:center; gap:16px; flex-wrap:wrap;}
-  .top-tag{text-align:right; line-height:1.35;}
-  .top-tag .t1{font-size:9.5px; letter-spacing:.16em; color:#8098BC; font-weight:700;}
-  .top-tag .t2{font-size:12px; font-weight:700; color:#fff;}
-  .ctrls{display:flex; gap:8px;}
-  .icon-btn{display:inline-flex; align-items:center; gap:6px; background:rgba(255,255,255,.1); color:#fff; border:1px solid rgba(255,255,255,.2); border-radius:999px; padding:6px 12px; font-size:12px; font-weight:600;}
-  .icon-btn:hover{background:rgba(255,255,255,.2);}
+  .topbar{background:var(--navy); color:#fff;}
+  .topbar-inner{max-width:var(--maxw); margin:0 auto; padding:14px 22px; display:flex; align-items:center; gap:16px; flex-wrap:wrap;}
+  .brand-mark{display:flex; align-items:center; gap:11px;}
+  .brand-logo{width:34px;height:34px;border-radius:8px; background:var(--gold); display:flex;align-items:center;justify-content:center; font-family:"Fraunces",serif; font-weight:700; font-size:18px; color:#fff; flex:none;}
+  .brand-title{font-family:"Fraunces",serif; font-weight:600; font-size:18px; color:#fff; display:block; line-height:1.15;}
+  .brand-sub{font-size:11px; color:#AFC0DA; display:block;}
+  .top-right{margin-left:auto; display:flex; align-items:center; gap:8px; flex-wrap:wrap;}
+  .icon-btn{display:inline-flex; align-items:center; gap:6px; background:rgba(255,255,255,.1); color:#fff; border:1px solid rgba(255,255,255,.2); border-radius:8px; padding:6px 11px; font-size:12px; font-weight:600;}
+  .icon-btn:hover{background:rgba(255,255,255,.18);}
 
-  /* subpage rail */
   .rail{background:var(--surface); border-bottom:1px solid var(--border); position:sticky; top:env(safe-area-inset-top,0px); z-index:30;}
-  .rail-inner{max-width:var(--maxw); margin:0 auto; padding:8px 22px; display:flex; align-items:center; gap:6px; flex-wrap:wrap;}
-  .flow{display:inline-flex; align-items:center; gap:6px; color:var(--muted); font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.07em; margin-right:4px;}
-  .nav{display:flex; align-items:center; gap:3px; flex-wrap:wrap;}
-  .nav button{display:inline-flex; align-items:center; gap:8px; padding:7px 12px; border-radius:10px; color:var(--muted); font-weight:600; font-size:12.5px; background:transparent; border:1px solid transparent;}
-  .nav button .sn{width:20px;height:20px;border-radius:6px; background:var(--surface-2); color:var(--muted); display:flex;align-items:center;justify-content:center; font-size:11px; font-weight:800; border:1px solid var(--border); font-family:"JetBrains Mono",monospace;}
+  .rail-inner{max-width:var(--maxw); margin:0 auto; padding:7px 22px; display:flex; align-items:center; gap:4px; flex-wrap:wrap;}
+  .nav{display:flex; align-items:center; gap:2px; flex-wrap:wrap;}
+  .nav button{display:inline-flex; align-items:center; gap:7px; padding:7px 12px; border-radius:8px; color:var(--muted); font-weight:600; font-size:12.5px; background:transparent; border:1px solid transparent;}
+  .nav button .sn{width:19px;height:19px;border-radius:5px; background:var(--surface-2); color:var(--muted); display:flex;align-items:center;justify-content:center; font-size:10.5px; font-weight:700; border:1px solid var(--border); font-family:"JetBrains Mono",monospace;}
   .nav button:hover{color:var(--ink); background:var(--surface-2);}
-  .nav button.active{color:var(--navy); background:var(--accent-soft); border-color:var(--accent-line);}
+  .nav button.active{color:var(--ink); background:var(--accent-soft); border-color:var(--accent-line);}
   .nav button.active .sn{background:var(--accent); color:#fff; border-color:var(--accent);}
-  :root[data-theme="dark"] .nav button.active, @media (prefers-color-scheme:dark){ :root:not([data-theme="light"]) .nav button.active{color:var(--ink);} }
+  .nav .dataBtn{margin-left:6px; color:var(--muted);}
+  .nav .dataBtn.active{color:var(--gold); background:var(--gold-soft); border-color:var(--gold-line);}
 
-  main{padding:18px 0 48px;}
-  .pagehead{display:flex; align-items:flex-end; gap:14px; flex-wrap:wrap; margin-bottom:14px;}
-  .pagehead .ph-main{min-width:0;}
-  .pagehead h1{font-size:23px; font-weight:600;}
-  .pagehead .lead{font-size:12.5px; color:var(--muted); margin-top:3px; max-width:76ch;}
-  .pagehead .step-chip{margin-left:auto; font-size:10.5px; font-weight:700; color:var(--gold); background:var(--gold-soft); border:1px solid var(--gold-line); border-radius:999px; padding:5px 12px; text-transform:uppercase; letter-spacing:.06em; white-space:nowrap;}
+  main{padding:18px 0 46px;}
+  .pagehead{margin-bottom:14px;}
+  .pagehead h1{font-size:22px;}
+  .pagehead .lead{font-size:12.5px; color:var(--muted); margin-top:2px; max-width:80ch;}
 
   .card{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow); margin-bottom:16px; overflow:hidden;}
-  .card-head{display:flex; align-items:center; gap:11px; padding:14px 16px; border-bottom:1px solid var(--border);}
-  .card-head .ico{width:30px;height:30px;border-radius:9px; background:var(--accent-soft); color:var(--accent); display:flex;align-items:center;justify-content:center; font-size:15px; flex:none;}
-  .card-head h3{font-size:14.5px; font-weight:700; font-family:"Inter",sans-serif;}
-  .card-head .hsub{font-size:11px; color:var(--muted); margin-top:1px;}
+  .card-head{display:flex; align-items:center; gap:10px; padding:13px 16px; border-bottom:1px solid var(--border);}
+  .card-head .ico{width:28px;height:28px;border-radius:7px; background:var(--accent-soft); color:var(--accent); display:flex;align-items:center;justify-content:center; font-size:14px; flex:none;}
+  .card-head h3{font-size:14px; color:var(--ink);}
+  .card-head .hsub{font-size:11px; color:var(--muted);}
   .card-head .right{margin-left:auto; display:flex; gap:8px; align-items:center; flex-wrap:wrap;}
   .card-body{padding:16px;}
 
-  .concept-note{display:flex; gap:11px; padding:12px 14px; background:var(--paper); border-bottom:1px solid var(--border); font-size:12px; color:var(--ink-2); line-height:1.6;}
-  .concept-note .qi{color:var(--gold); font-size:15px; flex:none;}
-  .concept-note b{color:var(--ink);}
-  .quote{border-left:2.5px solid var(--gold); padding:1px 0 1px 10px; margin:5px 0 0; color:var(--ink-2); font-style:italic;}
+  .note-strip{display:flex; gap:9px; padding:10px 16px; background:var(--paper); border-bottom:1px solid var(--border); font-size:11.5px; color:var(--ink-2); line-height:1.55;}
+  .note-strip b{color:var(--ink);}
 
-  /* selectors */
   .selbar{display:flex; flex-wrap:wrap; gap:14px; align-items:flex-end;}
-  .fld{display:flex; flex-direction:column; gap:4px; min-width:140px;}
-  .fld label{font-size:10.5px; color:var(--muted); font-weight:700; text-transform:uppercase; letter-spacing:.05em;}
-  select, input[type=number]{font-family:inherit; font-size:13px; padding:8px 10px; border:1px solid var(--border-2); border-radius:9px; background:var(--surface); color:var(--ink); min-width:0;}
-  input[type=number]{font-family:"JetBrains Mono",monospace; text-align:right; width:120px;}
+  .fld{display:flex; flex-direction:column; gap:4px; min-width:130px;}
+  .fld label{font-size:10.5px; color:var(--muted); font-weight:700; text-transform:uppercase; letter-spacing:.04em;}
+  select, input[type=number], input[type=text]{font-family:inherit; font-size:13px; padding:8px 10px; border:1px solid var(--border-2); border-radius:8px; background:var(--surface); color:var(--ink); min-width:0;}
+  input[type=number]{font-family:"JetBrains Mono",monospace; text-align:right; width:118px;}
   input[type=range]{accent-color:var(--accent); width:100%;}
-  .seg{display:inline-flex; background:var(--surface-2); border:1px solid var(--border); border-radius:10px; padding:3px; gap:2px; flex-wrap:wrap;}
-  .seg button{border:none; background:transparent; color:var(--ink-2); font-weight:700; font-size:12px; padding:6px 13px; border-radius:7px;}
+  .seg{display:inline-flex; background:var(--surface-2); border:1px solid var(--border); border-radius:8px; padding:3px; gap:2px; flex-wrap:wrap;}
+  .seg button{border:none; background:transparent; color:var(--ink-2); font-weight:700; font-size:12px; padding:6px 12px; border-radius:6px;}
   .seg button.on{background:var(--accent); color:#fff;}
   .slider-head{display:flex; justify-content:space-between; font-size:11px; color:var(--muted); font-weight:700; margin-bottom:4px;}
   .slider-head b{color:var(--ink); font-family:"JetBrains Mono",monospace;}
+  .btn{display:inline-flex; align-items:center; gap:6px; background:var(--accent); color:#fff; border:none; border-radius:8px; padding:8px 13px; font-size:12.5px; font-weight:600;}
+  .btn.ghost{background:var(--surface-2); color:var(--ink-2); border:1px solid var(--border);}
+  .btn:hover{opacity:.92;}
 
-  /* tiles */
-  .tiles{display:grid; grid-template-columns:repeat(auto-fit,minmax(138px,1fr)); gap:11px;}
-  .tile{background:var(--paper); border:1px solid var(--border); border-radius:11px; padding:12px 13px;}
+  .tiles{display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:10px;}
+  .tile{background:var(--paper); border:1px solid var(--border); border-radius:10px; padding:11px 12px;}
   .tile .tl{font-size:10px; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); font-weight:700;}
-  .tile .tv{font-weight:700; font-size:19px; font-family:"JetBrains Mono",monospace; margin-top:5px; letter-spacing:-.01em;}
-  .tile .tsub{font-size:10.5px; color:var(--muted); margin-top:3px;}
+  .tile .tv{font-weight:700; font-size:18px; font-family:"JetBrains Mono",monospace; margin-top:4px;}
+  .tile .tsub{font-size:10.5px; color:var(--muted); margin-top:2px;}
   .tile.hi{background:var(--accent-soft); border-color:var(--accent-line);}
   .tile.good{background:var(--green-soft); border-color:var(--green-line);}
   .tile.bad{background:var(--red-soft); border-color:var(--red-line);}
   .tile.warn{background:var(--amber-soft); border-color:var(--amber-line);}
 
-  /* npl concept cards */
-  .npl-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(250px,1fr)); gap:13px;}
-  .npl{border:1px solid var(--border); border-radius:13px; background:var(--surface); padding:14px; cursor:pointer; display:flex; flex-direction:column; gap:9px; min-width:0; position:relative; transition:border-color .15s;}
+  .npl-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(248px,1fr)); gap:12px;}
+  .npl{border:1px solid var(--border); border-radius:11px; background:var(--surface); padding:13px; cursor:pointer; display:flex; flex-direction:column; gap:8px; min-width:0;}
   .npl:hover{border-color:var(--accent-line);}
-  .npl.sel{border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-soft);}
-  .npl.empty{border-style:dashed; background:var(--paper); cursor:default; align-items:center; justify-content:center; text-align:center; color:var(--muted); min-height:120px;}
+  .npl.sel{border-color:var(--accent); box-shadow:inset 0 0 0 1px var(--accent);}
+  .npl.empty{border-style:dashed; background:var(--paper); align-items:center; justify-content:center; text-align:center; color:var(--muted); min-height:118px;}
   .npl .nh{display:flex; align-items:center; gap:10px;}
-  .npl .emoji{width:40px;height:40px;border-radius:10px; background:var(--gold-soft); display:flex;align-items:center;justify-content:center; font-size:21px; flex:none;}
-  .npl .nm{font-weight:700; font-size:14.5px; line-height:1.2;}
+  .npl .emoji{width:38px;height:38px;border-radius:9px; background:var(--gold-soft); display:flex;align-items:center;justify-content:center; font-size:20px; flex:none;}
+  .npl .nm{font-weight:700; font-size:14px;}
   .npl .sku{font-size:10.5px; color:var(--muted); font-family:"JetBrains Mono",monospace;}
-  .npl .statrow{display:flex; gap:0; border:1px solid var(--border); border-radius:9px; overflow:hidden;}
+  .npl .statrow{display:flex; border:1px solid var(--border); border-radius:8px; overflow:hidden;}
   .npl .statrow>div{flex:1; padding:7px 9px; text-align:center;}
   .npl .statrow>div+div{border-left:1px solid var(--border);}
   .npl .statrow .sv{font-weight:700; font-size:14px; font-family:"JetBrains Mono",monospace;}
-  .npl .statrow .sl{font-size:9px; color:var(--muted); text-transform:uppercase; letter-spacing:.03em; margin-top:1px;}
+  .npl .statrow .sl{font-size:9px; color:var(--muted); text-transform:uppercase; margin-top:1px;}
   .chips{display:flex; flex-wrap:wrap; gap:5px;}
   .chip{font-size:10px; font-weight:700; padding:2px 8px; border-radius:999px; border:1px solid var(--border); background:var(--surface-2); color:var(--ink-2); white-space:nowrap;}
   .chip.good{background:var(--green-soft); border-color:var(--green-line); color:var(--green);}
@@ -152,62 +142,96 @@
   .chip.gold{background:var(--gold-soft); border-color:var(--gold-line); color:var(--gold);}
   .npl .why{font-size:11.5px; color:var(--ink-2); line-height:1.5;}
 
-  /* tables */
   .table-wrap{overflow-x:auto;}
   table.dt{width:100%; border-collapse:collapse; font-size:12.5px; min-width:540px;}
-  table.dt caption{text-align:left; font-size:11px; color:var(--muted); padding:0 0 9px; caption-side:top;}
-  table.dt th, table.dt td{padding:9px 11px; border-bottom:1px solid var(--border); text-align:left; white-space:nowrap;}
+  table.dt th, table.dt td{padding:8px 11px; border-bottom:1px solid var(--border); text-align:left; white-space:nowrap;}
   table.dt th{font-size:10px; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); font-weight:700; background:var(--paper);}
   table.dt td.num, table.dt th.num{text-align:right; font-family:"JetBrains Mono",monospace;}
-  table.dt tbody tr:hover{background:var(--accent-soft);}
+  table.dt tbody tr.click{cursor:pointer;}
+  table.dt tbody tr.click:hover{background:var(--accent-soft);}
   table.dt tbody tr.sel{background:var(--accent-soft); box-shadow:inset 3px 0 0 var(--accent);}
   table.dt tr.grp td{font-weight:700; background:var(--surface-2);}
   table.dt tr.hl td{background:var(--gold-soft);}
+  table.dt td input[type=number]{width:104px; padding:5px 7px;}
   .delta-up{color:var(--green); font-weight:700;} .delta-dn{color:var(--red); font-weight:700;}
-  .badge{display:inline-block; font-size:10px; font-weight:800; padding:2px 10px; border-radius:999px; border:1px solid; letter-spacing:.02em;}
+  .badge{display:inline-block; font-size:10px; font-weight:800; padding:2px 10px; border-radius:999px; border:1px solid;}
   .b-go{background:var(--green-soft); border-color:var(--green-line); color:var(--green);}
   .b-pilot{background:var(--accent-soft); border-color:var(--accent-line); color:var(--accent);}
   .b-rework{background:var(--amber-soft); border-color:var(--amber-line); color:var(--amber);}
   .b-hold{background:var(--red-soft); border-color:var(--red-line); color:var(--red);}
 
-  /* as-is / to-be */
   .aistobe{width:100%; border-collapse:collapse; font-size:12.5px;}
   .aistobe th,.aistobe td{padding:8px 11px; border-bottom:1px solid var(--border); white-space:nowrap;}
-  .aistobe th{font-size:10px; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); font-weight:700; text-align:right;}
+  .aistobe th{font-size:10px; text-transform:uppercase; color:var(--muted); font-weight:700; text-align:right;}
   .aistobe th:first-child{text-align:left;}
   .aistobe td.lab{text-align:left; color:var(--ink-2);}
   .aistobe td.num{text-align:right; font-family:"JetBrains Mono",monospace;}
   .aistobe .col-tobe{background:var(--accent-soft);}
-  .aistobe tr.move td{font-weight:700;}
-  .aistobe tr.move .col-tobe{color:var(--accent);}
+  .aistobe tr.move td{font-weight:700;} .aistobe tr.move .col-tobe{color:var(--accent);}
   .aistobe tr.ebt td{font-weight:800; background:var(--gold-soft);}
   .aistobe tr.gp td{font-weight:700;}
 
-  .capmeter{height:28px; border-radius:8px; background:var(--surface-2); border:1px solid var(--border); position:relative; overflow:hidden;}
+  .capmeter{height:26px; border-radius:7px; background:var(--surface-2); border:1px solid var(--border); position:relative; overflow:hidden;}
   .capmeter .fill{position:absolute; top:0; bottom:0; left:0;}
-  .capmeter .mk{position:absolute; top:-3px; bottom:-3px; width:2px; background:var(--ink); opacity:.5;}
-  .capmeter .mk span{position:absolute; top:-15px; left:50%; transform:translateX(-50%); font-size:9px; color:var(--muted); white-space:nowrap; font-weight:700;}
+  .capmeter .mk{position:absolute; top:-3px; bottom:-3px; width:2px; background:var(--ink); opacity:.45;}
+  .capmeter .mk span{position:absolute; top:-14px; left:50%; transform:translateX(-50%); font-size:9px; color:var(--muted); white-space:nowrap; font-weight:700;}
 
-  .legend{display:flex; gap:14px; flex-wrap:wrap; font-size:11px; color:var(--muted); margin-top:9px;}
+  .legend{display:flex; gap:14px; flex-wrap:wrap; font-size:11px; color:var(--muted); margin-top:8px;}
   .legend span{display:inline-flex; align-items:center; gap:6px;}
-  .legend i{width:11px;height:11px;border-radius:3px; display:inline-block;}
-  .bars{display:flex; flex-direction:column; gap:7px; margin-top:4px;}
+  .legend i{width:10px;height:10px;border-radius:3px; display:inline-block;}
+  .bars{display:flex; flex-direction:column; gap:6px;}
   .barrow{display:flex; align-items:center; gap:10px; font-size:12px;}
   .barrow .bl{width:150px; color:var(--ink-2); flex:none; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
-  .barrow .bt{flex:1; background:var(--surface-2); border-radius:6px; height:20px; overflow:hidden; min-width:60px;}
-  .barrow .bt i{display:block; height:100%; border-radius:6px;}
-  .barrow .bv{width:70px; text-align:right; font-family:"JetBrains Mono",monospace; flex:none;}
+  .barrow .bt{flex:1; background:var(--surface-2); border-radius:5px; height:18px; overflow:hidden; min-width:60px;}
+  .barrow .bt i{display:block; height:100%;}
+  .barrow .bv{width:66px; text-align:right; font-family:"JetBrains Mono",monospace; flex:none;}
 
-  .reasons{display:flex; flex-direction:column; gap:7px; margin-top:4px;}
+  .reasons{display:flex; flex-direction:column; gap:6px;}
   .ri{display:flex; gap:8px; font-size:12px; color:var(--ink-2); align-items:flex-start;}
   .ri .ok{color:var(--green); font-weight:800;} .ri .no{color:var(--red); font-weight:800;} .ri .wn{color:var(--amber); font-weight:800;}
-  .note{font-size:11px; color:var(--muted); line-height:1.6; margin-top:12px;}
-  .srcbar{display:flex; gap:9px; align-items:flex-start; font-size:11px; color:var(--muted); background:var(--paper); border:1px dashed var(--border-2); border-radius:9px; padding:10px 12px; margin-top:14px; line-height:1.6;}
+  .note{font-size:11px; color:var(--muted); line-height:1.6; margin-top:10px;}
+  .srcbar{display:flex; gap:9px; align-items:flex-start; font-size:11px; color:var(--muted); background:var(--paper); border:1px dashed var(--border-2); border-radius:9px; padding:9px 12px; margin-top:12px; line-height:1.55;}
   .grid2{display:grid; grid-template-columns:1fr 1fr; gap:16px;}
   @media (max-width:820px){ .grid2{grid-template-columns:1fr;} }
   .txt-green{color:var(--green);} .txt-amber{color:var(--amber);} .txt-red{color:var(--red);} .txt-muted{color:var(--muted);} .txt-accent{color:var(--accent);}
-  .foot{max-width:var(--maxw); margin:10px auto 0; padding:14px 22px 34px; color:var(--muted); font-size:11px; line-height:1.6;}
+  .foot{max-width:var(--maxw); margin:6px auto 0; padding:14px 22px 34px; color:var(--muted); font-size:11px;}
   svg{display:block; max-width:100%;}
+
+  /* globe + market layout */
+  .mkt-wrap{display:grid; grid-template-columns:380px 1fr; gap:18px; align-items:start;}
+  @media (max-width:860px){ .mkt-wrap{grid-template-columns:1fr;} }
+  #globeBox{height:360px; border-radius:12px; overflow:hidden; background:radial-gradient(130% 130% at 30% 20%, #16365e 0%, #0c203a 55%, #081627 100%); border:1px solid var(--border); position:relative;}
+  .globe-cap{position:absolute; left:12px; bottom:10px; color:#cfe0f5; font-size:11px; z-index:2;}
+  .cmb{display:flex; gap:10px; align-items:center; padding:10px 12px; border:1px solid var(--border); border-radius:10px; background:var(--surface); margin-bottom:9px; cursor:pointer;}
+  .cmb:hover{border-color:var(--accent-line);}
+  .cmb .ce{font-size:20px;}
+  .cmb .cn{font-weight:700; font-size:13px;}
+  .cmb .cs{font-size:11px; color:var(--muted);}
+  .cmb .cv{margin-left:auto; text-align:right;}
+
+  /* detail panel (ranking) */
+  .detail{border:1px solid var(--accent-line); background:var(--accent-soft); border-radius:12px; padding:0; margin-top:14px; overflow:hidden;}
+  .detail-head{display:flex; align-items:center; gap:12px; padding:13px 16px; background:var(--surface); border-bottom:1px solid var(--border);}
+  .detail-head .de{font-size:24px;}
+  .detail-head h4{font-size:15px; font-family:"Fraunces",serif; font-weight:600;}
+  .detail-head .dsub{font-size:11.5px; color:var(--muted);}
+  .detail-head .dcall{margin-left:auto;}
+  .detail-body{padding:16px; background:var(--surface);}
+  .scorebars{display:flex; flex-direction:column; gap:9px; margin-top:4px;}
+  .sb{display:flex; align-items:center; gap:10px; font-size:12px;}
+  .sb .sbl{width:140px; flex:none; color:var(--ink-2);}
+  .sb .sbt{flex:1; background:var(--surface-2); border-radius:5px; height:16px; overflow:hidden; min-width:60px;}
+  .sb .sbt i{display:block;height:100%;background:var(--accent);}
+  .sb .sbv{width:54px; text-align:right; font-family:"JetBrains Mono",monospace; flex:none;}
+  .kpi4{display:grid; grid-template-columns:repeat(4,1fr); gap:10px;}
+  @media (max-width:560px){ .kpi4{grid-template-columns:repeat(2,1fr);} }
+  .kpi{text-align:center; border:1px solid var(--border); border-radius:10px; padding:10px; background:var(--paper);}
+  .kpi .kv{font-weight:700; font-size:18px; font-family:"JetBrains Mono",monospace;}
+  .kpi .kl{font-size:10px; color:var(--muted); text-transform:uppercase; margin-top:2px;}
+
+  .drop{border:1.5px dashed var(--border-2); border-radius:12px; padding:22px; text-align:center; background:var(--paper); color:var(--muted);}
+  .drop.hot{border-color:var(--accent); background:var(--accent-soft); color:var(--ink);}
+  .hidden{display:none;}
 </style>
 </head>
 <body>
@@ -215,557 +239,551 @@
   <div class="topbar-inner">
     <div class="brand-mark">
       <div class="brand-logo">S</div>
-      <div>
-        <span class="brand-title">NPL Atomic Launch Engine</span>
-        <span class="brand-sub" data-i18n="brandSub">SIIP · Pull the P&amp;L forward — from concept to the best launch area</span>
-      </div>
+      <div><span class="brand-title">NPL Atomic Launch Engine</span><span class="brand-sub" data-i18n="brandSub">SIIP · concept to best launch area</span></div>
     </div>
     <div class="top-right">
-      <div class="top-tag"><div class="t1">ATOMIC P&amp;L</div><div class="t2" data-i18n="tagCeo">CEO decision view</div></div>
-      <div class="ctrls">
-        <button type="button" class="icon-btn" id="langBtn">🌐 <span id="langLabel">EN</span></button>
-        <button type="button" class="icon-btn" id="themeBtn">◐ <span id="themeLabel">System</span></button>
-      </div>
+      <button type="button" class="icon-btn" id="langBtn">🌐 <span id="langLabel">EN</span></button>
+      <button type="button" class="icon-btn" id="themeBtn">◐ <span id="themeLabel">System</span></button>
     </div>
   </div>
 </header>
 
-<nav class="rail">
-  <div class="rail-inner">
-    <span class="flow" data-i18n="flow">Flow</span>
-    <div class="nav" id="nav"></div>
-  </div>
-</nav>
+<nav class="rail"><div class="rail-inner"><div class="nav" id="nav"></div></div></nav>
 
-<main>
-  <div class="shell">
-    <div id="view"></div>
-  </div>
-</main>
-
-<footer class="foot">
-  <span data-i18n="footBrand">Atomic P&amp;L — "What kills an NPL is EBT, not GP1." Small but compounding: the first atom cell never loses money.</span>
-</footer>
+<main><div class="shell"><div id="view"></div></div></main>
+<footer class="foot"><span data-i18n="footBrand">Atomic P&L — what kills an NPL is EBT, not GP1. The first atom cell must not lose money.</span></footer>
 
 <script>
 (function(){
   "use strict";
-  function loadJSON(k,f){ try{ var r=localStorage.getItem(k); if(r) return JSON.parse(r);}catch(e){} return f; }
-  function saveJSON(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e){} }
-  var lang = loadJSON('npla-lang','en');
+  function lget(k,f){ try{ var r=localStorage.getItem(k); if(r) return JSON.parse(r);}catch(e){} return f; }
+  function lset(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e){} }
+  var lang = lget('npla-lang','en');
 
-  /* ===================== COGM ENGINE (real SIIP workbook) ===================== */
-  // Machine Sip 3.5g 500. Full capacity 95,256 ctn/mo/line. DBP (base price) = Rp94,734.97/ctn.
-  // Depreciation & OMC are fixed monthly -> per-carton cost balloons when volume < capacity.
-  // DL, Listrik, Gas, RM, PM are per-carton constants (do not change with utilisation).
-  var ENG = {
-    fullCap:95256, dbp:94734.973,
-    depreMo:1394.1082*95256, omcMo:2492.1861*95256,   // Rp132.80M + Rp237.40M
-    dl:6067.2232, listrik:732.42, gas:413.20, pm:35172.00
-  };
-  ENG.fixedMo = ENG.depreMo + ENG.omcMo;
-  function cogmComponents(vol, rm){
-    return { depre:ENG.depreMo/vol, omc:ENG.omcMo/vol, dl:ENG.dl, listrik:ENG.listrik, gas:ENG.gas, rm:rm, pm:ENG.pm };
-  }
-  function cogmAt(vol, rm){ var c=cogmComponents(vol,rm); return c.depre+c.omc+c.dl+c.listrik+c.gas+c.rm+c.pm; }
-  function gpPctAt(vol, rm){ return (1 - cogmAt(vol,rm)/ENG.dbp)*100; }
+  /* ========== DEFAULT DATA (real SIIP workbook + Nielsen audit) ========== */
+  function defaultData(){ return {
+    eng:{ fullCap:95256, dbp:94734.973 },
+    npls:[
+      {k:'nori', name:'SIIP Nori', sku:'3.5g', emoji:'🍙', nielsen:'seaweed',
+       cogm:{depreF:1394.1082, omcF:2492.1861, dl:6067.2232, listrik:732.3372, gas:413.1461, rm:28661.4524, pm:35171.9998}},
+      {k:'karaage', name:'SIIP Karaage', sku:'3.5g', emoji:'🍗', nielsen:'kaldu',
+       cogm:{depreF:1394.1082, omcF:2492.1861, dl:6067.2232, listrik:732.4241, gas:413.1951, rm:34313.0064, pm:35171.9998}},
+      {k:'kari', name:'SIIP Kari', sku:'3.5g', emoji:'🍛', nielsen:'curry',
+       cogm:{depreF:1394.1082, omcF:2492.1861, dl:6067.2232, listrik:732.4241, gas:413.1951, rm:24220.9457, pm:35171.9998}}
+    ]
+  };}
+  var DATA = lget('npla-data', defaultData());
+  function saveData(){ lset('npla-data', DATA); }
+  function resetData(){ DATA=defaultData(); saveData(); }
+  function ENG(){ return DATA.eng; }
+  function npl(k){ for(var i=0;i<DATA.npls.length;i++) if(DATA.npls[i].k===k) return DATA.npls[i]; return DATA.npls[0]; }
 
-  /* ===================== DATA ===================== */
-  // 3 active SIIP NPL (real COGM from the workbook) + 7 open slots (Stage-1 fill).
-  var NPLS = [
-    {k:'nori', name:'SIIP Nori', sku:'304xxx · 3.5g', emoji:'🍙', rm:28661.4524, cogmFull:74932.453, gpFull:20.9,
-      nielsen:'seaweed', dbpSell:71000,
-      seasoning:{keju:1.3922, coklat:0.71, jagung:1.3148},
-      why:{en:'Seaweed is the fastest-growing snack flavour in the audit (+20.2%). Mid COGM, strong channel fit in GT.',
-           id:'Seaweed = rasa snack tercepat tumbuh di audit (+20,2%). COGM menengah, fit channel GT kuat.'}},
-    {k:'karaage', name:'SIIP Karaage', sku:'3.5g', emoji:'🍗', rm:34313.0064, cogmFull:80584.143, gpFull:14.9,
-      nielsen:'kaldu', dbpSell:85000,
-      seasoning:{keju:1.6667, coklat:0.85, jagung:1.5741},
-      why:{en:'Richest seasoning = highest COGM, lowest GP. Kaldu-ayam category is small and declining (−1.1%).',
-           id:'Bumbu paling kaya = COGM tertinggi, GP terendah. Kategori kaldu-ayam kecil & menurun (−1,1%).'}},
-    {k:'kari', name:'SIIP Kari', sku:'3.5g', emoji:'🍛', rm:24220.9457, cogmFull:70492.0822, gpFull:25.6,
-      nielsen:'curry', dbpSell:60000,
-      seasoning:{keju:1.1765, coklat:0.6, jagung:1.1111},
-      why:{en:'Leanest COGM of the three → best GP. Curry is white space (not in the audit top-10) — demand unproven.',
-           id:'COGM paling ramping dari ketiganya → GP terbaik. Kari white space (tak di top-10 audit) — demand belum terbukti.'}}
-  ];
-  function npl(k){ for(var i=0;i<NPLS.length;i++) if(NPLS[i].k===k) return NPLS[i]; return NPLS[0]; }
-  var OPEN_SLOTS = 7;
+  /* ========== COGM ENGINE ==========
+     COGM(vol)= dl+listrik+gas+rm+pm + (depreF+omcF)*fullCap/vol  (Depre & OMC fixed per month -> balloon) */
+  function cogmAt(vol,c){ var g=c.cogm, e=ENG(); return g.dl+g.listrik+g.gas+g.rm+g.pm + (g.depreF+g.omcF)*e.fullCap/vol; }
+  function gpPctAt(vol,c){ return (1 - cogmAt(vol,c)/ENG().dbp)*100; }
+  function cogmFull(c){ return cogmAt(ENG().fullCap,c); }
+  function gpFull(c){ return gpPctAt(ENG().fullCap,c); }
 
-  // Baseline existing P&L per country, 2025 (Indonesia = real figures; MY/CN = planning assumptions).
+  /* ========== Baseline P&L (Indonesia real; MY/CN planning) ========== */
   var BASE = {
-    id:{name:{en:'Indonesia',id:'Indonesia'}, flag:'🇮🇩', real:true,
-        gross:5.2e9, ret:0.1e9, nsar:5.1e9, cogs:3.7e9,
-        sm1:295.8e6, sm2:173.4e6, sm3:367.2e6, sm4:132.6e6},
-    my:{name:{en:'Malaysia',id:'Malaysia'}, flag:'🇲🇾', real:false,
-        gross:3.06e9, ret:0.06e9, nsar:3.0e9, cogs:2.04e9,
-        sm1:180e6, sm2:120e6, sm3:255e6, sm4:102e6},
-    cn:{name:{en:'China',id:'China'}, flag:'🇨🇳', real:false,
-        gross:4.28e9, ret:0.08e9, nsar:4.2e9, cogs:2.73e9,
-        sm1:273e6, sm2:172e6, sm3:336e6, sm4:168e6}
+    id:{name:'Indonesia', flag:'🇮🇩', real:true, nsar:5.1e9, cogs:3.7e9, sm1:295.8e6, sm2:173.4e6, sm3:367.2e6, sm4:132.6e6},
+    my:{name:'Malaysia', flag:'🇲🇾', real:false, nsar:3.0e9, cogs:2.04e9, sm1:180e6, sm2:120e6, sm3:255e6, sm4:102e6},
+    cn:{name:'China', flag:'🇨🇳', real:false, nsar:4.2e9, cogs:2.73e9, sm1:273e6, sm2:172e6, sm3:336e6, sm4:168e6}
   };
   function baseEbt(b){ return b.nsar-b.cogs-b.sm1-b.sm2-b.sm3-b.sm4; }
-  function baseFixedBelowGp1(b){ return b.sm1+b.sm2+b.sm3+b.sm4; }
+  function baseFixed(b){ return b.sm1+b.sm2+b.sm3+b.sm4; }
 
-  // Nielsen / NIQ snack-extruded audit (Indonesia, MAT TY) — real figures from the market update.
+  /* ========== Nielsen (real audit) ========== */
   var NIELSEN = {
     marketT:9411074, period:'MAT TY · Apr-25',
     flavors:[
-      {k:'kentang', name:{en:'Potato / French Fries',id:'Kentang Goreng'}, val:1286349, chg:2.4, cont:13.67},
-      {k:'choco', name:{en:'Chocolate',id:'Coklat'}, val:1080856, chg:16.2, cont:11.48},
-      {k:'corn', name:{en:'Roasted Corn',id:'Jagung Bakar'}, val:1003967, chg:7.6, cont:10.67},
-      {k:'cheese', name:{en:'Cheese',id:'Keju'}, val:841347, chg:6.3, cont:8.94},
-      {k:'seaweed', name:{en:'Seaweed (Nori)',id:'Seaweed (Nori)'}, val:671213, chg:20.2, cont:7.13},
-      {k:'bbq', name:{en:'Potato Barbeque',id:'Potato Barbeque'}, val:350685, chg:6.0, cont:3.73},
-      {k:'seasalt', name:{en:'Sea Salt',id:'Sea Salt'}, val:218211, chg:15.4, cont:2.32},
-      {k:'ubi', name:{en:'Ubi',id:'Ubi'}, val:154705, chg:13.3, cont:1.64},
-      {k:'pedas', name:{en:'Pedas Level 15',id:'Pedas Level 15'}, val:121916, chg:-18.7, cont:1.30},
-      {k:'kaldu', name:{en:'Kaldu Ayam',id:'Kaldu Ayam'}, val:110704, chg:-1.1, cont:1.18}
+      {k:'kentang',n:{en:'Potato / French Fries',id:'Kentang Goreng'},val:1286349,chg:2.4,cont:13.67},
+      {k:'choco',n:{en:'Chocolate',id:'Coklat'},val:1080856,chg:16.2,cont:11.48},
+      {k:'corn',n:{en:'Roasted Corn',id:'Jagung Bakar'},val:1003967,chg:7.6,cont:10.67},
+      {k:'cheese',n:{en:'Cheese',id:'Keju'},val:841347,chg:6.3,cont:8.94},
+      {k:'seaweed',n:{en:'Seaweed (Nori)',id:'Seaweed (Nori)'},val:671213,chg:20.2,cont:7.13},
+      {k:'bbq',n:{en:'Potato Barbeque',id:'Potato Barbeque'},val:350685,chg:6.0,cont:3.73},
+      {k:'seasalt',n:{en:'Sea Salt',id:'Sea Salt'},val:218211,chg:15.4,cont:2.32},
+      {k:'ubi',n:{en:'Ubi',id:'Ubi'},val:154705,chg:13.3,cont:1.64},
+      {k:'pedas',n:{en:'Pedas Level 15',id:'Pedas Level 15'},val:121916,chg:-18.7,cont:1.30},
+      {k:'kaldu',n:{en:'Kaldu Ayam',id:'Kaldu Ayam'},val:110704,chg:-1.1,cont:1.18}
     ],
     brands:[
-      {n:'STT', val:1134369, sh:12.1, chg:6.0},
-      {n:'TARO', val:826221, sh:8.8, chg:8.7},
-      {n:'CHIKI Balls+Twist', val:735306, sh:7.8, chg:1.5},
-      {n:'SIIP', val:493277, sh:5.2, chg:-2.5, me:true},
-      {n:'OISHI Sponge', val:268104, sh:2.8, chg:38.2},
-      {n:'GURIBEE', val:265584, sh:2.8, chg:46.9}
+      {n:'STT',val:1134369,sh:12.1,chg:6.0},{n:'TARO',val:826221,sh:8.8,chg:8.7},
+      {n:'CHIKI Balls+Twist',val:735306,sh:7.8,chg:1.5},{n:'SIIP',val:493277,sh:5.2,chg:-2.5,me:true},
+      {n:'OISHI Sponge',val:268104,sh:2.8,chg:38.2},{n:'GURIBEE',val:265584,sh:2.8,chg:46.9}
     ],
-    // SIIP by channel: share now + potential headroom (Rp Billion) + Nabati vs category growth
     channels:[
-      {k:'gtl', name:{en:'GT Large',id:'GT Besar'}, sh:7.5, pot:3982, gNab:-10.7, gCat:13.6},
-      {k:'mm', name:{en:'Minimarket',id:'Minimarket'}, sh:1.7, pot:3514, gNab:53.3, gCat:9.5},
-      {k:'gts', name:{en:'GT Small',id:'GT Kecil'}, sh:9.0, pot:838, gNab:3.8, gCat:21.7},
-      {k:'hyper', name:{en:'Hyper / Super',id:'Hyper / Super'}, sh:4.1, pot:584, gNab:8.0, gCat:2.7}
+      {n:{en:'GT Large',id:'GT Besar'},sh:7.5,pot:3982,gNab:-10.7,gCat:13.6},
+      {n:{en:'Minimarket',id:'Minimarket'},sh:1.7,pot:3514,gNab:53.3,gCat:9.5},
+      {n:{en:'GT Small',id:'GT Kecil'},sh:9.0,pot:838,gNab:3.8,gCat:21.7},
+      {n:{en:'Hyper / Super',id:'Hyper / Super'},sh:4.1,pot:584,gNab:8.0,gCat:2.7}
     ]
   };
   function flavor(k){ for(var i=0;i<NIELSEN.flavors.length;i++) if(NIELSEN.flavors[i].k===k) return NIELSEN.flavors[i]; return null; }
 
-  // Slice & dice launch areas (3 countries) — from the launch-area map.
-  var AREAS = [
-    {c:{en:'Indonesia',id:'Indonesia'}, flag:'🇮🇩',
-     gt:{en:'GT: DP / LP, GRBM — region-level if possible',id:'GT: DP / LP, GRBM — per region bila bisa'},
-     mt:{en:'MT: Indomaret, Alfamart, Club80s (DP / LP)',id:'MT: Indomaret, Alfamart, Club80s (DP / LP)'},
-     uniq:{en:'4 PMA clusters — DP2 Central/East Java cheapest',id:'4 cluster PMA — DP2 Jateng/Jatim termurah'}},
-    {c:{en:'Malaysia',id:'Malaysia'}, flag:'🇲🇾',
-     gt:{en:'Total (skip deep GT hierarchy)',id:'Total (lewati hierarki GT dalam)'},
-     mt:{en:'MT: 99 Speedmart, Eco-Shop, MTI, Mr. DIY',id:'MT: 99 Speedmart, Eco-Shop, MTI, Mr. DIY'},
-     uniq:{en:'MTI-led route',id:'Rute dipimpin MTI'}},
-    {c:{en:'China',id:'China'}, flag:'🇨🇳',
-     gt:{en:'GT: by Province',id:'GT: per Provinsi'},
-     mt:{en:'DB Reg, heavy MT',id:'DB Reg, MT berat'},
-     uniq:{en:'Snack Shop (no listing fee), e-Commerce',id:'Snack Shop (tanpa listing fee), e-Commerce'}}
+  // Launch countries on the globe
+  var COUNTRIES = [
+    {k:'id',name:'Indonesia',flag:'🇮🇩',lat:-2.5,lng:118},
+    {k:'my',name:'Malaysia',flag:'🇲🇾',lat:4.2,lng:102},
+    {k:'cn',name:'China',flag:'🇨🇳',lat:35,lng:104}
   ];
-  // Ranking seed (SKU × area), expert field score from the workbook; bundle = Nori+BBQ.
-  var RANK_SEED = [
-    {npl:'nori', flavorName:'Nori', country:'Indonesia', channel:'GT', sub:'DP', field:80},
-    {npl:'nori', flavorName:'Nori', country:'Indonesia', channel:'MT', sub:'IDM', field:78},
-    {npl:'kari', flavorName:'Kari', country:'Indonesia', channel:'GT', sub:'DP', field:null},
-    {npl:'kari', flavorName:'Kari', country:'Indonesia', channel:'MT', sub:'IDM', field:null},
-    {npl:'karaage', flavorName:'Karaage', country:'Indonesia', channel:'GT', sub:'DP', field:null},
-    {npl:'karaage', flavorName:'Karaage', country:'Indonesia', channel:'MT', sub:'IDM', field:null}
+  // Slice & dice areas
+  var AREAS=[
+    {c:'Indonesia',flag:'🇮🇩',gt:{en:'GT: DP / LP, GRBM (region-level if possible)',id:'GT: DP / LP, GRBM (per region bila bisa)'},mt:{en:'MT: Indomaret, Alfamart, Club80s',id:'MT: Indomaret, Alfamart, Club80s'},u:{en:'4 PMA clusters; DP2 Central/East Java cheapest',id:'4 cluster PMA; DP2 Jateng/Jatim termurah'}},
+    {c:'Malaysia',flag:'🇲🇾',gt:{en:'Total (skip deep GT)',id:'Total (lewati GT dalam)'},mt:{en:'99 Speedmart, Eco-Shop, MTI, Mr. DIY',id:'99 Speedmart, Eco-Shop, MTI, Mr. DIY'},u:{en:'MTI-led',id:'Dipimpin MTI'}},
+    {c:'China',flag:'🇨🇳',gt:{en:'GT: by Province',id:'GT: per Provinsi'},mt:{en:'DB Reg, heavy MT',id:'DB Reg, MT berat'},u:{en:'Snack Shop (no listing fee), e-Commerce',id:'Snack Shop (tanpa listing fee), e-Commerce'}}
   ];
-  var BUNDLE = {label:'Nori + BBQ', country:'Indonesia', channel:'GT', sub:'DP', field:90};
+  // Ranking combinations (SKU x area) with workbook field score
+  var COMBOS=[
+    {npl:'nori',country:'Indonesia',channel:'GT',sub:'DP',field:80},
+    {npl:'nori',country:'Indonesia',channel:'MT',sub:'IDM',field:78},
+    {npl:'kari',country:'Indonesia',channel:'GT',sub:'DP',field:null},
+    {npl:'kari',country:'Indonesia',channel:'MT',sub:'IDM',field:null},
+    {npl:'karaage',country:'Indonesia',channel:'GT',sub:'DP',field:null},
+    {npl:'karaage',country:'Indonesia',channel:'MT',sub:'IDM',field:null}
+  ];
+  var BUNDLE={label:'Nori + BBQ',country:'Indonesia',channel:'GT',sub:'DP',field:90};
 
-  /* ===================== i18n ===================== */
-  var T = {
-    en:{
-      brandSub:'SIIP · Pull the P&L forward — from concept to the best launch area', tagCeo:'CEO decision view', flow:'Flow',
-      footBrand:'Atomic P&L — "What kills an NPL is EBT, not GP1." Small but compounding: the first atom cell never loses money.',
-      nav1:'Concepts', nav2:'COGM', nav3:'Reverse EBT', nav4:'Market Share', nav5:'Launch Ranking',
-      step:'Step {n} of 5',
-      // p1
-      p1t:'NPL Concept Shortlist', p1l:'Stage-1 concepts that passed the CEO taste gate. Three SIIP flavours are modelled in full; the rest are open slots to be filled as concepts clear the gate.',
-      p1note:'This tab is just the register of <b>what the NPLs are</b>. The focus now is three: <b>SIIP Nori, SIIP Karaage, SIIP Kari</b>. Pick one here and it carries through COGM, Reverse EBT and the Launch Ranking.',
-      p1q:'"Atomic runs on what survives the gate — the CEO likes it first, then we build the P&L."',
-      cogmFull:'COGM / ctn', gpFull:'GP @ full', nielsenCat:'Nielsen category', selectThis:'Selected — flows to all tabs', clickToSelect:'Click to select',
-      openSlot:'Open NPL slot', openSlotSub:'To be filled at Stage-1',
-      // p2
-      p2t:'COGM Calculator', p2l:'Cost per carton built from the seven standard lines. Every division fills its own number; depreciation and OMC balloon as volume falls below capacity.',
-      p2note:'The seven lines: <b>PM = BOM×price</b>, <b>RM = BOM×price</b>, <b>DL = manpower×UMK ÷ capacity</b>, <b>Listrik = KWH×tariff ÷ capacity</b>, <b>Gas = MMBTU×tariff ÷ capacity</b>, <b>OMC = monthly budget ÷ capacity</b>, <b>Depre = monthly ÷ capacity</b>. Only RM changes between flavours; PM stays fixed.',
-      volume:'Monthly volume (carton)', util:'Capacity utilisation', cogmCtn:'COGM / carton', gpPct:'GP margin', dbp:'DBP (base price)', marginCtn:'Margin / carton',
-      line:'COGM line', perCtn:'Rp / carton', shareCogm:'% of COGM', editable:'Editable by division',
-      lDepre:'Depreciation', lOmc:'OMC (overhead mfg)', lDl:'Direct Labour', lListrik:'Electricity', lGas:'Gas', lRm:'RM (seasoning BOM)', lPm:'PM (packaging)', lTotal:'COGM / carton',
-      atFull:'at full capacity (95,256 ctn)', capNote:'Depreciation & OMC are fixed per month, so per-carton cost rises as volume drops. At 1/3 capacity (≈30,000 ctn) Nori COGM climbs from Rp74,932 to ≈Rp83,400 and GP falls from 20.9% to ≈12%.',
-      cogmCurveT:'COGM per carton vs monthly volume', resetVol:'Reset to full',
-      compareT:'Three flavours at full capacity', flavorSeasoning:'Seasoning multiplier (Keju / Coklat / Jagung)',
-      // p3
-      p3t:'Reverse EBT → Net Sales', p3l:'Work backwards from a target EBT on an existing country P&L. Only Net Sales, COGM and EBT move in rupiah; the rest hold their contribution, so their cost ratio flexes.',
-      p3note:'Runs on the <b>country baseline</b>, not per-NPL (that is the hard part). The NPL only injects its <b>COGM ratio</b> from the calculator. <b>Net Sales to-be = below-GP1 fixed cost ÷ (1 − COGM ratio − target EBT%)</b> — raise the target and see how much Net Sales must grow.',
-      baseline:'Baseline P&L', injectNpl:'NPL COGM (to-be)', targetEbt:'Target EBT', breakEven:'Break-even',
-      asis:'As-is', tobe:'To-be', item:'Item', ratio:'Ratio',
-      iNsar:'Net Sales (NSAR)', iCogm:'COGM (incl. COGS)', iGp1:'GP1 — Gross Margin', iSm1:'SM1 — Sales Force', iSm2:'SM2 — Distribution', iSm3:'SM3 — Trade Spending', iSm4:'SM4 — Overhead', iEbt:'EBT',
-      salesGap:'Net Sales gap to-be', ebtTobe:'EBT to-be', cogmRatio:'COGM ratio (to-be)', feasHdr:'Reading',
-      feasEasy:'Reachable — modest sales uplift', feasHard:'Hard — needs a big sales jump', feasNo:'Infeasible at this target & COGM',
-      p3read:'Reading: {name} needs Net Sales of {ns} (vs {base} as-is) to hold a {t} EBT — a {g} change. Its {rc} COGM ratio is the lever; the lower the COGM, the smaller the sales climb.',
-      moveNote:'Moves in rupiah: Net Sales, COGM, EBT. Held in rupiah (ratio flexes): SM1–SM4.',
-      // p4
-      p4t:'Market Share — Nielsen', p4l:'Snack-extruded retail audit (Indonesia). Each NPL is matched to its flavour category and SIIP’s current position, so the launch rides real demand, not a guess.',
-      mktSize:'Market size', siipShare:'SIIP share', siipTrend:'SIIP trend', fastest:'Fastest-growing flavour',
-      flavorHdr:'Flavour category', valHdr:'Value MAT', chgHdr:'Chg MAT', contHdr:'% of market', mapHdr:'NPL',
-      brandHdr:'Brand', shareHdr:'Share', trendHdr:'Chg MAT',
-      chFit:'Channel headroom for SIIP', chName:'Channel', chShare:'SIIP share', chPot:'Potential to grow', chGrow:'Nabati / category growth',
-      nplMatchT:'NPL ↔ Nielsen match', demandHot:'Hot demand', demandSoft:'Soft / declining', demandWhite:'White space',
-      matchNori:'Nori rides Seaweed — the fastest-growing flavour (+20.2%, Rp671B).',
-      matchKaraage:'Karaage maps to Kaldu Ayam — small and declining (−1.1%, Rp111B).',
-      matchKari:'Kari (Curry) is not in the audit top-10 — white space, demand unproven.',
-      siipPos:'SIIP brand: Rp493B, 5.2% share, −2.5% MAT (share lost to GURIBEE/STT). Strong in GT (83% of SIIP), thin in Minimarket (1.7% share) where category grows +9.5% — the clearest headroom.',
-      nielsenSrc:'Source: Market Update Domestic — Snack (Nielsen/NIQ retail audit), MAT TY to Apr-25, Indonesia. Malaysia & China audits are not in this file.',
-      // p5
-      p5t:'Launch Ranking — SKU × Area', p5l:'Where each SIIP flavour should launch first. Score blends COGM margin, Nielsen demand and channel fit — ranked for the smallest, surest first atom cell.',
-      p5note:'The win is the <b>first atom cell</b>: the SKU-and-place where SIIP breaks even earliest and compounds. Field test favours <b>Nori · Indonesia · GT</b>; the <b>Nori + BBQ</b> bundle scores highest of all.',
-      bundleRec:'Recommended first launch', bundleWhy:'Nori + BBQ, Indonesia GT (DP). Nori rides the hottest flavour; BBQ adds a proven companion — field score {s}/100.',
-      rkHdr:'Rank', skuHdr:'SKU', areaHdr:'Launch area', gpHdr:'GP @ full', demandHdr:'Nielsen', scoreHdr:'Score', fieldHdr:'Field', callHdr:'Call',
-      sliceT:'Slice & dice — launch area by country', cCountry:'Country', cGt:'GT channel', cMt:'MT channel', cUniq:'Country-unique',
-      mapT:'SIIP channel map — Indonesia', scoreForm:'Score = COGM margin (40) + Nielsen demand (35) + channel fit (25). Field = expert launch score from the workbook. Ranked for earliest break-even, not highest GP1.',
-      callLaunch:'LAUNCH', callPilot:'PILOT', callRework:'REWORK', callHold:'HOLD',
-      ctn:'ctn', bil:'B'
-    },
-    id:{
-      brandSub:'SIIP · Tarik P&L ke depan — dari konsep ke area launch terbaik', tagCeo:'Tampilan keputusan CEO', flow:'Alur',
-      footBrand:'Atomic P&L — "Yang membunuh NPL adalah EBT, bukan GP1." Small but compounding: sel atom pertama tak pernah rugi.',
-      nav1:'Konsep', nav2:'COGM', nav3:'Reverse EBT', nav4:'Market Share', nav5:'Ranking Launch',
-      step:'Langkah {n} dari 5',
-      p1t:'Shortlist Konsep NPL', p1l:'Konsep Stage-1 yang lolos gate rasa CEO. Tiga rasa SIIP dimodelkan penuh; sisanya slot kosong untuk diisi saat konsep lolos gate.',
-      p1note:'Tab ini hanya register <b>NPL-nya apa saja</b>. Fokus sekarang tiga: <b>SIIP Nori, SIIP Karaage, SIIP Kari</b>. Pilih satu di sini dan ia mengalir ke COGM, Reverse EBT, dan Ranking Launch.',
-      p1q:'"Atomic jalan untuk yang lolos gate — CEO suka dulu, baru kita bangun P&L-nya."',
-      cogmFull:'COGM / ktn', gpFull:'GP @ penuh', nielsenCat:'Kategori Nielsen', selectThis:'Terpilih — mengalir ke semua tab', clickToSelect:'Klik untuk pilih',
-      openSlot:'Slot NPL kosong', openSlotSub:'Diisi saat Stage-1',
-      p2t:'Kalkulator COGM', p2l:'Biaya per karton dari tujuh lini standar. Tiap divisi mengisi angkanya sendiri; depresiasi & OMC membengkak saat volume turun di bawah kapasitas.',
-      p2note:'Tujuh lini: <b>PM = BOM×harga</b>, <b>RM = BOM×harga</b>, <b>DL = manpower×UMK ÷ kapasitas</b>, <b>Listrik = KWH×tarif ÷ kapasitas</b>, <b>Gas = MMBTU×tarif ÷ kapasitas</b>, <b>OMC = budget/bln ÷ kapasitas</b>, <b>Depre = /bln ÷ kapasitas</b>. Hanya RM berubah antar rasa; PM tetap.',
-      volume:'Volume bulanan (karton)', util:'Utilisasi kapasitas', cogmCtn:'COGM / karton', gpPct:'Margin GP', dbp:'DBP (harga dasar)', marginCtn:'Margin / karton',
-      line:'Lini COGM', perCtn:'Rp / karton', shareCogm:'% dari COGM', editable:'Bisa diedit divisi',
-      lDepre:'Depresiasi', lOmc:'OMC (overhead pabrik)', lDl:'Tenaga Kerja Langsung', lListrik:'Listrik', lGas:'Gas', lRm:'RM (BOM bumbu)', lPm:'PM (kemasan)', lTotal:'COGM / karton',
-      atFull:'pada kapasitas penuh (95.256 ktn)', capNote:'Depresiasi & OMC tetap per bulan, jadi biaya per karton naik saat volume turun. Di 1/3 kapasitas (≈30.000 ktn) COGM Nori naik dari Rp74.932 ke ≈Rp83.400 dan GP turun dari 20,9% ke ≈12%.',
-      cogmCurveT:'COGM per karton vs volume bulanan', resetVol:'Kembalikan ke penuh',
-      compareT:'Tiga rasa pada kapasitas penuh', flavorSeasoning:'Pengali bumbu (Keju / Coklat / Jagung)',
-      p3t:'Reverse EBT → Net Sales', p3l:'Hitung mundur dari target EBT pada P&L negara yang ada. Hanya Net Sales, COGM, dan EBT yang bergerak dalam rupiah; sisanya menahan kontribusi, jadi cost rasionya yang bergeser.',
-      p3note:'Jalan di <b>baseline negara</b>, bukan per-NPL (itu bagian sulitnya). NPL hanya menyuntik <b>rasio COGM</b>-nya dari kalkulator. <b>Net Sales to-be = biaya tetap di bawah GP1 ÷ (1 − rasio COGM − target EBT%)</b> — naikkan target dan lihat berapa Net Sales harus tumbuh.',
-      baseline:'P&L Baseline', injectNpl:'COGM NPL (to-be)', targetEbt:'Target EBT', breakEven:'Break-even',
-      asis:'As-is', tobe:'To-be', item:'Item', ratio:'Rasio',
-      iNsar:'Net Sales (NSAR)', iCogm:'COGM (incl. COGS)', iGp1:'GP1 — Margin Kotor', iSm1:'SM1 — Tenaga Penjual', iSm2:'SM2 — Distribusi', iSm3:'SM3 — Trade Spending', iSm4:'SM4 — Overhead', iEbt:'EBT',
-      salesGap:'Selisih Net Sales to-be', ebtTobe:'EBT to-be', cogmRatio:'Rasio COGM (to-be)', feasHdr:'Pembacaan',
-      feasEasy:'Terjangkau — kenaikan sales moderat', feasHard:'Berat — butuh lonjakan sales besar', feasNo:'Tak layak di target & COGM ini',
-      p3read:'Pembacaan: {name} butuh Net Sales {ns} (vs {base} as-is) untuk menahan EBT {t} — perubahan {g}. Rasio COGM {rc} adalah tuasnya; makin rendah COGM, makin kecil kenaikan sales.',
-      moveNote:'Bergerak dalam rupiah: Net Sales, COGM, EBT. Ditahan dalam rupiah (rasio bergeser): SM1–SM4.',
-      p4t:'Market Share — Nielsen', p4l:'Retail audit snack-extruded (Indonesia). Tiap NPL dicocokkan ke kategori rasanya dan posisi SIIP saat ini, agar launch menunggangi demand nyata, bukan tebakan.',
-      mktSize:'Ukuran pasar', siipShare:'Share SIIP', siipTrend:'Tren SIIP', fastest:'Rasa tercepat tumbuh',
-      flavorHdr:'Kategori rasa', valHdr:'Nilai MAT', chgHdr:'Chg MAT', contHdr:'% pasar', mapHdr:'NPL',
-      brandHdr:'Brand', shareHdr:'Share', trendHdr:'Chg MAT',
-      chFit:'Headroom channel untuk SIIP', chName:'Channel', chShare:'Share SIIP', chPot:'Potensi tumbuh', chGrow:'Pertumbuhan Nabati / kategori',
-      nplMatchT:'Cocokan NPL ↔ Nielsen', demandHot:'Demand panas', demandSoft:'Lemah / menurun', demandWhite:'White space',
-      matchNori:'Nori menunggangi Seaweed — rasa tercepat tumbuh (+20,2%, Rp671M).',
-      matchKaraage:'Karaage memetakan ke Kaldu Ayam — kecil & menurun (−1,1%, Rp111M).',
-      matchKari:'Kari (Curry) tak ada di top-10 audit — white space, demand belum terbukti.',
-      siipPos:'Brand SIIP: Rp493M, share 5,2%, −2,5% MAT (share diambil GURIBEE/STT). Kuat di GT (83% SIIP), tipis di Minimarket (share 1,7%) di mana kategori tumbuh +9,5% — headroom paling jelas.',
-      nielsenSrc:'Sumber: Market Update Domestic — Snack (retail audit Nielsen/NIQ), MAT TY ke Apr-25, Indonesia. Audit Malaysia & China tidak ada di file ini.',
-      p5t:'Ranking Launch — SKU × Area', p5l:'Di mana tiap rasa SIIP sebaiknya launch duluan. Skor memadukan margin COGM, demand Nielsen, dan fit channel — diurutkan untuk sel atom pertama terkecil & terpasti.',
-      p5note:'Kemenangannya <b>sel atom pertama</b>: SKU-dan-tempat di mana SIIP break-even paling dini lalu compounding. Field test memihak <b>Nori · Indonesia · GT</b>; bundle <b>Nori + BBQ</b> skor tertinggi dari semua.',
-      bundleRec:'Rekomendasi launch pertama', bundleWhy:'Nori + BBQ, Indonesia GT (DP). Nori menunggangi rasa terpanas; BBQ menambah pendamping terbukti — field score {s}/100.',
-      rkHdr:'Rank', skuHdr:'SKU', areaHdr:'Area launch', gpHdr:'GP @ penuh', demandHdr:'Nielsen', scoreHdr:'Skor', fieldHdr:'Field', callHdr:'Putusan',
-      sliceT:'Slice & dice — area launch per negara', cCountry:'Negara', cGt:'Channel GT', cMt:'Channel MT', cUniq:'Khusus-negara',
-      mapT:'Peta channel SIIP — Indonesia', scoreForm:'Skor = margin COGM (40) + demand Nielsen (35) + fit channel (25). Field = skor launch pakar dari workbook. Diurutkan untuk break-even terdini, bukan GP1 tertinggi.',
-      callLaunch:'LAUNCH', callPilot:'PILOT', callRework:'REWORK', callHold:'HOLD',
-      ctn:'ktn', bil:'M'
-    }
-  };
-  function t(k,v){ var d=T[lang]||T.en, s=d[k]; if(s==null)s=T.en[k]; if(s==null)return k;
-    if(v)Object.keys(v).forEach(function(x){ s=s.replace(new RegExp('\\{'+x+'\\}','g'),v[x]); }); return s; }
+  // channel SM load (% of NSAR) for standalone NPL EBT
+  var SMLOAD={ GT:{sm1:5.8,sm2:2.8,sm3:7.0,sm4:2.6,ap:3.0}, MT:{sm1:5.8,sm2:3.4,sm3:8.5,sm4:2.6,ap:3.0} };
+  function smTotal(ch){ var s=SMLOAD[ch]; return s.sm1+s.sm2+s.sm3+s.sm4+s.ap; }
+
+  /* ========== i18n (concise) ========== */
+  var T={en:{
+    brandSub:'SIIP · concept to best launch area', footBrand:'Atomic P&L — what kills an NPL is EBT, not GP1. The first atom cell must not lose money.',
+    n1:'Concepts', n2:'COGM', n3:'Reverse EBT', n4:'Market Share', n5:'Launch Ranking', nData:'Data',
+    p1t:'NPL Concepts', p1l:'Stage-1 concepts that passed the taste gate. Pick one to carry through every tab.',
+    cogmF:'COGM/ctn', gpF:'GP full', cat:'Category', selected:'Selected', addNpl:'Add NPL', newName:'NPL name', newRm:'RM cost / carton', newCat:'Nielsen category', add:'Add', cancel:'Cancel',
+    p2t:'COGM Calculator', p2l:'Cost per carton from the seven lines. Edit any number; depreciation & OMC balloon as volume drops below capacity.',
+    volume:'Monthly volume', fullCapL:'Full capacity', setFull:'Set to full', util:'Utilisation', cogmCtn:'COGM/carton', gpPct:'GP margin', dbpL:'DBP', marginCtn:'Margin/carton',
+    line:'COGM line', perCtn:'Rp / carton (at full)', pctCogm:'% COGM', lDepre:'Depreciation', lOmc:'OMC', lDl:'Direct Labour', lListrik:'Electricity', lGas:'Gas', lRm:'RM (seasoning)', lPm:'PM (packaging)', lTot:'COGM / carton',
+    curveT:'COGM vs volume', atFull:'full', editHint:'Edit the full-capacity Rp/carton below — division inputs. Depre & OMC are fixed per month, so they rise per carton when volume falls.',
+    p3t:'Reverse EBT → Net Sales', p3l:'Target an EBT on a country P&L. Only Net Sales, COGM and EBT move in rupiah; SM1–SM4 hold their amount, so their ratio flexes.',
+    baseline:'Baseline', nplCogm:'NPL COGM', target:'Target EBT', custom:'Custom', breakEven:'Break-even',
+    asis:'As-is', tobe:'To-be', ratio:'Ratio', item:'Item', iN:'Net Sales (NSAR)', iC:'COGM (incl. COGS)', iG:'GP1', iS1:'SM1 Sales Force', iS2:'SM2 Distribution', iS3:'SM3 Trade', iS4:'SM4 Overhead', iE:'EBT',
+    salesGap:'Net Sales change', ebtTobe:'EBT to-be', cogmR:'COGM ratio', decision:'Decision',
+    decGo:'GO', decPilot:'PILOT', decRework:'REWORK', decHold:'HOLD',
+    p3read:'{name}: Net Sales must reach {ns} ({g}) to hold a {t} EBT. Lower COGM = smaller climb.',
+    p4t:'Market Share — Nielsen', p4l:'Snack-extruded audit (Indonesia). Each NPL mapped to its flavour; verdict per combination.',
+    mktSize:'Market', siipSh:'SIIP share', siipTr:'SIIP MAT', fastest:'Fastest flavour', verdict:'Verdict',
+    vRide:'RIDE', vWatch:'WATCH', vAvoid:'AVOID', vRideD:'hot category, launch with it', vWatchD:'flat/declining, launch selectively', vAvoidD:'white space, validate demand first',
+    flavorH:'Flavour', valH:'Value MAT (Rp Mill)', chgH:'Chg MAT', contH:'% market', mapH:'NPL', brandH:'Brand', shareH:'Share',
+    chFit:'Channel headroom', chGrow:'Nabati / category',
+    siipPos:'SIIP: Rp493B, 5.2% share, −2.5% MAT. Strong in GT (83% of SIIP); thin in Minimarket (1.7%) where the category grows +9.5% — the clearest headroom.',
+    nielsenSrc:'Nielsen/NIQ snack audit, MAT TY to Apr-25, Indonesia. Malaysia & China not in this file.',
+    p5t:'Launch Ranking — SKU × Area', p5l:'Where each flavour should launch first. Click a row for the full score and decision.',
+    bundleRec:'Recommended first launch', bundleWhy:'Nori + BBQ, Indonesia GT (DP). Field score {s}/100.',
+    rkH:'#', skuH:'SKU', areaH:'Area', gpH:'GP full', demandH:'Nielsen', oppH:'Opportunity', callH:'Decision',
+    sliceT:'Launch area by country', cC:'Country', cG:'GT channel', cM:'MT channel', cU:'Country-unique',
+    oppScore:'Opportunity', probSucc:'Probability', riskL:'Risk', confL:'Confidence', expEbt:'Expected EBT at scale',
+    scoreBreak:'Score breakdown', sbDemand:'Nielsen demand', sbMargin:'COGM margin', sbChannel:'Channel fit',
+    rationale:'Rationale', caution:'Caution / next steps',
+    gMkt:'Market capacity sufficient', gEbt:'EBT sustainable at scale', gEvid:'Comparable demand evidence', gCap:'Execution capability available',
+    cautionTxt:'Monitor RM volatility and trade spending.',
+    riskLow:'Low', riskMed:'Medium', riskHigh:'High', confHigh:'High', confMed:'Medium', confLow:'Low',
+    pDatat:'Data & Upload', pDatal:'Upload the COGM workbook to refresh the numbers, or export/import a JSON snapshot. Everything is stored in this browser.',
+    upCogm:'Upload COGM workbook (.xlsx)', upHint:'Drop the COGM SIIP file here or click to choose. Reads Sheet1 rows 13–15 (Nori, Karaage, Kari) and capacity/DBP.',
+    expJson:'Export JSON', impJson:'Import JSON', resetD:'Reset to defaults', upOk:'Updated {n} SKU from the workbook.', upErr:'Could not read the workbook — check the layout matches the COGM SIIP file.',
+    curData:'Current data', ctn:'ctn', bil:'B'
+  }, id:{
+    brandSub:'SIIP · dari konsep ke area launch terbaik', footBrand:'Atomic P&L — yang membunuh NPL adalah EBT, bukan GP1. Sel atom pertama tak boleh rugi.',
+    n1:'Konsep', n2:'COGM', n3:'Reverse EBT', n4:'Market Share', n5:'Ranking Launch', nData:'Data',
+    p1t:'Konsep NPL', p1l:'Konsep Stage-1 yang lolos gate rasa. Pilih satu untuk dibawa ke semua tab.',
+    cogmF:'COGM/ktn', gpF:'GP penuh', cat:'Kategori', selected:'Terpilih', addNpl:'Tambah NPL', newName:'Nama NPL', newRm:'Biaya RM / karton', newCat:'Kategori Nielsen', add:'Tambah', cancel:'Batal',
+    p2t:'Kalkulator COGM', p2l:'Biaya per karton dari tujuh lini. Edit angkanya; depresiasi & OMC membengkak saat volume turun di bawah kapasitas.',
+    volume:'Volume bulanan', fullCapL:'Kapasitas penuh', setFull:'Set ke penuh', util:'Utilisasi', cogmCtn:'COGM/karton', gpPct:'Margin GP', dbpL:'DBP', marginCtn:'Margin/karton',
+    line:'Lini COGM', perCtn:'Rp / karton (penuh)', pctCogm:'% COGM', lDepre:'Depresiasi', lOmc:'OMC', lDl:'Tenaga Kerja', lListrik:'Listrik', lGas:'Gas', lRm:'RM (bumbu)', lPm:'PM (kemasan)', lTot:'COGM / karton',
+    curveT:'COGM vs volume', atFull:'penuh', editHint:'Edit Rp/karton pada kapasitas penuh di bawah — input tiap divisi. Depre & OMC tetap per bulan, jadi naik per karton saat volume turun.',
+    p3t:'Reverse EBT → Net Sales', p3l:'Target EBT pada P&L negara. Hanya Net Sales, COGM, EBT bergerak rupiah; SM1–SM4 menahan nominal, rasionya bergeser.',
+    baseline:'Baseline', nplCogm:'COGM NPL', target:'Target EBT', custom:'Custom', breakEven:'Break-even',
+    asis:'As-is', tobe:'To-be', ratio:'Rasio', item:'Item', iN:'Net Sales (NSAR)', iC:'COGM (incl. COGS)', iG:'GP1', iS1:'SM1 Tenaga Penjual', iS2:'SM2 Distribusi', iS3:'SM3 Trade', iS4:'SM4 Overhead', iE:'EBT',
+    salesGap:'Perubahan Net Sales', ebtTobe:'EBT to-be', cogmR:'Rasio COGM', decision:'Keputusan',
+    decGo:'GO', decPilot:'PILOT', decRework:'REWORK', decHold:'HOLD',
+    p3read:'{name}: Net Sales harus mencapai {ns} ({g}) untuk menahan EBT {t}. COGM lebih rendah = kenaikan lebih kecil.',
+    p4t:'Market Share — Nielsen', p4l:'Audit snack-extruded (Indonesia). Tiap NPL dipetakan ke rasanya; verdict per kombinasi.',
+    mktSize:'Pasar', siipSh:'Share SIIP', siipTr:'SIIP MAT', fastest:'Rasa tercepat', verdict:'Verdict',
+    vRide:'RIDE', vWatch:'WATCH', vAvoid:'AVOID', vRideD:'kategori panas, launch bareng', vWatchD:'datar/turun, launch selektif', vAvoidD:'white space, validasi demand dulu',
+    flavorH:'Rasa', valH:'Nilai MAT (Rp Juta)', chgH:'Chg MAT', contH:'% pasar', mapH:'NPL', brandH:'Brand', shareH:'Share',
+    chFit:'Headroom channel', chGrow:'Nabati / kategori',
+    siipPos:'SIIP: Rp493M, share 5,2%, −2,5% MAT. Kuat di GT (83% SIIP); tipis di Minimarket (1,7%) di mana kategori tumbuh +9,5% — headroom paling jelas.',
+    nielsenSrc:'Audit snack Nielsen/NIQ, MAT TY ke Apr-25, Indonesia. Malaysia & China tak ada di file ini.',
+    p5t:'Ranking Launch — SKU × Area', p5l:'Di mana tiap rasa launch duluan. Klik baris untuk skor penuh & keputusan.',
+    bundleRec:'Rekomendasi launch pertama', bundleWhy:'Nori + BBQ, Indonesia GT (DP). Field score {s}/100.',
+    rkH:'#', skuH:'SKU', areaH:'Area', gpH:'GP penuh', demandH:'Nielsen', oppH:'Opportunity', callH:'Keputusan',
+    sliceT:'Area launch per negara', cC:'Negara', cG:'Channel GT', cM:'Channel MT', cU:'Khusus-negara',
+    oppScore:'Opportunity', probSucc:'Probabilitas', riskL:'Risiko', confL:'Keyakinan', expEbt:'Ekspektasi EBT di skala',
+    scoreBreak:'Rincian skor', sbDemand:'Demand Nielsen', sbMargin:'Margin COGM', sbChannel:'Fit channel',
+    rationale:'Dasar', caution:'Perhatian / langkah berikut',
+    gMkt:'Kapasitas pasar memadai', gEbt:'EBT berkelanjutan di skala', gEvid:'Bukti demand pembanding', gCap:'Kapabilitas eksekusi tersedia',
+    cautionTxt:'Pantau volatilitas RM dan trade spending.',
+    riskLow:'Rendah', riskMed:'Sedang', riskHigh:'Tinggi', confHigh:'Tinggi', confMed:'Sedang', confLow:'Rendah',
+    pDatat:'Data & Upload', pDatal:'Upload workbook COGM untuk memperbarui angka, atau export/import snapshot JSON. Semua tersimpan di browser ini.',
+    upCogm:'Upload workbook COGM (.xlsx)', upHint:'Taruh file COGM SIIP di sini atau klik untuk pilih. Membaca Sheet1 baris 13–15 (Nori, Karaage, Kari) dan kapasitas/DBP.',
+    expJson:'Export JSON', impJson:'Import JSON', resetD:'Reset ke default', upOk:'Memperbarui {n} SKU dari workbook.', upErr:'Gagal membaca workbook — pastikan layout sama dengan file COGM SIIP.',
+    curData:'Data saat ini', ctn:'ktn', bil:'M'
+  }};
+  function t(k,v){ var d=T[lang]||T.en, s=d[k]; if(s==null)s=T.en[k]; if(s==null)return k; if(v)Object.keys(v).forEach(function(x){ s=s.replace(new RegExp('\\{'+x+'\\}','g'),v[x]); }); return s; }
   function L(o){ return o?(o[lang]||o.en):''; }
 
-  /* ===================== format ===================== */
+  /* ========== format ========== */
   function grp(n){ return Math.round(n).toLocaleString(lang==='id'?'id-ID':'en-US'); }
   function dec(x,d){ var s=(+x).toFixed(d==null?1:d); return lang==='id'?s.replace('.',','):s; }
-  function rpShort(n){ var neg=n<0?'−':''; n=Math.abs(n);
-    if(n>=1e12)return neg+'Rp'+dec(n/1e12)+'T'; if(n>=1e9)return neg+'Rp'+dec(n/1e9)+(lang==='id'?'M':'B'); if(n>=1e6)return neg+'Rp'+dec(n/1e6)+(lang==='id'?'Jt':'M'); return neg+'Rp'+grp(n); }
+  function rpShort(n){ var s=n<0?'−':''; n=Math.abs(n); if(n>=1e12)return s+'Rp'+dec(n/1e12)+'T'; if(n>=1e9)return s+'Rp'+dec(n/1e9)+(lang==='id'?'M':'B'); if(n>=1e6)return s+'Rp'+dec(n/1e6)+(lang==='id'?'Jt':'M'); return s+'Rp'+grp(n); }
   function rpFull(n){ return (n<0?'−Rp':'Rp')+grp(Math.abs(n)); }
   function pct(n,d){ return dec(n,d)+'%'; }
   function pctS(n){ return (n<0?'−':'+')+dec(Math.abs(n))+'%'; }
 
-  /* ===================== state ===================== */
-  var st = { page:1, sel:'nori', vol:95256, base:'id', target:0.085 };
+  /* ========== state ========== */
+  var st={ page:1, sel:'nori', vol:ENG().fullCap, base:'id', target:0.085, customT:12, selCombo:0, addOpen:false };
+  var globe=null;
 
-  /* ===================== NAV + PAGEHEAD ===================== */
-  function renderNav(){
-    var n=document.getElementById('nav'), labels=['nav1','nav2','nav3','nav4','nav5'];
-    n.innerHTML=labels.map(function(l,i){ return '<button type="button" data-p="'+(i+1)+'" class="'+(st.page===i+1?'active':'')+'"><span class="sn">'+(i+1)+'</span>'+t(l)+'</button>'; }).join('');
-    n.querySelectorAll('button').forEach(function(b){ b.addEventListener('click',function(){ st.page=+b.getAttribute('data-p'); render(); window.scrollTo({top:0,behavior:'smooth'}); }); });
+  /* ========== decision / scoring engine (prototype-aligned) ========== */
+  function expectedEbt(c,ch){ return gpFull(c) - smTotal(ch); } // % of NSAR at full capacity
+  function evalCombo(cm){
+    var c=npl(cm.npl), fl=flavor(c.nielsen), ebt=expectedEbt(c,cm.channel), gp=gpFull(c);
+    // sub-scores
+    var demand = !fl ? 12 : Math.max(4,Math.min(40, 18 + fl.chg*0.8 + Math.min(10,fl.val/130000)));
+    var margin = Math.max(0,Math.min(30,(gp-13)/13*30));
+    var channel = cm.channel==='GT'?26:19;        // SIIP strong in GT (83%)
+    var opp = Math.round(demand+margin+channel);
+    // probability of success (evidence-based)
+    var prob = Math.round(Math.max(40,Math.min(86, (fl?62:46) + (fl?fl.chg*0.6:0) + (gp-20))));
+    // gates
+    var gMkt = !!fl && fl.val>=250000;            // category big enough
+    var gEbt = ebt>=0;                            // sustainable at scale (break-even+)
+    var gEvid = !!fl;                             // comparable demand exists
+    var gCap = cm.channel==='GT' || NIELSEN.channels[1].pot>0; // capability in channel
+    var pass=[gMkt,gEbt,gEvid,gCap].filter(Boolean).length;
+    var decision = pass===4?'go' : (gEvid&&gMkt&&pass>=3)?'pilot' : (!gEbt&&gEvid)?'rework':'hold';
+    if(!fl && decision==='go') decision='pilot';
+    // risk & confidence
+    var risk = ebt>=2?'Low':ebt>=-2?'Medium':'High';
+    var conf = !fl?'Low':(fl.chg>=5?'High':'Medium');
+    return {c:c,fl:fl,cm:cm,ebt:ebt,gp:gp,opp:opp,prob:prob,demand:demand,margin:margin,channel:channel,
+      gates:{gMkt:gMkt,gEbt:gEbt,gEvid:gEvid,gCap:gCap}, decision:decision, risk:risk, conf:conf};
   }
-  function pagehead(title,lead){ return '<div class="pagehead"><div class="ph-main"><h1>'+title+'</h1><p class="lead">'+lead+'</p></div><span class="step-chip">'+t('step',{n:st.page})+'</span></div>'; }
+
+  /* ========== NAV ========== */
+  function renderNav(){
+    var n=document.getElementById('nav'), labels=['n1','n2','n3','n4','n5'];
+    var h=labels.map(function(l,i){ return '<button type="button" data-p="'+(i+1)+'" class="'+(st.page===i+1?'active':'')+'"><span class="sn">'+(i+1)+'</span>'+t(l)+'</button>'; }).join('');
+    h+='<button type="button" class="dataBtn '+(st.page===6?'active':'')+'" data-p="6" title="Data & Upload">⚙ '+t('nData')+'</button>';
+    n.innerHTML=h;
+    n.querySelectorAll('button').forEach(function(b){ b.addEventListener('click',function(){ st.page=+b.getAttribute('data-p'); render(); window.scrollTo(0,0); }); });
+  }
+  function pagehead(title,lead){ return '<div class="pagehead"><h1>'+title+'</h1><p class="lead">'+lead+'</p></div>'; }
   function card(ico,title,sub,note,body,right){
-    return '<section class="card"><div class="card-head"><div class="ico">'+ico+'</div><div><h3>'+title+'</h3>'+(sub?'<div class="hsub">'+sub+'</div>':'')+'</div>'+(right?'<div class="right">'+right+'</div>':'')+'</div>'+
-      (note?'<div class="concept-note"><span class="qi">◆</span><div>'+note+'</div></div>':'')+body+'</section>';
+    return '<section class="card"><div class="card-head"><div class="ico">'+ico+'</div><div><h3>'+title+'</h3>'+(sub?'<div class="hsub">'+sub+'</div>':'')+'</div>'+(right?'<div class="right">'+right+'</div>':'')+'</div>'+(note?'<div class="note-strip">'+note+'</div>':'')+body+'</section>';
   }
   function tile(label,val,cls,sub){ return '<div class="tile '+(cls||'')+'"><div class="tl">'+label+'</div><div class="tv">'+val+'</div>'+(sub?'<div class="tsub">'+sub+'</div>':'')+'</div>'; }
-  function nplPicker(){ return '<select id="nplSel" aria-label="NPL">'+NPLS.map(function(c){ return '<option value="'+c.k+'"'+(c.k===st.sel?' selected':'')+'>'+c.emoji+' '+c.name+'</option>'; }).join('')+'</select>'; }
+  function nplPicker(id){ return '<select id="'+(id||'nplSel')+'">'+DATA.npls.map(function(c){ return '<option value="'+c.k+'"'+(c.k===st.sel?' selected':'')+'>'+c.emoji+' '+c.name+'</option>'; }).join('')+'</select>'; }
 
-  /* ===================== PAGE 1 — Concepts ===================== */
+  /* ========== PAGE 1 — Concepts ========== */
   function page1(){
-    var cards=NPLS.map(function(c){
-      var fl=flavor(c.nielsen);
-      var demandChip = fl ? (fl.chg>=10?'<span class="chip good">▲ '+pctS(fl.chg)+'</span>':fl.chg<0?'<span class="chip bad">▼ '+pctS(fl.chg)+'</span>':'<span class="chip warn">'+pctS(fl.chg)+'</span>') : '<span class="chip">white space</span>';
-      var gpChip = c.gpFull>=22?'good':c.gpFull>=18?'warn':'bad';
+    var cards=DATA.npls.map(function(c){
+      var fl=flavor(c.nielsen), gpv=gpFull(c), cgm=cogmFull(c);
+      var demand = fl ? (fl.chg>=10?'<span class="chip good">▲ '+pctS(fl.chg)+'</span>':fl.chg<0?'<span class="chip bad">▼ '+pctS(fl.chg)+'</span>':'<span class="chip warn">'+pctS(fl.chg)+'</span>') : '<span class="chip">white space</span>';
+      var gpc=gpv>=22?'txt-green':gpv>=18?'txt-amber':'txt-red';
       return '<div class="npl'+(c.k===st.sel?' sel':'')+'" data-k="'+c.k+'">'+
         '<div class="nh"><span class="emoji">'+c.emoji+'</span><div><div class="nm">'+c.name+'</div><div class="sku">'+c.sku+'</div></div></div>'+
-        '<div class="statrow"><div><div class="sv">'+rpShort(c.cogmFull)+'</div><div class="sl">'+t('cogmFull')+'</div></div>'+
-          '<div><div class="sv '+( 'txt-'+(gpChip==='good'?'green':gpChip==='warn'?'amber':'red') )+'">'+pct(c.gpFull)+'</div><div class="sl">'+t('gpFull')+'</div></div></div>'+
-        '<div class="chips"><span class="chip gold">'+t('nielsenCat')+': '+(fl?L(fl.name):'—')+'</span>'+demandChip+'</div>'+
-        '<div class="why">'+L(c.why)+'</div>'+
-        '<div class="chips">'+(c.k===st.sel?'<span class="chip good">✓ '+t('selectThis')+'</span>':'<span class="chip">'+t('clickToSelect')+'</span>')+'</div>'+
+        '<div class="statrow"><div><div class="sv">'+rpShort(cgm)+'</div><div class="sl">'+t('cogmF')+'</div></div><div><div class="sv '+gpc+'">'+pct(gpv)+'</div><div class="sl">'+t('gpF')+'</div></div></div>'+
+        '<div class="chips"><span class="chip gold">'+t('cat')+': '+(fl?L(fl.n):'—')+'</span>'+demand+'</div>'+
       '</div>';
     }).join('');
-    var slots='';
-    for(var i=0;i<OPEN_SLOTS;i++){ slots+='<div class="npl empty"><div style="font-size:22px;opacity:.5">＋</div><div style="font-weight:700;margin-top:6px">'+t('openSlot')+'</div><div style="font-size:11px;margin-top:2px">'+(NPLS.length+i+1)+' / 10 · '+t('openSlotSub')+'</div></div>'; }
-    return pagehead(t('p1t'),t('p1l'))+
-      card('🧪', t('nav1'), '3 / 10 '+(lang==='id'?'terisi':'filled'), t('p1note')+'<div class="quote">'+t('p1q')+'</div>',
-        '<div class="card-body"><div class="npl-grid">'+cards+slots+'</div></div>', nplPicker());
+    var addCard = st.addOpen ?
+      '<div class="npl" style="cursor:default"><input id="aName" type="text" placeholder="'+t('newName')+'" style="width:100%">'+
+      '<input id="aRm" type="number" placeholder="RM" value="26000" style="width:100%;text-align:left">'+
+      '<select id="aCat" style="width:100%">'+NIELSEN.flavors.map(function(f){return '<option value="'+f.k+'">'+L(f.n)+'</option>';}).join('')+'<option value="">white space</option></select>'+
+      '<div style="display:flex;gap:6px"><button class="btn" id="aAdd">'+t('add')+'</button><button class="btn ghost" id="aCancel">'+t('cancel')+'</button></div></div>'
+      : '<div class="npl empty" id="addSlot"><div style="font-size:24px">＋</div><div style="font-weight:700;margin-top:4px">'+t('addNpl')+'</div></div>';
+    return pagehead(t('p1t'),t('p1l'))+card('🧪',t('n1'),DATA.npls.length+' SKU',null,'<div class="card-body"><div class="npl-grid">'+cards+addCard+'</div></div>',nplPicker());
   }
 
-  /* ===================== PAGE 2 — COGM ===================== */
-  function cogmTilesHtml(c,vol){
-    var cogm=cogmAt(vol,c.rm), gp=gpPctAt(vol,c.rm), util=vol/ENG.fullCap*100, margin=ENG.dbp-cogm;
-    return tile(t('util'),pct(util,0),util>=80?'good':util<45?'bad':'warn',grp(vol)+' / '+grp(ENG.fullCap)+' '+t('ctn'))+
-      tile(t('cogmCtn'),rpFull(cogm),cogm<=70000?'good':cogm>=78000?'bad':'warn',t('lTotal'))+
-      tile(t('gpPct'),pct(gp),gp>=22?'good':gp<16?'bad':'warn','DBP '+rpFull(ENG.dbp))+
-      tile(t('marginCtn'),rpFull(margin),'hi',t('dbp')+' − COGM');
+  /* ========== PAGE 2 — COGM (editable) ========== */
+  function page2(){
+    var c=npl(st.sel), e=ENG();
+    var body='<div class="card-body">'+
+      '<div class="selbar">'+
+        '<div class="fld"><label>'+t('fullCapL')+'</label><input type="number" id="fcIn" value="'+Math.round(e.fullCap)+'" step="1000"></div>'+
+        '<div class="fld"><label>'+t('dbpL')+'</label><input type="number" id="dbpIn" value="'+Math.round(e.dbp)+'" step="100"></div>'+
+        '<div class="fld" style="flex:1;min-width:240px"><div class="slider-head"><span>'+t('volume')+'</span><b id="volLbl">'+grp(st.vol)+' '+t('ctn')+'</b></div>'+
+          '<input type="range" id="volR" min="20000" max="'+Math.round(e.fullCap)+'" step="1000" value="'+Math.min(st.vol,e.fullCap)+'">'+
+          '<div class="capmeter" id="capM" style="margin-top:7px">'+capFill(st.vol)+'</div></div>'+
+        '<button class="btn ghost" id="setFullBtn">'+t('setFull')+'</button>'+
+      '</div>'+
+      '<div class="tiles" id="cogmTiles" style="margin-top:14px">'+cogmTiles(c)+'</div>'+
+      '<div class="grid2" style="margin-top:16px"><div><div class="note" style="margin:0 0 8px">'+t('editHint')+'</div><div id="cogmTable">'+cogmTable(c)+'</div></div>'+
+        '<div><h4 style="font-size:12.5px;margin-bottom:8px">'+t('curveT')+' — '+c.name+'</h4><div id="cogmCurve">'+cogmCurve(c)+'</div></div></div>'+
+      srcbar('cogm')+'</div>';
+    return pagehead(t('p2t'),t('p2l'))+card('🏭',t('n2'),c.name,null,body,nplPicker());
   }
-  function cogmTableHtml(c,vol){
-    var comp=cogmComponents(vol,c.rm), cogm=cogmAt(vol,c.rm);
-    var rows=[['lDepre',comp.depre,true],['lOmc',comp.omc,true],['lDl',comp.dl,false],['lListrik',comp.listrik,false],['lGas',comp.gas,false],['lRm',comp.rm,false],['lPm',comp.pm,false]];
-    var body=rows.map(function(r){ var v=r[1]; return '<tr><td class="lab">'+t(r[0])+(r[2]?' <span class="chip warn" style="font-size:9px">'+(lang==='id'?'tetap/bln':'fixed/mo')+'</span>':'')+'</td><td class="num">'+rpFull(v)+'</td><td class="num txt-muted">'+pct(v/cogm*100)+'</td></tr>'; }).join('');
-    return '<div class="table-wrap"><table class="dt" style="min-width:420px"><thead><tr><th>'+t('line')+'</th><th class="num">'+t('perCtn')+'</th><th class="num">'+t('shareCogm')+'</th></tr></thead><tbody>'+body+
-      '<tr class="grp"><td>'+t('lTotal')+'</td><td class="num">'+rpFull(cogm)+'</td><td class="num">'+pct(100)+'</td></tr></tbody></table></div>';
+  function cogmTiles(c){
+    var cg=cogmAt(st.vol,c), gp=gpPctAt(st.vol,c), util=st.vol/ENG().fullCap*100, m=ENG().dbp-cg;
+    return tile(t('util'),pct(util,0),util>=80?'good':util<45?'bad':'warn',grp(st.vol)+' / '+grp(ENG().fullCap))+
+      tile(t('cogmCtn'),rpFull(cg),cg<=70000?'good':cg>=78000?'bad':'warn','')+
+      tile(t('gpPct'),pct(gp),gp>=22?'good':gp<16?'bad':'warn','')+
+      tile(t('marginCtn'),rpFull(m),'hi','');
   }
+  function cogmTable(c){
+    var g=c.cogm, cg=cogmFull(c);
+    function r(key,field,fixed){ var v=g[field]; return '<tr><td class="lab">'+t(key)+(fixed?' <span class="chip warn" style="font-size:9px">'+(lang==='id'?'tetap/bln':'fixed/mo')+'</span>':'')+'</td>'+
+      '<td class="num"><input type="number" data-f="'+field+'" value="'+(Math.round(v*100)/100)+'" step="100"></td>'+
+      '<td class="num txt-muted">'+pct(v/cg*100)+'</td></tr>'; }
+    return '<div class="table-wrap"><table class="dt" id="cogmInputs" style="min-width:380px"><thead><tr><th>'+t('line')+'</th><th class="num">'+t('perCtn')+'</th><th class="num">'+t('pctCogm')+'</th></tr></thead><tbody>'+
+      r('lDepre','depreF',true)+r('lOmc','omcF',true)+r('lDl','dl')+r('lListrik','listrik')+r('lGas','gas')+r('lRm','rm')+r('lPm','pm')+
+      '<tr class="grp"><td>'+t('lTot')+'</td><td class="num">'+rpFull(cg)+'</td><td class="num">100%</td></tr></tbody></table></div>';
+  }
+  function capFill(vol){ var e=ENG(),u=vol/e.fullCap*100; return '<div class="fill" style="width:'+Math.min(100,u)+'%;background:'+(u>=80?'var(--green)':u>=45?'var(--amber)':'var(--red)')+'"></div><div class="mk" style="left:'+(Math.min(100,30000/e.fullCap*100))+'%"><span>1/3</span></div><div class="mk" style="left:100%"><span>'+t('atFull')+'</span></div>'; }
   function cogmCurve(c){
-    var W=680,H=240,pL=58,pR=16,pT=14,pB=34, vmin=20000,vmax=100000, cmin=68000,cmax=86000;
+    var e=ENG(), W=560,H=220,pL=54,pR=14,pT=12,pB=32, vmin=Math.max(15000,e.fullCap*0.2),vmax=e.fullCap;
+    var cvals=[]; for(var v=vmin;v<=vmax;v+=(vmax-vmin)/40) cvals.push(cogmAt(v,c));
+    var cmin=Math.min.apply(null,cvals)*0.99, cmax=Math.max.apply(null,cvals)*1.01;
     function X(v){ return pL+(v-vmin)/(vmax-vmin)*(W-pL-pR); }
     function Y(cg){ return pT+(cmax-cg)/(cmax-cmin)*(H-pT-pB); }
-    var pts=[]; for(var v=vmin;v<=vmax;v+=2000) pts.push(X(v)+','+Y(Math.min(cmax,cogmAt(v,c.rm))));
-    var xt=[20000,40000,60000,80000,100000].map(function(v){ return '<line x1="'+X(v)+'" y1="'+pT+'" x2="'+X(v)+'" y2="'+(H-pB)+'" stroke="var(--border)"/>'+'<text x="'+X(v)+'" y="'+(H-pB+16)+'" font-size="10" fill="var(--muted)" text-anchor="middle" font-family="JetBrains Mono">'+(v/1000)+'k</text>'; }).join('');
-    var yt=[70000,74000,78000,82000,86000].map(function(cg){ return '<line x1="'+pL+'" y1="'+Y(cg)+'" x2="'+(W-pR)+'" y2="'+Y(cg)+'" stroke="var(--border)" opacity=".6"/>'+'<text x="'+(pL-8)+'" y="'+(Y(cg)+3)+'" font-size="10" fill="var(--muted)" text-anchor="end" font-family="JetBrains Mono">'+(cg/1000)+'k</text>'; }).join('');
-    function dot(v,col,lab){ var cg=cogmAt(v,c.rm); if(cg>cmax)cg=cmax; return '<circle cx="'+X(v)+'" cy="'+Y(cg)+'" r="4.5" fill="'+col+'"/><text x="'+X(v)+'" y="'+(Y(cg)-9)+'" font-size="10" fill="'+col+'" text-anchor="middle" font-weight="700" font-family="JetBrains Mono">'+lab+'</text>'; }
-    var cur=st.vol>=vmin&&st.vol<=vmax?'<circle cx="'+X(st.vol)+'" cy="'+Y(Math.min(cmax,cogmAt(st.vol,c.rm)))+'" r="6" fill="var(--accent)" stroke="var(--surface)" stroke-width="2"/>':'';
-    return '<div class="table-wrap"><svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="COGM vs volume">'+yt+xt+
-      '<polyline points="'+pts.join(' ')+'" fill="none" stroke="var(--accent)" stroke-width="2.5"/>'+
-      dot(95256,'var(--green)',rpShort(cogmAt(95256,c.rm)))+dot(30000,'var(--red)',rpShort(cogmAt(30000,c.rm)))+cur+'</svg></div>'+
-      '<div class="legend"><span><i style="background:var(--accent)"></i>'+c.name+' COGM</span><span><i style="background:var(--green)"></i>'+t('atFull')+'</span><span><i style="background:var(--red)"></i>30,000 '+t('ctn')+' (1/3)</span></div>';
+    var pts=[]; for(var v2=vmin;v2<=vmax;v2+=(vmax-vmin)/60) pts.push(X(v2)+','+Y(cogmAt(v2,c)));
+    var xt=[0.25,0.5,0.75,1].map(function(f){ var v=vmin+(vmax-vmin)*f; return '<text x="'+X(v)+'" y="'+(H-pB+15)+'" font-size="10" fill="var(--muted)" text-anchor="middle" font-family="JetBrains Mono">'+Math.round(v/1000)+'k</text>'; }).join('');
+    var yt=[cmin,(cmin+cmax)/2,cmax].map(function(cg){ return '<line x1="'+pL+'" y1="'+Y(cg)+'" x2="'+(W-pR)+'" y2="'+Y(cg)+'" stroke="var(--border)" opacity=".6"/><text x="'+(pL-7)+'" y="'+(Y(cg)+3)+'" font-size="10" fill="var(--muted)" text-anchor="end" font-family="JetBrains Mono">'+Math.round(cg/1000)+'k</text>'; }).join('');
+    var cur=st.vol>=vmin&&st.vol<=vmax?'<circle cx="'+X(st.vol)+'" cy="'+Y(cogmAt(st.vol,c))+'" r="5" fill="var(--accent)" stroke="var(--surface)" stroke-width="2"/>':'';
+    return '<div class="table-wrap"><svg viewBox="0 0 '+W+' '+H+'">'+yt+xt+'<polyline points="'+pts.join(' ')+'" fill="none" stroke="var(--accent)" stroke-width="2.5"/>'+cur+'</svg></div>';
   }
-  function compareTable(){
-    var body=NPLS.map(function(c){ var fl=flavor(c.nielsen);
-      return '<tr class="'+(c.k===st.sel?'sel':'')+'" data-k="'+c.k+'"><td>'+c.emoji+' '+c.name+'</td>'+
-        '<td class="num">'+rpFull(c.rm)+'</td><td class="num">'+rpFull(ENG.pm)+'</td>'+
-        '<td class="num">'+rpFull(c.cogmFull)+'</td>'+
-        '<td class="num '+(c.gpFull>=22?'txt-green':c.gpFull<16?'txt-red':'txt-amber')+'">'+pct(c.gpFull)+'</td>'+
-        '<td class="num">'+rpFull(ENG.dbp-c.cogmFull)+'</td>'+
-        '<td class="txt-muted" style="font-size:11px">'+(c.seasoning.keju)+' / '+(c.seasoning.coklat)+' / '+(c.seasoning.jagung)+'</td></tr>'; }).join('');
-    return '<div class="table-wrap"><table class="dt"><caption>'+t('flavorSeasoning')+'</caption><thead><tr><th>SKU</th><th class="num">'+t('lRm')+'</th><th class="num">'+t('lPm')+'</th><th class="num">'+t('lTotal')+'</th><th class="num">'+t('gpFull')+'</th><th class="num">'+t('marginCtn')+'</th><th>Keju/Coklat/Jagung</th></tr></thead><tbody>'+body+'</tbody></table></div>';
-  }
-  function page2(){
-    var c=npl(st.sel);
-    var body='<div class="card-body">'+
-      '<div class="selbar"><div class="fld" style="flex:1;min-width:280px"><div class="slider-head"><span>'+t('volume')+'</span><b id="volLbl">'+grp(st.vol)+' '+t('ctn')+'</b></div>'+
-        '<input type="range" id="volR" min="20000" max="100000" step="1000" value="'+st.vol+'">'+
-        '<div class="capmeter" id="capM" style="margin-top:7px">'+capFill(st.vol)+'</div></div></div>'+
-      '<div class="tiles" id="cogmTiles" style="margin-top:14px">'+cogmTilesHtml(c,st.vol)+'</div>'+
-      '<div class="grid2" style="margin-top:16px"><div><h4 style="font-size:12.5px;margin-bottom:8px">'+t('line')+' — '+c.name+'</h4><div id="cogmTable">'+cogmTableHtml(c,st.vol)+'</div></div>'+
-        '<div><h4 style="font-size:12.5px;margin-bottom:8px">'+t('cogmCurveT')+'</h4><div id="cogmCurve">'+cogmCurve(c)+'</div></div></div>'+
-      '<p class="note">'+t('capNote')+'</p>'+
-      '<h4 style="font-size:12.5px;margin:18px 0 8px">'+t('compareT')+'</h4>'+compareTable()+
-      srcbar()+'</div>';
-    return pagehead(t('p2t'),t('p2l'))+card('🏭',t('nav2'),c.name,t('p2note'),body,nplPicker());
-  }
-  function capFill(vol){ var u=vol/ENG.fullCap*100; return '<div class="fill" style="width:'+Math.min(100,u)+'%;background:'+(u>=80?'var(--green)':u>=45?'var(--amber)':'var(--red)')+'"></div><div class="mk" style="left:'+(30000/ENG.fullCap*100)+'%"><span>1/3 · '+rpShort(cogmAt(30000,npl(st.sel).rm))+'</span></div><div class="mk" style="left:100%"><span>'+(lang==='id'?'penuh':'full')+' · '+rpShort(cogmAt(95256,npl(st.sel).rm))+'</span></div>'; }
 
-  /* ===================== PAGE 3 — Reverse EBT ===================== */
-  function reverse(base, rc, target){
-    var O=baseFixedBelowGp1(base), denom=1-rc-target;
-    if(denom<=0) return {feasible:false, O:O};
-    var ns=O/denom;
-    return {feasible:true, O:O, ns:ns, cogm:rc*ns, ebt:target*ns, gp1:ns-rc*ns};
-  }
+  /* ========== PAGE 3 — Reverse EBT ========== */
+  function reverse(b,rc,target){ var O=baseFixed(b), d=1-rc-target; if(d<=0) return {feasible:false}; var ns=O/d; return {feasible:true,O:O,ns:ns,cogm:rc*ns,ebt:target*ns,gp1:ns-rc*ns}; }
   function page3(){
-    var c=npl(st.sel), b=BASE[st.base], rc=c.cogmFull/ENG.dbp;
-    var asisEbt=baseEbt(b), r=reverse(b,rc,st.target);
-    var baseSel='<select id="baseSel">'+Object.keys(BASE).map(function(k){ var x=BASE[k]; return '<option value="'+k+'"'+(k===st.base?' selected':'')+'>'+x.flag+' '+L(x.name)+(x.real?'':' *')+'</option>'; }).join('')+'</select>';
-    var tgtSeg='<div class="seg" id="tgtSeg"><button data-tv="0" class="'+(st.target===0?'on':'')+'">'+t('breakEven')+'</button>'+
-      [0.05,0.085,0.10].map(function(x){ return '<button data-tv="'+x+'" class="'+(st.target===x?'on':'')+'">'+pct(x*100,x===0.085?1:0)+'</button>'; }).join('')+'</div>';
+    var c=npl(st.sel), b=BASE[st.base], rc=cogmFull(c)/ENG().dbp;
+    var target = st.target==='custom' ? st.customT/100 : st.target;
+    var asis=baseEbt(b), r=reverse(b,rc,target);
+    var baseSel='<select id="baseSel">'+Object.keys(BASE).map(function(k){var x=BASE[k];return '<option value="'+k+'"'+(k===st.base?' selected':'')+'>'+x.flag+' '+x.name+(x.real?'':' *')+'</option>';}).join('')+'</select>';
+    var seg='<div class="seg" id="tgtSeg"><button data-tv="0" class="'+(st.target===0?'on':'')+'">'+t('breakEven')+'</button>'+
+      [0.05,0.085,0.10].map(function(x){return '<button data-tv="'+x+'" class="'+(st.target===x?'on':'')+'">'+pct(x*100,x===0.085?1:0)+'</button>';}).join('')+
+      '<button data-tv="custom" class="'+(st.target==='custom'?'on':'')+'">'+t('custom')+'</button></div>'+
+      (st.target==='custom'?'<input type="number" id="customIn" value="'+st.customT+'" step="0.5" style="margin-left:8px;width:80px"> %':'');
     var rows='';
-    function r2(lab,asisV,asisR,tobeV,tobeR,cls){
-      return '<tr class="'+(cls||'')+'"><td class="lab">'+lab+'</td>'+
-        '<td class="num">'+rpShort(asisV)+'</td><td class="num txt-muted">'+(asisR==null?'—':pct(asisR))+'</td>'+
-        '<td class="num col-tobe">'+(tobeV==null?'—':rpShort(tobeV))+'</td><td class="num col-tobe txt-muted">'+(tobeR==null?'—':pct(tobeR))+'</td></tr>';
-    }
+    function rr(lab,av,ar,tv,tr,cls){ return '<tr class="'+(cls||'')+'"><td class="lab">'+lab+'</td><td class="num">'+rpShort(av)+'</td><td class="num txt-muted">'+(ar==null?'—':pct(ar))+'</td><td class="num col-tobe">'+(tv==null?'—':rpShort(tv))+'</td><td class="num col-tobe txt-muted">'+(tr==null?'—':pct(tr))+'</td></tr>'; }
+    var dec=null, gap=null;
     if(r.feasible){
-      rows=r2(t('iNsar'),b.nsar,100,r.ns,100,'move')+
-        r2(t('iCogm'),b.cogs,b.cogs/b.nsar*100,r.cogm,rc*100,'move')+
-        r2(t('iGp1'),b.nsar-b.cogs,(b.nsar-b.cogs)/b.nsar*100,r.gp1,r.gp1/r.ns*100,'gp')+
-        r2(t('iSm1'),b.sm1,b.sm1/b.nsar*100,b.sm1,b.sm1/r.ns*100)+
-        r2(t('iSm2'),b.sm2,b.sm2/b.nsar*100,b.sm2,b.sm2/r.ns*100)+
-        r2(t('iSm3'),b.sm3,b.sm3/b.nsar*100,b.sm3,b.sm3/r.ns*100)+
-        r2(t('iSm4'),b.sm4,b.sm4/b.nsar*100,b.sm4,b.sm4/r.ns*100)+
-        r2(t('iEbt'),asisEbt,asisEbt/b.nsar*100,r.ebt,st.target*100,'ebt');
-    }
-    var gap = r.feasible ? (r.ns/b.nsar-1)*100 : null;
-    var feasCls = !r.feasible?'bad':gap<=25?'good':gap<=80?'warn':'bad';
-    var feasTxt = !r.feasible?t('feasNo'):gap<=25?t('feasEasy'):gap<=80?t('feasHard'):t('feasHard');
-    var tiles = r.feasible ? '<div class="tiles" style="margin-top:14px">'+
-        tile(t('salesGap'),pctS(gap),feasCls,rpShort(r.ns-b.nsar))+
-        tile(t('ebtTobe'),rpShort(r.ebt),'hi',t('targetEbt')+' '+pct(st.target*100,st.target===0.085?1:0))+
-        tile(t('cogmRatio'),pct(rc*100),rc<=0.75?'good':rc>=0.82?'bad':'warn',c.name)+
-        tile(t('feasHdr'),feasCls==='good'?'✓':feasCls==='warn'?'~':'✕',feasCls,feasTxt)+'</div>' : '';
-    var reading = r.feasible ? '<p class="note">'+t('p3read',{name:c.name, ns:rpShort(r.ns), base:rpShort(b.nsar), t:pct(st.target*100,st.target===0.085?1:0), g:pctS(gap), rc:pct(rc*100)})+'</p>' : '<p class="note txt-red">'+t('feasNo')+'</p>';
-    var body='<div class="card-body">'+
-      '<div class="selbar"><div class="fld"><label>'+t('baseline')+'</label>'+baseSel+'</div>'+
-        '<div class="fld"><label>'+t('injectNpl')+'</label>'+nplPicker()+'</div>'+
-        '<div class="fld"><label>'+t('targetEbt')+'</label>'+tgtSeg+'</div></div>'+
-      tiles+
-      '<div class="table-wrap" style="margin-top:16px"><table class="aistobe"><thead><tr><th>'+t('item')+'</th><th>'+t('asis')+'</th><th>'+t('ratio')+'</th><th class="col-tobe">'+t('tobe')+'</th><th class="col-tobe">'+t('ratio')+'</th></tr></thead><tbody>'+rows+'</tbody></table></div>'+
-      reading+
-      '<p class="note">'+t('moveNote')+'</p>'+
-      srcbar(true)+'</div>';
-    return pagehead(t('p3t'),t('p3l'))+card('🧮',t('nav3'),L(b.name)+' · '+c.name,t('p3note'),body);
+      gap=(r.ns/b.nsar-1)*100;
+      rows=rr(t('iN'),b.nsar,100,r.ns,100,'move')+rr(t('iC'),b.cogs,b.cogs/b.nsar*100,r.cogm,rc*100,'move')+
+        rr(t('iG'),b.nsar-b.cogs,(b.nsar-b.cogs)/b.nsar*100,r.gp1,r.gp1/r.ns*100,'gp')+
+        rr(t('iS1'),b.sm1,b.sm1/b.nsar*100,b.sm1,b.sm1/r.ns*100)+rr(t('iS2'),b.sm2,b.sm2/b.nsar*100,b.sm2,b.sm2/r.ns*100)+
+        rr(t('iS3'),b.sm3,b.sm3/b.nsar*100,b.sm3,b.sm3/r.ns*100)+rr(t('iS4'),b.sm4,b.sm4/b.nsar*100,b.sm4,b.sm4/r.ns*100)+
+        rr(t('iE'),asis,asis/b.nsar*100,r.ebt,target*100,'ebt');
+      // decision: reachable sales climb?
+      dec = gap<=25?'go':gap<=80?'pilot':'rework';
+    } else dec='hold';
+    var decMap={go:'b-go',pilot:'b-pilot',rework:'b-rework',hold:'b-hold'};
+    var tiles='<div class="tiles" style="margin-top:14px">'+
+      (r.feasible?tile(t('salesGap'),pctS(gap),gap<=25?'good':gap<=80?'warn':'bad',rpShort(r.ns-b.nsar)):tile(t('salesGap'),'∞','bad',''))+
+      (r.feasible?tile(t('ebtTobe'),rpShort(r.ebt),'hi',pct(target*100,1)):'')+
+      tile(t('cogmR'),pct(rc*100),rc<=0.75?'good':rc>=0.82?'bad':'warn',c.name)+
+      tile(t('decision'),'<span class="badge '+decMap[dec]+'">'+t('dec'+dec.charAt(0).toUpperCase()+dec.slice(1))+'</span>',dec==='go'?'good':dec==='hold'?'bad':'warn','')+'</div>';
+    var read = r.feasible?'<p class="note">'+t('p3read',{name:c.name,ns:rpShort(r.ns),g:pctS(gap),t:pct(target*100,1)})+'</p>':'';
+    var body='<div class="card-body"><div class="selbar">'+
+        '<div class="fld"><label>'+t('baseline')+'</label>'+baseSel+'</div><div class="fld"><label>'+t('nplCogm')+'</label>'+nplPicker()+'</div>'+
+        '<div class="fld"><label>'+t('target')+'</label>'+seg+'</div></div>'+tiles+
+      '<div class="table-wrap" style="margin-top:14px"><table class="aistobe"><thead><tr><th>'+t('item')+'</th><th>'+t('asis')+'</th><th>'+t('ratio')+'</th><th class="col-tobe">'+t('tobe')+'</th><th class="col-tobe">'+t('ratio')+'</th></tr></thead><tbody>'+rows+'</tbody></table></div>'+read+srcbar('rev')+'</div>';
+    return pagehead(t('p3t'),t('p3l'))+card('🧮',t('n3'),b.name+' · '+c.name,null,body);
   }
 
-  /* ===================== PAGE 4 — Market Share ===================== */
+  /* ========== PAGE 4 — Market Share + globe ========== */
   function page4(){
     var N=NIELSEN, fl=flavor('seaweed');
-    var tiles='<div class="tiles">'+
-      tile(t('mktSize'),rpShort(N.marketT*1e6),'hi',N.period)+
-      tile(t('siipShare'),pct(5.2),'warn','Rp493'+t('bil'))+
-      tile(t('siipTrend'),pctS(-2.5),'bad',lang==='id'?'share diambil GURIBEE':'share lost to GURIBEE')+
-      tile(t('fastest'),L(fl.name),'good',pctS(fl.chg))+'</div>';
+    var tiles='<div class="tiles">'+tile(t('mktSize'),rpShort(N.marketT*1e6),'hi',N.period)+tile(t('siipSh'),pct(5.2),'warn','Rp493'+t('bil'))+tile(t('siipTr'),pctS(-2.5),'bad','')+tile(t('fastest'),L(fl.n),'good',pctS(fl.chg))+'</div>';
+    // per-combination verdict (each NPL)
+    var combos=DATA.npls.map(function(c){ var f=flavor(c.nielsen); var v=!f?'avoid':(f.chg>=5?'ride':'watch');
+      var vc=v==='ride'?'good':v==='watch'?'warn':'bad';
+      return '<div class="cmb" data-k="'+c.k+'"><span class="ce">'+c.emoji+'</span><div><div class="cn">'+c.name+'</div><div class="cs">'+(f?L(f.n)+' · '+pctS(f.chg):'white space')+'</div></div>'+
+        '<div class="cv"><span class="badge '+(v==='ride'?'b-go':v==='watch'?'b-rework':'b-hold')+'">'+t('v'+v.charAt(0).toUpperCase()+v.slice(1))+'</span><div class="cs" style="margin-top:3px">'+t('v'+v.charAt(0).toUpperCase()+v.slice(1)+'D')+'</div></div></div>'; }).join('');
+    var left='<div style="min-width:0"><div id="globeBox"><div class="globe-cap">Indonesia · Malaysia · China</div></div><div style="margin-top:12px">'+combos+'</div></div>';
     // flavor table
-    var fmax=N.flavors[0].val;
-    var frows=N.flavors.map(function(f){
-      var mapTo=NPLS.filter(function(x){return x.nielsen===f.k;})[0];
-      var chgCls=f.chg>=10?'delta-up':f.chg<0?'delta-dn':'';
-      return '<tr'+(mapTo?' class="hl"':'')+'><td>'+L(f.name)+'</td><td class="num">'+grp(f.val)+'</td>'+
-        '<td class="num '+chgCls+'">'+pctS(f.chg)+'</td><td class="num txt-muted">'+pct(f.cont)+'</td>'+
-        '<td>'+(mapTo?mapTo.emoji+' '+mapTo.name:'—')+'</td></tr>'; }).join('');
-    var flavorCap=(lang==='id'?'Rasa snack-extruded · MAT TY (Rp Juta)':'Snack-extruded flavours · MAT TY (Rp Mill)');
-    var flavorTable='<div class="table-wrap"><table class="dt"><caption>'+flavorCap+'</caption><thead><tr><th>'+t('flavorHdr')+'</th><th class="num">'+t('valHdr')+'</th><th class="num">'+t('chgHdr')+'</th><th class="num">'+t('contHdr')+'</th><th>'+t('mapHdr')+'</th></tr></thead><tbody>'+frows+'</tbody></table></div>';
-    // brand table
-    var brows=N.brands.map(function(bd){ return '<tr'+(bd.me?' class="hl"':'')+'><td>'+(bd.me?'★ ':'')+bd.n+'</td><td class="num">'+grp(bd.val)+'</td><td class="num">'+pct(bd.sh)+'</td><td class="num '+(bd.chg<0?'delta-dn':'delta-up')+'">'+pctS(bd.chg)+'</td></tr>'; }).join('');
-    var brandTable='<div class="table-wrap"><table class="dt"><caption>'+(lang==='id'?'Brand · MAT TY (Rp Juta)':'Brands · MAT TY (Rp Mill)')+'</caption><thead><tr><th>'+t('brandHdr')+'</th><th class="num">'+t('valHdr')+'</th><th class="num">'+t('shareHdr')+'</th><th class="num">'+t('trendHdr')+'</th></tr></thead><tbody>'+brows+'</tbody></table></div>';
-    // channel headroom bars
+    var frows=N.flavors.map(function(f){ var m=DATA.npls.filter(function(x){return x.nielsen===f.k;})[0]; var cc=f.chg>=10?'delta-up':f.chg<0?'delta-dn':'';
+      return '<tr'+(m?' class="hl"':'')+'><td>'+L(f.n)+'</td><td class="num">'+grp(f.val)+'</td><td class="num '+cc+'">'+pctS(f.chg)+'</td><td class="num txt-muted">'+pct(f.cont)+'</td><td>'+(m?m.emoji+' '+m.name:'—')+'</td></tr>'; }).join('');
+    var ftab='<div class="table-wrap"><table class="dt"><thead><tr><th>'+t('flavorH')+'</th><th class="num">'+t('valH')+'</th><th class="num">'+t('chgH')+'</th><th class="num">'+t('contH')+'</th><th>'+t('mapH')+'</th></tr></thead><tbody>'+frows+'</tbody></table></div>';
+    var brows=N.brands.map(function(bd){return '<tr'+(bd.me?' class="hl"':'')+'><td>'+(bd.me?'★ ':'')+bd.n+'</td><td class="num">'+grp(bd.val)+'</td><td class="num">'+pct(bd.sh)+'</td><td class="num '+(bd.chg<0?'delta-dn':'delta-up')+'">'+pctS(bd.chg)+'</td></tr>';}).join('');
+    var btab='<div class="table-wrap"><table class="dt"><thead><tr><th>'+t('brandH')+'</th><th class="num">'+t('valH')+'</th><th class="num">'+t('shareH')+'</th><th class="num">'+t('chgH')+'</th></tr></thead><tbody>'+brows+'</tbody></table></div>';
     var pmax=Math.max.apply(null,N.channels.map(function(x){return x.pot;}));
-    var chBars=N.channels.map(function(ch){
-      var w=ch.pot/pmax*100, gNabCls=ch.gNab>=0?'txt-green':'txt-red';
-      return '<div class="barrow"><span class="bl">'+L(ch.name)+' · '+pct(ch.sh)+'</span>'+
-        '<div class="bt"><i style="width:'+w+'%;background:var(--accent)"></i></div>'+
-        '<span class="bv">'+ch.pot.toLocaleString()+t('bil')+'</span></div>'+
-        '<div style="font-size:10.5px;color:var(--muted);margin:-2px 0 2px 160px">'+t('chGrow')+': <span class="'+gNabCls+'">'+pctS(ch.gNab)+'</span> / '+pctS(ch.gCat)+'</div>'; }).join('');
-    // NPL match cards
-    var matches=[['nori','good',t('matchNori'),t('demandHot')],['karaage','bad',t('matchKaraage'),t('demandSoft')],['kari','warn',t('matchKari'),t('demandWhite')]];
-    var matchHtml=matches.map(function(m){ var c=npl(m[0]);
-      return '<div class="npl" style="cursor:default"><div class="nh"><span class="emoji">'+c.emoji+'</span><div><div class="nm">'+c.name+'</div><div class="chips" style="margin-top:3px"><span class="chip '+m[1]+'">'+m[3]+'</span></div></div></div><div class="why">'+m[2]+'</div></div>'; }).join('');
-
-    var body2='<div class="card-body"><div class="grid2">'+flavorTable+brandTable+'</div>'+
-      '<h4 style="font-size:12.5px;margin:18px 0 10px">'+t('chFit')+'</h4><div class="bars">'+chBars+'</div>'+
-      '<div class="srcbar"><span>📊</span><span>'+t('nielsenSrc')+'</span></div></div>';
-    return pagehead(t('p4t'),t('p4l'))+
-      card('📈',t('nplMatchT'),N.period,null,'<div class="card-body">'+tiles+'<div class="npl-grid" style="margin-top:16px">'+matchHtml+'</div><p class="note">'+t('siipPos')+'</p></div>')+
-      card('🗂️',(lang==='id'?'Audit kategori & brand':'Category & brand audit'),null,null,body2);
+    var chBars=N.channels.map(function(ch){ var w=ch.pot/pmax*100; return '<div class="barrow"><span class="bl">'+L(ch.n)+' · '+pct(ch.sh)+'</span><div class="bt"><i style="width:'+w+'%;background:var(--accent)"></i></div><span class="bv">'+ch.pot.toLocaleString()+t('bil')+'</span></div>'+
+      '<div style="font-size:10px;color:var(--muted);margin:-2px 0 2px 160px">'+t('chGrow')+': <span class="'+(ch.gNab>=0?'txt-green':'txt-red')+'">'+pctS(ch.gNab)+'</span> / '+pctS(ch.gCat)+'</div>'; }).join('');
+    var right='<div style="min-width:0">'+tiles+
+      '<h4 style="font-size:12.5px;margin:16px 0 8px">'+t('flavorH')+'</h4>'+ftab+
+      '<h4 style="font-size:12.5px;margin:16px 0 8px">'+t('brandH')+'</h4>'+btab+
+      '<h4 style="font-size:12.5px;margin:16px 0 8px">'+t('chFit')+'</h4><div class="bars">'+chBars+'</div>'+
+      '<p class="note">'+t('siipPos')+'</p></div>';
+    var body='<div class="card-body"><div class="mkt-wrap">'+left+right+'</div><div class="srcbar"><span>📊</span><span>'+t('nielsenSrc')+'</span></div></div>';
+    return pagehead(t('p4t'),t('p4l'))+card('🌐',t('n4'),N.period,null,body);
   }
 
-  /* ===================== PAGE 5 — Launch Ranking ===================== */
-  function rankScore(c, channel){
-    // COGM margin (40): GP% full-cap normalised 14..26 -> 0..40
-    var gpS=Math.max(0,Math.min(40,(c.gpFull-13)/13*40));
-    // Nielsen demand (35): growth + size of mapped flavour
-    var fl=flavor(c.nielsen), dem;
-    if(!fl) dem=14; // white space
-    else dem=Math.max(0,Math.min(35, 17 + fl.chg*0.7 + Math.min(10,fl.val/120000)));
-    // channel fit (25): GT where SIIP strong; MT a bit lower
-    var ch=channel==='GT'?25:18;
-    return Math.round(gpS+dem+ch);
-  }
-  function callOf(score){ return score>=72?'launch':score>=58?'pilot':score>=44?'rework':'hold'; }
+  /* ========== PAGE 5 — Launch Ranking ========== */
   function page5(){
-    var rows=RANK_SEED.map(function(s){ var c=npl(s.npl), fl=flavor(c.nielsen);
-      var score=rankScore(c,s.channel), call=callOf(score);
-      if(!fl && call==='launch') call='pilot'; // white space demand unproven -> validate before full launch
-      return {s:s,c:c,fl:fl,score:score,call:call};
-    }).sort(function(a,b){ return b.score-a.score; });
-    var callMap={launch:'b-go',pilot:'b-pilot',rework:'b-rework',hold:'b-hold'};
-    var trs=rows.map(function(r,i){ var c=r.c, fl=r.fl;
-      var dem = fl? (fl.chg>=10?'<span class="delta-up">▲ '+pctS(fl.chg)+'</span>':fl.chg<0?'<span class="delta-dn">▼ '+pctS(fl.chg)+'</span>':pctS(fl.chg)) : '<span class="txt-muted">white space</span>';
-      return '<tr class="'+(c.k===st.sel?'sel':'')+'" data-k="'+c.k+'"><td class="num">'+(i+1)+'</td>'+
-        '<td>'+c.emoji+' '+c.name+'</td>'+
-        '<td>'+r.s.country+' · '+r.s.channel+' · '+r.s.sub+'</td>'+
-        '<td class="num '+(c.gpFull>=22?'txt-green':c.gpFull<16?'txt-red':'txt-amber')+'">'+pct(c.gpFull)+'</td>'+
-        '<td>'+dem+'</td>'+
-        '<td class="num"><b>'+r.score+'</b></td>'+
-        '<td class="num">'+(r.s.field?r.s.field:'<span class="txt-muted">—</span>')+'</td>'+
-        '<td><span class="badge '+callMap[r.call]+'">'+t('call'+r.call.charAt(0).toUpperCase()+r.call.slice(1))+'</span></td></tr>'; }).join('');
-    var rankTable='<div class="table-wrap"><table class="dt" id="rankT"><thead><tr><th class="num">'+t('rkHdr')+'</th><th>'+t('skuHdr')+'</th><th>'+t('areaHdr')+'</th><th class="num">'+t('gpHdr')+'</th><th>'+t('demandHdr')+'</th><th class="num">'+t('scoreHdr')+'</th><th class="num">'+t('fieldHdr')+'</th><th>'+t('callHdr')+'</th></tr></thead><tbody>'+trs+'</tbody></table></div>';
-    // bundle recommendation banner
-    var bundle='<div class="tile hi" style="display:flex;gap:14px;align-items:center;padding:14px 16px"><div style="font-size:30px">🏆</div><div><div class="tl">'+t('bundleRec')+'</div><div style="font-weight:700;font-size:15px;margin:3px 0;font-family:Fraunces,serif">'+BUNDLE.label+' · '+BUNDLE.country+' '+BUNDLE.channel+'</div><div style="font-size:12px;color:var(--ink-2)">'+t('bundleWhy',{s:BUNDLE.field})+'</div></div></div>';
-    // slice n dice table
-    var sliceRows=AREAS.map(function(a){ return '<tr><td>'+a.flag+' '+L(a.c)+'</td><td style="white-space:normal">'+L(a.gt)+'</td><td style="white-space:normal">'+L(a.mt)+'</td><td style="white-space:normal">'+L(a.uniq)+'</td></tr>'; }).join('');
-    var sliceTable='<div class="table-wrap"><table class="dt" style="min-width:640px"><thead><tr><th>'+t('cCountry')+'</th><th>'+t('cGt')+'</th><th>'+t('cMt')+'</th><th>'+t('cUniq')+'</th></tr></thead><tbody>'+sliceRows+'</tbody></table></div>';
-    var map=channelMap();
-    var body1='<div class="card-body">'+bundle+'<div style="margin-top:14px">'+rankTable+'</div><p class="note">'+t('scoreForm')+'</p>'+srcbar()+'</div>';
-    var body2='<div class="card-body"><div class="grid2"><div><h4 style="font-size:12.5px;margin-bottom:10px">'+t('mapT')+'</h4>'+map+'</div><div>'+sliceTable+'</div></div></div>';
-    return pagehead(t('p5t'),t('p5l'))+
-      card('🏁',t('nav5'),null,t('p5note'),body1)+
-      card('🗺️',t('sliceT'),null,null,body2);
+    var evals=COMBOS.map(evalCombo).map(function(e,i){ e.idx=i; return e; }).sort(function(a,b){return b.opp-a.opp;});
+    var decMap={go:'b-go',pilot:'b-pilot',rework:'b-rework',hold:'b-hold'};
+    var trs=evals.map(function(e,i){ var c=e.c, fl=e.fl;
+      var dem=fl?(fl.chg>=10?'<span class="delta-up">▲'+pctS(fl.chg)+'</span>':fl.chg<0?'<span class="delta-dn">▼'+pctS(fl.chg)+'</span>':pctS(fl.chg)):'<span class="txt-muted">white space</span>';
+      return '<tr class="click'+(e.idx===st.selCombo?' sel':'')+'" data-i="'+e.idx+'"><td class="num">'+(i+1)+'</td><td>'+c.emoji+' '+c.name+'</td>'+
+        '<td>'+e.cm.country+' · '+e.cm.channel+' · '+e.cm.sub+'</td><td class="num '+(e.gp>=22?'txt-green':e.gp<16?'txt-red':'txt-amber')+'">'+pct(e.gp)+'</td>'+
+        '<td>'+dem+'</td><td class="num"><b>'+e.opp+'</b></td><td><span class="badge '+decMap[e.decision]+'">'+t('dec'+e.decision.charAt(0).toUpperCase()+e.decision.slice(1))+'</span></td></tr>'; }).join('');
+    var tableCard='<div class="table-wrap"><table class="dt" id="rankT"><thead><tr><th class="num">'+t('rkH')+'</th><th>'+t('skuH')+'</th><th>'+t('areaH')+'</th><th class="num">'+t('gpH')+'</th><th>'+t('demandH')+'</th><th class="num">'+t('oppH')+'</th><th>'+t('callH')+'</th></tr></thead><tbody>'+trs+'</tbody></table></div>';
+    var bundle='<div class="tile hi" style="display:flex;gap:13px;align-items:center;margin-bottom:12px"><div style="font-size:26px">🏆</div><div><div class="tl">'+t('bundleRec')+'</div><div style="font-weight:700;font-size:15px;font-family:Fraunces,serif;margin:2px 0">'+BUNDLE.label+' · '+BUNDLE.country+' '+BUNDLE.channel+'</div><div style="font-size:11.5px;color:var(--ink-2)">'+t('bundleWhy',{s:BUNDLE.field})+'</div></div></div>';
+    var detail=comboDetail(evalCombo(COMBOS[st.selCombo]));
+    var body1='<div class="card-body">'+bundle+tableCard+detail+srcbar('rank')+'</div>';
+    // slice n dice
+    var slice=AREAS.map(function(a){return '<tr><td>'+a.flag+' '+a.c+'</td><td style="white-space:normal">'+L(a.gt)+'</td><td style="white-space:normal">'+L(a.mt)+'</td><td style="white-space:normal">'+L(a.u)+'</td></tr>';}).join('');
+    var sliceTab='<div class="card-body"><div class="table-wrap"><table class="dt" style="min-width:640px"><thead><tr><th>'+t('cC')+'</th><th>'+t('cG')+'</th><th>'+t('cM')+'</th><th>'+t('cU')+'</th></tr></thead><tbody>'+slice+'</tbody></table></div></div>';
+    return pagehead(t('p5t'),t('p5l'))+card('🏁',t('n5'),null,null,body1)+card('🗂️',t('sliceT'),null,null,sliceTab);
   }
-  function channelMap(){
-    // simple proportional treemap of SIIP channel value (GT Large/Small, MT sub)
-    var segs=[{n:'GT Large',v:324803,c:'var(--accent)'},{n:'GT Small',v:82445,c:'var(--navy-2)'},
-      {n:'MT Minimarket',v:61100,c:'var(--gold)'},{n:'MT Independent',v:59664,c:'var(--green)'},
-      {n:'MT Key Acc',v:26365,c:'var(--amber)'},{n:'MT Hyper',v:24929,c:'var(--red)'}];
-    var tot=segs.reduce(function(a,b){return a+b.v;},0), W=440,H=150,x=0;
-    var rects=segs.map(function(s){ var w=s.v/tot*W; var r='<g><rect x="'+x+'" y="0" width="'+(w-2)+'" height="'+H+'" rx="6" fill="'+s.c+'" opacity=".88"/>'+
-      (w>52?'<text x="'+(x+8)+'" y="24" font-size="11" fill="#fff" font-weight="700">'+s.n+'</text><text x="'+(x+8)+'" y="42" font-size="10" fill="#fff" font-family="JetBrains Mono" opacity=".9">Rp'+Math.round(s.v/1000)+'B</text>':'')+'</g>'; x+=w; return r; }).join('');
-    return '<div class="table-wrap"><svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="SIIP channel map">'+rects+'</svg></div>'+
-      '<p class="note">'+(lang==='id'?'GT = 83% nilai SIIP (kekuatan). Minimarket kecil tapi kategori tumbuh +9,5% — headroom launch.':'GT = 83% of SIIP value (the strength). Minimarket is small but the category grows +9.5% — launch headroom.')+'</p>';
+  function comboDetail(e){
+    var decMap={go:'b-go',pilot:'b-pilot',rework:'b-rework',hold:'b-hold'};
+    var risk=e.risk==='Low'?'txt-green':e.risk==='Medium'?'txt-amber':'txt-red';
+    var conf=e.conf==='High'?'txt-green':e.conf==='Medium'?'txt-amber':'txt-red';
+    function sb(lab,val,max){ return '<div class="sb"><span class="sbl">'+lab+'</span><div class="sbt"><i style="width:'+(val/max*100)+'%"></i></div><span class="sbv">'+Math.round(val)+'/'+max+'</span></div>'; }
+    var gates=[['gMkt',e.gates.gMkt],['gEbt',e.gates.gEbt],['gEvid',e.gates.gEvid],['gCap',e.gates.gCap]];
+    var rationale=gates.map(function(g){ return '<div class="ri"><span class="'+(g[1]?'ok':'no')+'">'+(g[1]?'✓':'✕')+'</span>'+t(g[0])+'</div>'; }).join('');
+    return '<div class="detail"><div class="detail-head"><span class="de">'+e.c.emoji+'</span><div><h4>'+e.c.name+' — '+e.cm.country+' '+e.cm.channel+' ('+e.cm.sub+')</h4><div class="dsub">'+(e.fl?L(e.fl.n)+' '+pctS(e.fl.chg):'white space')+'</div></div><div class="dcall"><span class="badge '+decMap[e.decision]+'" style="font-size:12px;padding:4px 12px">'+t('dec'+e.decision.charAt(0).toUpperCase()+e.decision.slice(1))+'</span></div></div>'+
+      '<div class="detail-body"><div class="kpi4">'+
+        '<div class="kpi"><div class="kv">'+e.opp+'<span style="font-size:11px;color:var(--muted)">/100</span></div><div class="kl">'+t('oppScore')+'</div></div>'+
+        '<div class="kpi"><div class="kv">'+e.prob+'%</div><div class="kl">'+t('probSucc')+'</div></div>'+
+        '<div class="kpi"><div class="kv '+risk+'">'+t('risk'+e.risk)+'</div><div class="kl">'+t('riskL')+'</div></div>'+
+        '<div class="kpi"><div class="kv '+conf+'">'+t('conf'+e.conf)+'</div><div class="kl">'+t('confL')+'</div></div>'+
+      '</div>'+
+      '<div class="grid2" style="margin-top:14px"><div><h4 style="font-size:12px;margin-bottom:8px">'+t('scoreBreak')+'</h4><div class="scorebars">'+
+        sb(t('sbDemand'),e.demand,40)+sb(t('sbMargin'),e.margin,30)+sb(t('sbChannel'),e.channel,30)+
+        '</div><div class="tile" style="margin-top:10px"><div class="tl">'+t('expEbt')+'</div><div class="tv '+(e.ebt>=0?'txt-green':'txt-red')+'">'+pct(e.ebt)+'</div><div class="tsub">GP '+pct(e.gp)+' − SM/A&P '+pct(smTotal(e.cm.channel))+'</div></div></div>'+
+        '<div><h4 style="font-size:12px;margin-bottom:8px">'+t('rationale')+'</h4><div class="reasons">'+rationale+'</div>'+
+        '<div class="tile warn" style="margin-top:10px"><div class="tl">'+t('caution')+'</div><div style="font-size:12px;color:var(--ink-2);margin-top:4px">'+t('cautionTxt')+'</div></div></div></div>'+
+      '</div></div>';
   }
 
-  /* ===================== shared ===================== */
-  function srcbar(reverse){
-    var txt = reverse ?
-      (lang==='id'
-        ? 'Baseline Indonesia = P&L existing (angka nyata). Malaysia & China (*) = asumsi perencanaan 2025. Rasio COGM to-be dari kalkulator COGM (kapasitas penuh). Hanya Net Sales/COGM/EBT bergerak nominal; SM1–SM4 ditahan nominal.'
-        : 'Indonesia baseline = existing P&L (real figures). Malaysia & China (*) = 2025 planning assumptions. To-be COGM ratio comes from the COGM calculator (full capacity). Only Net Sales/COGM/EBT move in rupiah; SM1–SM4 are held in rupiah.')
-      : (lang==='id'
-        ? 'COGM dari workbook SIIP asli (Depre 1.394 + OMC 2.492 + DL 6.067 + Listrik 732 + Gas 413 + RM per rasa + PM 35.172, DBP 94.735). Depre & OMC tetap/bulan → membengkak saat utilisasi turun. Market share dari audit Nielsen snack. Seed ranking dari workbook.'
-        : 'COGM from the real SIIP workbook (Depre 1,394 + OMC 2,492 + DL 6,067 + Listrik 732 + Gas 413 + RM per flavour + PM 35,172, DBP 94,735). Depre & OMC fixed/month → balloon as utilisation falls. Market share from the Nielsen snack audit. Ranking seed from the workbook.');
-    return '<div class="srcbar"><span>📎</span><span>'+txt+'</span></div>';
+  /* ========== PAGE 6 — Data & Upload ========== */
+  function page6(){
+    var e=ENG();
+    var cur='<div class="table-wrap"><table class="dt"><thead><tr><th>SKU</th><th class="num">RM</th><th class="num">PM</th><th class="num">COGM full</th><th class="num">GP full</th></tr></thead><tbody>'+
+      DATA.npls.map(function(c){return '<tr><td>'+c.emoji+' '+c.name+'</td><td class="num">'+rpFull(c.cogm.rm)+'</td><td class="num">'+rpFull(c.cogm.pm)+'</td><td class="num">'+rpFull(cogmFull(c))+'</td><td class="num">'+pct(gpFull(c))+'</td></tr>';}).join('')+
+      '<tr class="grp"><td>'+(lang==='id'?'Kapasitas / DBP':'Capacity / DBP')+'</td><td class="num" colspan="4" style="text-align:right">'+grp(e.fullCap)+' ctn · DBP '+rpFull(e.dbp)+'</td></tr></tbody></table></div>';
+    var body='<div class="card-body">'+
+      '<div class="drop" id="drop"><div style="font-size:26px">⬆</div><div style="font-weight:700;margin-top:6px;color:var(--ink)">'+t('upCogm')+'</div><div class="note" style="margin-top:4px">'+t('upHint')+'</div><input type="file" id="fileIn" accept=".xlsx,.xls" class="hidden"></div>'+
+      '<div id="upMsg" class="note"></div>'+
+      '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px"><button class="btn ghost" id="expBtn">⬇ '+t('expJson')+'</button><button class="btn ghost" id="impBtn">⬆ '+t('impJson')+'</button><input type="file" id="jsonIn" accept=".json" class="hidden"><button class="btn ghost" id="resetBtn">↺ '+t('resetD')+'</button></div>'+
+      '<h4 style="font-size:12.5px;margin:18px 0 8px">'+t('curData')+'</h4>'+cur+'</div>';
+    return pagehead(t('pDatat'),t('pDatal'))+card('⚙️',t('nData'),null,null,body);
   }
 
-  /* ===================== render + wire ===================== */
+  /* ========== shared ========== */
+  function srcbar(which){
+    var m={cogm:lang==='id'?'COGM dari workbook SIIP (Depre & OMC tetap/bulan → membengkak saat utilisasi turun). Edit angka langsung; tersimpan di browser. Upload workbook di tab Data.':'COGM from the SIIP workbook (Depre & OMC fixed/month → balloon as utilisation falls). Edit numbers directly; stored in this browser. Upload a workbook in the Data tab.',
+      rev:lang==='id'?'Indonesia = P&L existing (nyata). Malaysia & China (*) = asumsi 2025. Rasio COGM to-be dari tab COGM (kapasitas penuh).':'Indonesia = existing P&L (real). Malaysia & China (*) = 2025 assumptions. To-be COGM ratio from the COGM tab (full capacity).',
+      rank:lang==='id'?'Opportunity = demand Nielsen (40) + margin COGM (30) + fit channel (30). Keputusan ikut gate: kapasitas pasar, EBT di skala, bukti demand, kapabilitas eksekusi.':'Opportunity = Nielsen demand (40) + COGM margin (30) + channel fit (30). Decision follows gates: market capacity, EBT at scale, demand evidence, execution capability.'};
+    return '<div class="srcbar"><span>📎</span><span>'+m[which]+'</span></div>';
+  }
+
+  /* ========== globe ========== */
+  function globeFallback(el){
+    // static SVG globe with the three launch markers, used when globe.gl can't load (offline)
+    var pts={id:[205,150],my:[180,120],cn:[210,70]};
+    el.innerHTML='<svg viewBox="0 0 380 300" style="width:100%;height:100%">'+
+      '<defs><radialGradient id="gg" cx="38%" cy="32%" r="75%"><stop offset="0%" stop-color="#2b5e9e"/><stop offset="60%" stop-color="#143a66"/><stop offset="100%" stop-color="#0a1f38"/></radialGradient></defs>'+
+      '<circle cx="190" cy="150" r="120" fill="url(#gg)" stroke="#6aa0e0" stroke-opacity=".4"/>'+
+      [40,80,120,160,200].map(function(y){return '<ellipse cx="190" cy="150" rx="120" ry="'+Math.max(8,120-Math.abs(150-(30+y)))+'" fill="none" stroke="#6aa0e0" stroke-opacity=".12"/>';}).join('')+
+      [95,135,190,245,285].map(function(x){return '<line x1="'+x+'" y1="40" x2="'+x+'" y2="260" stroke="#6aa0e0" stroke-opacity=".1"/>';}).join('')+
+      COUNTRIES.map(function(c){var p=pts[c.k]; return '<circle cx="'+p[0]+'" cy="'+p[1]+'" r="5" fill="#E0A94A"/><text x="'+(p[0]+9)+'" y="'+(p[1]+4)+'" font-size="11" fill="#cfe0f5">'+c.flag+' '+c.name+'</text>';}).join('')+
+      '</svg>';
+  }
+  function initGlobe(){
+    var el=document.getElementById('globeBox'); if(!el) return;
+    if(typeof window.Globe==='undefined'){ globeFallback(el); return; }
+    try{
+      var g=window.Globe()(el)
+        .globeImageUrl('https://cdn.jsdelivr.net/npm/three-globe/example/img/earth-blue-marble.jpg')
+        .bumpImageUrl('https://cdn.jsdelivr.net/npm/three-globe/example/img/earth-topology.png')
+        .backgroundColor('rgba(0,0,0,0)').showAtmosphere(true).atmosphereColor('#6aa0e0').atmosphereAltitude(0.2)
+        .width(el.clientWidth).height(el.clientHeight)
+        .htmlElementsData(COUNTRIES).htmlLat(function(d){return d.lat;}).htmlLng(function(d){return d.lng;})
+        .htmlElement(function(d){ var s=document.createElement('div'); s.innerHTML='<div style="font-size:18px;text-align:center;transform:translate(-50%,-100%)"><div>📍</div><div style="font-size:10px;color:#fff;background:rgba(10,22,40,.8);border-radius:6px;padding:1px 6px;white-space:nowrap">'+d.flag+' '+d.name+'</div></div>'; s.style.pointerEvents='none'; return s; });
+      g.pointOfView({lat:6,lng:112,altitude:2.2},0);
+      try{ var ctr=g.controls(); ctr.autoRotate=true; ctr.autoRotateSpeed=0.18; ctr.enableZoom=false; }catch(e){}
+      globe=g;
+    }catch(e){ globeFallback(el); }
+  }
+
+  /* ========== render + wire ========== */
   function render(){
-    document.querySelectorAll('[data-i18n]').forEach(function(el){ el.innerHTML=t(el.getAttribute('data-i18n')); });
+    document.querySelectorAll('[data-i18n]').forEach(function(el){ el.textContent=t(el.getAttribute('data-i18n')); });
     document.documentElement.setAttribute('lang',lang);
     renderNav();
-    document.getElementById('view').innerHTML=[page1,page2,page3,page4,page5][st.page-1]();
+    globe=null;
+    document.getElementById('view').innerHTML=[page1,page2,page3,page4,page5,page6][st.page-1]();
     wire();
+    if(st.page===4) setTimeout(initGlobe,30);
   }
   function wire(){
-    document.querySelectorAll('.npl[data-k]').forEach(function(el){ if(el.classList.contains('empty'))return; el.addEventListener('click',function(){ st.sel=el.getAttribute('data-k'); if(st.page===2)st.vol=ENG.fullCap; render(); }); });
-    var sel=document.getElementById('nplSel'); if(sel) sel.addEventListener('change',function(){ st.sel=sel.value; if(st.page===2)st.vol=ENG.fullCap; render(); });
+    document.querySelectorAll('.npl[data-k]').forEach(function(el){ el.addEventListener('click',function(){ st.sel=el.getAttribute('data-k'); if(st.page===2)st.vol=ENG().fullCap; render(); }); });
+    var add=document.getElementById('addSlot'); if(add) add.addEventListener('click',function(){ st.addOpen=true; render(); });
+    var aAdd=document.getElementById('aAdd'); if(aAdd) aAdd.addEventListener('click',function(){
+      var name=(document.getElementById('aName').value||'New NPL').trim(), rm=+document.getElementById('aRm').value||26000, cat=document.getElementById('aCat').value;
+      var base=npl('nori').cogm; DATA.npls.push({k:'npl'+Date.now(), name:name, sku:'3.5g', emoji:'🆕', nielsen:cat, cogm:{depreF:base.depreF,omcF:base.omcF,dl:base.dl,listrik:base.listrik,gas:base.gas,rm:rm,pm:base.pm}});
+      st.addOpen=false; saveData(); render(); });
+    var aCancel=document.getElementById('aCancel'); if(aCancel) aCancel.addEventListener('click',function(){ st.addOpen=false; render(); });
+    var sel=document.getElementById('nplSel'); if(sel) sel.addEventListener('change',function(){ st.sel=sel.value; if(st.page===2)st.vol=ENG().fullCap; render(); });
+    // COGM
     var vr=document.getElementById('volR'); if(vr) vr.addEventListener('input',function(){ st.vol=+vr.value; var c=npl(st.sel);
       var a=document.getElementById('volLbl'); if(a)a.textContent=grp(st.vol)+' '+t('ctn');
       var m=document.getElementById('capM'); if(m)m.innerHTML=capFill(st.vol);
-      var ti=document.getElementById('cogmTiles'); if(ti)ti.innerHTML=cogmTilesHtml(c,st.vol);
-      var tb=document.getElementById('cogmTable'); if(tb)tb.innerHTML=cogmTableHtml(c,st.vol);
-      var cv=document.getElementById('cogmCurve'); if(cv)cv.innerHTML=cogmCurve(c);
-    });
+      var ti=document.getElementById('cogmTiles'); if(ti)ti.innerHTML=cogmTiles(c);
+      var cv=document.getElementById('cogmCurve'); if(cv)cv.innerHTML=cogmCurve(c); });
+    var fc=document.getElementById('fcIn'); if(fc) fc.addEventListener('change',function(){ var v=+fc.value||ENG().fullCap; ENG().fullCap=v; st.vol=Math.min(st.vol,v); saveData(); render(); });
+    var dbp=document.getElementById('dbpIn'); if(dbp) dbp.addEventListener('change',function(){ ENG().dbp=+dbp.value||ENG().dbp; saveData(); render(); });
+    var setFull=document.getElementById('setFullBtn'); if(setFull) setFull.addEventListener('click',function(){ st.vol=ENG().fullCap; render(); });
+    document.querySelectorAll('#cogmInputs input[data-f]').forEach(function(inp){ inp.addEventListener('change',function(){ var c=npl(st.sel); c.cogm[inp.getAttribute('data-f')]=+inp.value||0; saveData(); render(); }); });
+    // reverse
     var bs=document.getElementById('baseSel'); if(bs) bs.addEventListener('change',function(){ st.base=bs.value; render(); });
-    var tg=document.getElementById('tgtSeg'); if(tg) tg.querySelectorAll('button').forEach(function(b){ b.addEventListener('click',function(){ st.target=parseFloat(b.getAttribute('data-tv')); render(); }); });
-    var rt=document.getElementById('rankT'); if(rt) rt.querySelectorAll('tbody tr').forEach(function(tr){ tr.addEventListener('click',function(){ st.sel=tr.getAttribute('data-k'); render(); }); });
+    var tg=document.getElementById('tgtSeg'); if(tg) tg.querySelectorAll('button').forEach(function(b){ b.addEventListener('click',function(){ var v=b.getAttribute('data-tv'); st.target=v==='custom'?'custom':parseFloat(v); render(); }); });
+    var ci=document.getElementById('customIn'); if(ci) ci.addEventListener('change',function(){ st.customT=+ci.value||10; render(); });
+    // market combos
+    document.querySelectorAll('.cmb[data-k]').forEach(function(el){ el.addEventListener('click',function(){ st.sel=el.getAttribute('data-k'); st.page=1; render(); }); });
+    // ranking
+    var rt=document.getElementById('rankT'); if(rt) rt.querySelectorAll('tbody tr').forEach(function(tr){ tr.addEventListener('click',function(){ st.selCombo=+tr.getAttribute('data-i'); render(); }); });
+    // data tab
+    wireData();
+  }
+  function wireData(){
+    var drop=document.getElementById('drop'), fileIn=document.getElementById('fileIn');
+    if(drop&&fileIn){ drop.addEventListener('click',function(){ fileIn.click(); });
+      ['dragover','dragenter'].forEach(function(ev){ drop.addEventListener(ev,function(e){ e.preventDefault(); drop.classList.add('hot'); }); });
+      ['dragleave','drop'].forEach(function(ev){ drop.addEventListener(ev,function(e){ e.preventDefault(); drop.classList.remove('hot'); }); });
+      drop.addEventListener('drop',function(e){ if(e.dataTransfer.files[0]) readXlsx(e.dataTransfer.files[0]); });
+      fileIn.addEventListener('change',function(){ if(fileIn.files[0]) readXlsx(fileIn.files[0]); }); }
+    var exp=document.getElementById('expBtn'); if(exp) exp.addEventListener('click',function(){ var a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([JSON.stringify(DATA,null,2)],{type:'application/json'})); a.download='npl-atomic-data.json'; a.click(); });
+    var imp=document.getElementById('impBtn'), jsonIn=document.getElementById('jsonIn');
+    if(imp&&jsonIn){ imp.addEventListener('click',function(){ jsonIn.click(); }); jsonIn.addEventListener('change',function(){ var f=jsonIn.files[0]; if(!f)return; var rd=new FileReader(); rd.onload=function(){ try{ DATA=JSON.parse(rd.result); saveData(); render(); }catch(e){} }; rd.readAsText(f); }); }
+    var rs=document.getElementById('resetBtn'); if(rs) rs.addEventListener('click',function(){ resetData(); st.vol=ENG().fullCap; render(); });
+  }
+  function readXlsx(file){
+    var msg=document.getElementById('upMsg');
+    if(typeof XLSX==='undefined'){ if(msg){msg.textContent=t('upErr'); msg.className='note txt-red';} return; }
+    var rd=new FileReader();
+    rd.onload=function(){ try{
+      var wb=XLSX.read(new Uint8Array(rd.result),{type:'array'}); var ws=wb.Sheets['Sheet1']||wb.Sheets[wb.SheetNames[0]];
+      function cell(a){ var c=ws[a]; return c?+c.v:null; }
+      var fullCap=cell('O4')||ENG().fullCap, dbp=cell('L4')||ENG().dbp;
+      ENG().fullCap=fullCap; ENG().dbp=dbp;
+      var rowMap={13:'nori',14:'karaage',15:'kari'}, n=0;
+      Object.keys(rowMap).forEach(function(r){ var c=npl(rowMap[r]); if(!c) return;
+        var depre=cell('D'+r), omc=cell('E'+r), dl=cell('F'+r), li=cell('G'+r), ga=cell('H'+r), rm=cell('I'+r), pm=cell('J'+r);
+        if(rm!=null){ c.cogm={depreF:depre,omcF:omc,dl:dl,listrik:li,gas:ga,rm:rm,pm:pm}; n++; } });
+      saveData(); st.vol=ENG().fullCap;
+      if(msg){ msg.textContent=t('upOk',{n:n}); msg.className='note txt-green'; }
+      render();
+    }catch(e){ if(msg){msg.textContent=t('upErr'); msg.className='note txt-red';} } };
+    rd.readAsArrayBuffer(file);
   }
 
-  /* ===================== theme + lang ===================== */
-  function applyTheme(mode){ var r=document.documentElement;
-    if(mode==='light')r.setAttribute('data-theme','light'); else if(mode==='dark')r.setAttribute('data-theme','dark'); else r.removeAttribute('data-theme');
-    var lbl=document.getElementById('themeLabel'); if(lbl)lbl.textContent=mode==='light'?(lang==='id'?'Terang':'Light'):mode==='dark'?(lang==='id'?'Gelap':'Dark'):(lang==='id'?'Sistem':'System');
-    try{localStorage.setItem('npla-theme',mode);}catch(e){} }
+  /* ========== theme + lang ========== */
+  function applyTheme(mode){ var r=document.documentElement; if(mode==='light')r.setAttribute('data-theme','light'); else if(mode==='dark')r.setAttribute('data-theme','dark'); else r.removeAttribute('data-theme');
+    var lbl=document.getElementById('themeLabel'); if(lbl)lbl.textContent=mode==='light'?(lang==='id'?'Terang':'Light'):mode==='dark'?(lang==='id'?'Gelap':'Dark'):(lang==='id'?'Sistem':'System'); try{localStorage.setItem('npla-theme',mode);}catch(e){} }
   (function(){ var s='system'; try{s=localStorage.getItem('npla-theme')||'system';}catch(e){} applyTheme(s);
-    document.getElementById('themeBtn').addEventListener('click',function(){ var c='system'; try{c=localStorage.getItem('npla-theme')||'system';}catch(e){} applyTheme(c==='system'?'light':c==='light'?'dark':'system'); }); })();
-  document.getElementById('langBtn').addEventListener('click',function(){ lang=lang==='en'?'id':'en'; saveJSON('npla-lang',lang);
-    document.getElementById('langLabel').textContent=lang==='id'?'ID':'EN'; var s='system'; try{s=localStorage.getItem('npla-theme')||'system';}catch(e){} applyTheme(s); render(); });
+    document.getElementById('themeBtn').addEventListener('click',function(){ var c='system'; try{c=localStorage.getItem('npla-theme')||'system';}catch(e){} applyTheme(c==='system'?'light':c==='light'?'dark':'system'); if(globe)render(); }); })();
+  document.getElementById('langBtn').addEventListener('click',function(){ lang=lang==='en'?'id':'en'; lset('npla-lang',lang); document.getElementById('langLabel').textContent=lang==='id'?'ID':'EN'; render(); });
   document.getElementById('langLabel').textContent=lang==='id'?'ID':'EN';
 
   render();
