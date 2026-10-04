@@ -1,0 +1,669 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>NPL Atomic P&amp;L Cockpit</title>
+<meta name="description" content="Five-stage NPL decision tool driven by the Atomic P&L logic: Stage-1 shortlist, capacity-aware COGM, reverse EBT break-even, Nielsen market share, and an EBT-centric launch ranking. Illustrative planning math, not verified financials.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+  /* layout: fixed top identity + subpage rail, then one working column of cards per subpage */
+  :root{
+    --navy:#0B1F33; --blue:#2457D6; --blue-soft:#EEF4FF; --blue-line:#C9DBFB;
+    --green:#17865B; --green-soft:#E9F7F1; --green-line:#C7E9DA;
+    --amber:#B7791F; --amber-soft:#FBF2E3; --amber-line:#F0DFB8;
+    --red:#C23B4A; --red-soft:#FBEAEC; --red-line:#F2C7CC;
+    --violet:#6D4AA6; --violet-soft:#F1ECFA; --violet-line:#DDD0F2;
+    --bg:#F6F8FB; --surface:#FFFFFF; --surface-2:#F1F3F7;
+    --ink:#172033; --ink-2:#3B4658; --muted:#667085; --border:#DDE3EC;
+    --shadow:0 1px 2px rgba(11,31,51,.05), 0 2px 10px rgba(11,31,51,.06);
+    --maxw:1180px; --radius:14px;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+    --navy:#0B1420; --blue:#5B8DEF; --blue-soft:#152238; --blue-line:#2C3F63;
+    --green:#3DB98B; --green-soft:#12271F; --green-line:#245542;
+    --amber:#E0A94A; --amber-soft:#2A2113; --amber-line:#5C4726;
+    --red:#E06B78; --red-soft:#2B1417; --red-line:#5C2A30;
+    --violet:#A98BE0; --violet-soft:#1E1830; --violet-line:#413055;
+    --bg:#0B0F17; --surface:#121826; --surface-2:#1A2233;
+    --ink:#EAF0FB; --ink-2:#C3CCDE; --muted:#8B96AC; --border:#28324A;
+    --shadow:0 1px 2px rgba(0,0,0,.3), 0 2px 12px rgba(0,0,0,.35);
+    color-scheme: dark;
+  }}
+  :root[data-theme="dark"]{
+    --navy:#0B1420; --blue:#5B8DEF; --blue-soft:#152238; --blue-line:#2C3F63;
+    --green:#3DB98B; --green-soft:#12271F; --green-line:#245542;
+    --amber:#E0A94A; --amber-soft:#2A2113; --amber-line:#5C4726;
+    --red:#E06B78; --red-soft:#2B1417; --red-line:#5C2A30;
+    --violet:#A98BE0; --violet-soft:#1E1830; --violet-line:#413055;
+    --bg:#0B0F17; --surface:#121826; --surface-2:#1A2233;
+    --ink:#EAF0FB; --ink-2:#C3CCDE; --muted:#8B96AC; --border:#28324A;
+    --shadow:0 1px 2px rgba(0,0,0,.3), 0 2px 12px rgba(0,0,0,.35);
+    color-scheme: dark;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{background:var(--bg); color:var(--ink); font-family:"Inter",-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; font-size:13.5px; line-height:1.5; -webkit-font-smoothing:antialiased;}
+  h1,h2,h3,h4{font-family:"Manrope",sans-serif; font-weight:800; color:var(--ink); margin:0; letter-spacing:-.01em; text-wrap:balance;}
+  .mono{font-family:"JetBrains Mono",monospace; font-variant-numeric:tabular-nums;}
+  p{margin:0;} ul,ol{margin:0;padding:0;list-style:none;} button{font-family:inherit;cursor:pointer;}
+  :focus-visible{outline:2.5px solid var(--blue); outline-offset:2px; border-radius:4px;}
+  @media (prefers-reduced-motion: reduce){ *{transition-duration:.001ms !important;} }
+  .shell{max-width:var(--maxw); margin:0 auto; padding-left:20px; padding-right:20px;}
+  @media (max-width:640px){ .shell{padding-left:14px; padding-right:14px;} }
+
+  /* top bar */
+  .topbar{background:linear-gradient(100deg,var(--navy),#13365e); color:#fff;}
+  .topbar-inner{max-width:var(--maxw); margin:0 auto; padding:14px 20px; display:flex; align-items:center; gap:18px; flex-wrap:wrap;}
+  .brand-title{font-family:"Manrope",sans-serif; font-weight:800; font-size:21px; color:#fff; letter-spacing:-.02em; display:block; line-height:1.1;}
+  .brand-sub{font-size:12px; color:#b9c7de; display:block; margin-top:2px;}
+  .top-right{margin-left:auto; display:flex; align-items:center; gap:16px; flex-wrap:wrap;}
+  .top-tag{text-align:right; line-height:1.3;}
+  .top-tag .t1{font-size:10px; letter-spacing:.14em; color:#8fa8cc; font-weight:700;}
+  .top-tag .t2{font-size:12.5px; font-weight:800; color:#fff;}
+  .ctrls{display:flex; gap:8px;}
+  .icon-btn{display:inline-flex; align-items:center; gap:6px; background:rgba(255,255,255,.1); color:#fff; border:1px solid rgba(255,255,255,.18); border-radius:999px; padding:6px 12px; font-size:12px; font-weight:600;}
+  .icon-btn:hover{background:rgba(255,255,255,.18);}
+
+  /* subpage rail */
+  .rail{background:var(--surface); border-bottom:1px solid var(--border); position:sticky; top:env(safe-area-inset-top,0px); z-index:20;}
+  .rail-inner{max-width:var(--maxw); margin:0 auto; padding:9px 20px; display:flex; align-items:center; gap:7px; flex-wrap:wrap;}
+  .engine-badge{display:inline-flex; align-items:center; gap:7px; background:var(--red); color:#fff; font-weight:800; font-size:12px; padding:6px 12px; border-radius:999px;}
+  .engine-badge .n{background:#fff; color:var(--red); width:18px;height:18px; border-radius:50%; display:flex;align-items:center;justify-content:center; font-size:11px;}
+  .nav{display:flex; align-items:center; gap:4px; flex-wrap:wrap;}
+  .nav button{display:inline-flex; align-items:center; gap:7px; padding:6px 11px; border-radius:999px; color:var(--muted); font-weight:600; font-size:12.5px; background:transparent; border:1px solid transparent;}
+  .nav button .sn{width:19px;height:19px;border-radius:50%; background:var(--surface-2); color:var(--muted); display:flex;align-items:center;justify-content:center; font-size:11px; font-weight:800; border:1px solid var(--border);}
+  .nav button:hover{color:var(--ink); background:var(--surface-2);}
+  .nav button.active{color:var(--ink); background:var(--blue-soft); border-color:var(--blue-line);}
+  .nav button.active .sn{background:var(--blue); color:#fff; border-color:var(--blue);}
+
+  main{padding:18px 0 46px;}
+  .illus-pill{display:inline-flex; align-items:center; gap:6px; background:var(--amber-soft); color:var(--amber); border:1px solid var(--amber-line); border-radius:999px; padding:4px 12px; font-size:11.5px; font-weight:700; margin-bottom:14px;}
+
+  .card{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow); margin-bottom:16px;}
+  .card-head{display:flex; align-items:flex-start; gap:10px; padding:15px 16px 0;}
+  .card-head .ico{width:30px;height:30px;border-radius:9px; background:var(--blue-soft); color:var(--blue); display:flex;align-items:center;justify-content:center; font-size:16px; flex:none;}
+  .card-head h2{font-size:15.5px;}
+  .card-head .sub{font-size:11.5px; color:var(--muted); margin-top:2px; max-width:70ch;}
+  .card-head .right{margin-left:auto;}
+  .card-body{padding:14px 16px 16px;}
+
+  .stage-note{display:flex; gap:9px; margin:0 16px 2px; padding:10px 12px; background:var(--blue-soft); border:1px solid var(--blue-line); border-radius:10px; font-size:12px; color:var(--ink-2); line-height:1.55;}
+  .stage-note b{color:var(--ink);}
+  .quote{border-left:3px solid var(--red); padding:2px 0 2px 11px; margin:3px 0; color:var(--ink-2); font-style:italic;}
+
+  /* NPL cards grid */
+  .npl-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(230px,1fr)); gap:12px;}
+  .npl{border:1px solid var(--border); border-radius:12px; background:var(--surface-2); padding:12px; cursor:pointer; display:flex; flex-direction:column; gap:7px; min-width:0;}
+  .npl:hover{border-color:var(--blue-line);}
+  .npl.sel{border-color:var(--blue); outline:2px solid var(--blue-line); background:var(--blue-soft);}
+  .npl .nh{display:flex; align-items:flex-start; gap:8px;}
+  .npl .emoji{font-size:19px; line-height:1;}
+  .npl .nm{font-weight:800; font-size:13.5px; line-height:1.2;}
+  .npl .cat{font-size:10.5px; color:var(--muted); font-weight:600; text-transform:uppercase; letter-spacing:.03em;}
+  .npl .rank-chip{margin-left:auto; font-family:"JetBrains Mono",monospace; font-weight:800; font-size:11px; color:var(--muted);}
+  .chips{display:flex; flex-wrap:wrap; gap:5px;}
+  .chip{font-size:10.5px; font-weight:700; padding:2px 8px; border-radius:999px; border:1px solid var(--border); background:var(--surface); color:var(--ink-2); white-space:nowrap;}
+  .chip.pillar{background:var(--green-soft); border-color:var(--green-line); color:var(--green);}
+  .chip.warn{background:var(--red-soft); border-color:var(--red-line); color:var(--red);}
+  .chip.base{background:var(--amber-soft); border-color:var(--amber-line); color:var(--amber);}
+  .npl .why{font-size:11.5px; color:var(--ink-2); line-height:1.5;}
+
+  /* controls */
+  .controls{display:flex; flex-wrap:wrap; gap:16px; align-items:flex-end;}
+  .ctl{display:flex; flex-direction:column; gap:5px; min-width:150px;}
+  .ctl label{font-size:11px; color:var(--muted); font-weight:700; text-transform:uppercase; letter-spacing:.03em;}
+  select, input[type=number]{font-family:inherit; font-size:13px; padding:7px 10px; border:1px solid var(--border); border-radius:9px; background:var(--surface); color:var(--ink); min-width:0;}
+  input[type=range]{accent-color:var(--blue); width:100%;}
+  .seg-toggle{display:inline-flex; background:var(--surface-2); border:1px solid var(--border); border-radius:999px; padding:3px; gap:2px; flex-wrap:wrap;}
+  .seg-toggle button{border:none; background:transparent; color:var(--ink-2); font-weight:700; font-size:12px; padding:6px 13px; border-radius:999px;}
+  .seg-toggle button.on{background:var(--blue); color:#fff;}
+  .slider-wrap{min-width:260px; flex:1;}
+  .slider-head{display:flex; justify-content:space-between; font-size:11px; color:var(--muted); font-weight:700; text-transform:uppercase; letter-spacing:.03em; margin-bottom:3px;}
+  .slider-val{color:var(--ink); font-family:"JetBrains Mono",monospace;}
+
+  /* tiles */
+  .tiles{display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:10px; margin-top:14px;}
+  .tile{background:var(--surface-2); border:1px solid var(--border); border-radius:10px; padding:11px 12px;}
+  .tile .tl{font-size:10px; text-transform:uppercase; letter-spacing:.03em; color:var(--muted); font-weight:700;}
+  .tile .tv{font-weight:800; font-size:18px; font-family:"JetBrains Mono",monospace; margin-top:4px;}
+  .tile .tsub{font-size:10.5px; color:var(--muted); margin-top:2px;}
+  .tile.hi{background:var(--blue-soft); border-color:var(--blue-line);}
+  .tile.good{background:var(--green-soft); border-color:var(--green-line);}
+  .tile.bad{background:var(--red-soft); border-color:var(--red-line);}
+
+  /* capacity meter */
+  .meter{height:30px; border-radius:8px; background:var(--surface-2); border:1px solid var(--border); position:relative; overflow:hidden; margin-top:6px;}
+  .meter .fill{position:absolute; top:0; bottom:0; left:0; border-radius:7px 0 0 7px;}
+  .meter .marker{position:absolute; top:-4px; bottom:-4px; width:2px; background:var(--ink); opacity:.55;}
+  .meter .marker span{position:absolute; top:-16px; left:50%; transform:translateX(-50%); font-size:9.5px; color:var(--muted); white-space:nowrap; font-weight:700;}
+
+  /* waterfall / curve svg */
+  .chart-wrap{overflow-x:auto; margin-top:12px;}
+  svg{display:block; max-width:100%;}
+  .legend{display:flex; gap:14px; flex-wrap:wrap; font-size:11px; color:var(--muted); margin-top:8px;}
+  .legend span{display:inline-flex; align-items:center; gap:6px;}
+  .legend i{width:10px;height:10px;border-radius:3px; display:inline-block;}
+
+  /* tables */
+  .table-wrap{overflow-x:auto; margin-top:12px;}
+  table.dt{width:100%; border-collapse:collapse; font-size:12.5px; min-width:560px;}
+  table.dt th, table.dt td{padding:9px 10px; border-bottom:1px solid var(--border); text-align:left; white-space:nowrap;}
+  table.dt th{font-size:10.5px; text-transform:uppercase; letter-spacing:.03em; color:var(--muted); font-weight:700; background:var(--bg);}
+  table.dt td.num, table.dt th.num{text-align:right; font-family:"JetBrains Mono",monospace;}
+  table.dt tbody tr:hover{background:var(--blue-soft);}
+  table.dt tbody tr.sel{background:var(--blue-soft); outline:2px solid var(--blue); outline-offset:-2px;}
+  table.dt tr.tot td{font-weight:800; background:var(--surface-2);}
+  .badge{display:inline-block; font-size:10.5px; font-weight:800; padding:2px 9px; border-radius:999px; border:1px solid;}
+  .b-go{background:var(--green-soft); border-color:var(--green-line); color:var(--green);}
+  .b-pilot{background:var(--blue-soft); border-color:var(--blue-line); color:var(--blue);}
+  .b-rework{background:var(--amber-soft); border-color:var(--amber-line); color:var(--amber);}
+  .b-hold{background:var(--red-soft); border-color:var(--red-line); color:var(--red);}
+
+  .txt-green{color:var(--green);} .txt-amber{color:var(--amber);} .txt-red{color:var(--red);} .txt-muted{color:var(--muted);}
+  .reasons{display:flex; flex-direction:column; gap:6px; margin-top:4px;}
+  .ri{display:flex; gap:7px; font-size:12px; color:var(--ink-2);}
+  .ri .ok{color:var(--green); font-weight:800;} .ri .no{color:var(--red); font-weight:800;} .ri .wn{color:var(--amber); font-weight:800;}
+  .note{font-size:11px; color:var(--muted); line-height:1.5; margin-top:10px;}
+  .srcbar{display:flex; gap:8px; align-items:flex-start; font-size:11px; color:var(--muted); background:var(--surface-2); border:1px dashed var(--border); border-radius:9px; padding:9px 11px; margin-top:12px; line-height:1.55;}
+
+  .foot{max-width:var(--maxw); margin:10px auto 0; padding:14px 20px 30px; color:var(--muted); font-size:11.5px;}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="topbar-inner">
+    <div>
+      <span class="brand-title">NPL Atomic P&amp;L Cockpit</span>
+      <span class="brand-sub" data-i18n="brandSub">Pull the P&amp;L forward — Stage-1 shortlist to launch call, on Atomic logic</span>
+    </div>
+    <div class="top-right">
+      <div class="top-tag">
+        <div class="t1">TURN DATA INTO IMPACT</div>
+        <div class="t2" data-i18n="tagCeo">CEO VIEW · ATOMIC DECISION MODEL</div>
+      </div>
+      <div class="ctrls">
+        <button type="button" class="icon-btn" id="langBtn">🌐 <span id="langLabel">EN</span></button>
+        <button type="button" class="icon-btn" id="themeBtn">◐ <span id="themeLabel">System</span></button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<nav class="rail">
+  <div class="rail-inner">
+    <span class="engine-badge"><span class="n">A</span> <span data-i18n="engine">Atomic Engine</span></span>
+    <div class="nav" id="nav"></div>
+  </div>
+</nav>
+
+<main>
+  <div class="shell">
+    <span class="illus-pill">⚠ <span data-i18n="illus">Illustrative planning model — forward-looking Atomic math, not verified financials. COGM engine is anchored to the two Sip 3.5g figures from the transcript; concept names and Nielsen figures are editable placeholders.</span></span>
+    <div id="view"></div>
+  </div>
+</main>
+
+<footer class="foot">
+  <span data-i18n="footBrand">Atomic P&amp;L · "What kills an NPL is EBT, not GP1." · Small but compounding — the first atom cell never loses money.</span>
+</footer>
+
+<script>
+(function(){
+  "use strict";
+  function loadJSON(k,f){ try{ var r=localStorage.getItem(k); if(r) return JSON.parse(r);}catch(e){} return f; }
+  function saveJSON(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e){} }
+  var lang = loadJSON('npl-lang','en');
+
+  /* ============ ENGINE (anchored to transcript) ============ */
+  // Machine Sip 3.5g 500. Two anchor points from the transcript:
+  //   full capacity 95,000 ctn/mo -> COGM Rp65,000, GP1 31%
+  //   1/3 capacity  30,000 ctn/mo -> COGM Rp73,000, GP1 ~22%
+  // COGM(vol) = variablePerCtn + fixedPerMonth/vol  (fixed = depreciation + OMC)
+  var ENG = { fullCap:95000, fixedPerMo:350769231, varPerCtn:61308, netPerCtn:94203 };
+  function cogmAt(vol, npl){ return (npl.varPerCtn||ENG.varPerCtn) + ENG.fixedPerMo/vol; }
+  function gp1pctAt(vol, npl){ var net=npl.netPerCtn||ENG.netPerCtn; return (1 - cogmAt(vol,npl)/net)*100; }
+
+  // SM structure as % of NSAR. SM2 (distribution) + listing fee vary by PMA cluster.
+  var SM = { sm1:5.8, sm3:7.2, sm4:2.6, ap:3.0 }; // A&P capped at 3% (guard rail)
+  function pnlAt(vol, npl, cl){
+    var net=npl.netPerCtn||ENG.netPerCtn;
+    var nsar=vol*net;
+    var gp1=nsar*gp1pctAt(vol,npl)/100;
+    var sm1=nsar*SM.sm1/100, sm2=nsar*cl.sm2/100, sm3=nsar*(cl.sm3||SM.sm3)/100, sm4=nsar*SM.sm4/100, ap=nsar*SM.ap/100;
+    var ebt=gp1 - sm1 - sm2 - sm3 - sm4 - ap - cl.listing;
+    return {vol:vol, nsar:nsar, cogm:cogmAt(vol,npl), gp1:gp1, gp1pct:gp1pctAt(vol,npl),
+      sm1:sm1,sm2:sm2,sm3:sm3,sm4:sm4,ap:ap,listing:cl.listing, ebt:ebt, ebtpct:ebt/nsar*100,
+      util:vol/ENG.fullCap*100};
+  }
+  // Reverse calculation (Goal Seek): minimum volume to reach a target EBT (default 0 = break-even).
+  // EBT rises monotonically with volume (fixed cost amortizes + GP1% climbs) -> binary search.
+  function reverseVol(target, npl, cl){
+    var lo=500, hi=ENG.fullCap*2;
+    if(pnlAt(hi,npl,cl).ebt < target) return {vol:Infinity, feasible:false};
+    for(var i=0;i<60;i++){ var mid=(lo+hi)/2; if(pnlAt(mid,npl,cl).ebt < target) lo=mid; else hi=mid; }
+    return {vol:hi, feasible:true};
+  }
+
+  /* ============ DATA ============ */
+  // 10 NPL — Stage-1 shortlist (illustrative, editable). Built on the Sip 3.5g line;
+  // per-concept net price / variable cost reflect price point & gramasi deltas.
+  var NPLS = [
+    {k:'nori', emoji:'🧀', name:'Richeese Nori Wave', cat:{en:'Cheese snack',id:'Snack keju'}, pillar:'cheese', base:'same', gram:35, price:10000, netPerCtn:94203, varPerCtn:61308, target:42000, capVol:70000, cann:'low',
+      why:{en:'Cheese pillar, nori trend for young adults. Same flavour-house, cheap to run three variants.', id:'Pilar keju, tren nori untuk young adult. Satu flavour-house, murah jalankan tiga varian.'}},
+    {k:'curry', emoji:'🍛', name:'Richeese Curry Blaze', cat:{en:'Cheese savoury',id:'Gurih keju'}, pillar:'cheese', base:'same', gram:35, price:12000, netPerCtn:96000, varPerCtn:63000, target:38000, capVol:60000, cann:'med',
+      why:{en:'Strong CLT skew; may out-score Nori financially with a formula tweak.', id:'Skor CLT kuat; bisa ungguli Nori secara finansial dengan tweak formula.'}},
+    {k:'brownlava', emoji:'🍫', name:'Richoco Brownie Lava', cat:{en:'Brownies',id:'Brownies'}, pillar:'brownies', base:'same', gram:35, price:12000, netPerCtn:100000, varPerCtn:66000, target:36000, capVol:55000, cann:'low',
+      why:{en:'Brownies pillar — plays to a core strength, premium price point holds GP1.', id:'Pilar brownies — main di kekuatan inti, price point premium jaga GP1.'}},
+    {k:'kejumelt', emoji:'🧀', name:'Nabati Keju Melt Stick', cat:{en:'Cheese stick',id:'Stik keju'}, pillar:'cheese', base:'same', gram:35, price:10000, netPerCtn:90000, varPerCtn:60000, target:48000, capVol:75000, cann:'med',
+      why:{en:'High-velocity format, lowest price point — built for volume and fast break-even.', id:'Format high-velocity, price point terendah — dibangun untuk volume & break-even cepat.'}},
+    {k:'ayam', emoji:'🍗', name:'Richeese Ayam Spicy', cat:{en:'Savoury',id:'Gurih'}, pillar:'cheese', base:'same', gram:40, price:10000, netPerCtn:93000, varPerCtn:64000, target:30000, capVol:50000, cann:'med',
+      why:{en:'Flavour line extension; same effort as Nori — just run it in Atomic.', id:'Line extension rasa; effort sama seperti Nori — jalankan saja di Atomic.'}},
+    {k:'sapi', emoji:'🥩', name:'Richeese Sapi Panggang', cat:{en:'Savoury',id:'Gurih'}, pillar:'savoury', base:'same', gram:40, price:10000, netPerCtn:93000, varPerCtn:65000, target:26000, capVol:45000, cann:'high',
+      why:{en:'Third savoury flavour — watch cannibalisation; judge as a family group, not standalone.', id:'Rasa gurih ketiga — awas kanibalisasi; nilai sebagai family group, bukan berdiri sendiri.'}},
+    {k:'chocomalt', emoji:'🥤', name:'Richoco Choco Malt', cat:{en:'Brownies / drink',id:'Brownies / minuman'}, pillar:'brownies', base:'same', gram:35, price:12000, netPerCtn:98000, varPerCtn:64000, target:34000, capVol:52000, cann:'low',
+      why:{en:'Young-adult appeal, premium malt note; strong brownies adjacency.', id:'Appeal young adult, nuansa malt premium; adjacency brownies kuat.'}},
+    {k:'youngcheese', emoji:'✨', name:'Nabati Young Cheese Bites', cat:{en:'Cheese snack',id:'Snack keju'}, pillar:'young-adult', base:'same', gram:35, price:12000, netPerCtn:97000, varPerCtn:62000, target:40000, capVol:66000, cann:'low',
+      why:{en:'Targets young adults with higher purchasing power — the stated business challenge.', id:'Sasar young adult berdaya beli lebih tinggi — persis business challenge yang disebut.'}},
+    {k:'noodle', emoji:'🍜', name:'Siip Noodle Keju', cat:{en:'Instant noodle',id:'Mi instan'}, pillar:'noodle', base:'diff', gram:70, price:12000, netPerCtn:85000, varPerCtn:68000, target:22000, capVol:40000, cann:'low',
+      why:{en:'Noodle is a challenger category — fighting a competitor strength with our weakness. Different base = heavy R&D.', id:'Noodle kategori challenger — melawan strength kompetitor pakai kelemahan kita. Beda basis = R&D berat.'}},
+    {k:'matcha', emoji:'🍵', name:'Richoco Brownie Matcha', cat:{en:'Brownies',id:'Brownies'}, pillar:'brownies', base:'same', gram:35, price:12000, netPerCtn:102000, varPerCtn:67000, target:28000, capVol:48000, cann:'med',
+      why:{en:'Premium brownies flavour; expensive matcha RMP — optimise supplier (e.g. source flavour from China, not Givaudan).', id:'Rasa brownies premium; RMP matcha mahal — optimalkan supplier (mis. perisa dari China, bukan Givaudan).'}}
+  ];
+  function npl(k){ for(var i=0;i<NPLS.length;i++) if(NPLS[i].k===k) return NPLS[i]; return NPLS[0]; }
+
+  // 4 PMA regional clusters (not per-province). DP2 cheapest; West high promo; outer islands high logistics.
+  var CLUSTERS = [
+    {k:'dp1', code:'DP 1', name:{en:'DKI · Banten · West Java',id:'DKI · Banten · Jawa Barat'}, sm2:3.4, sm3:8.5, listing:150e6, note:{en:'Very expensive A&P / trade spending in the West.',id:'A&P / trade spending Barat sangat mahal.'}},
+    {k:'dp2', code:'DP 2', name:{en:'Central Java · East Java',id:'Jawa Tengah · Jawa Timur'}, sm2:2.8, sm3:7.0, listing:90e6, note:{en:'Most efficient & cheapest distribution — the natural first atom cell.',id:'Distribusi paling efisien & murah — sel atom pertama yang alami.'}},
+    {k:'lp1', code:'LP 1', name:{en:'All Sumatra',id:'Seluruh Sumatera'}, sm2:5.0, sm3:7.2, listing:70e6, note:{en:'Logistic-partner region — higher SM2 (freight).',id:'Region logistic partner — SM2 (ongkos kirim) lebih tinggi.'}},
+    {k:'lp2', code:'LP 2', name:{en:'Kalimantan · Sulawesi',id:'Kalimantan · Sulawesi'}, sm2:6.5, sm3:7.2, listing:60e6, note:{en:'Highest logistics load (outer islands).',id:'Beban logistik tertinggi (luar pulau).'}}
+  ];
+  function cluster(k){ for(var i=0;i<CLUSTERS.length;i++) if(CLUSTERS[i].k===k) return CLUSTERS[i]; return CLUSTERS[1]; }
+
+  // Nielsen / NIQ market share — ILLUSTRATIVE placeholders (not a connected feed).
+  var NIELSEN = [
+    {cat:{en:'Cheese wafer / snack',id:'Wafer / snack keju'}, sizeT:8.4, nabati:34, leader:'Nabati', growth:7.2, maps:'nori', head:{en:'High',id:'Tinggi'}},
+    {cat:{en:'Brownies / choco cake',id:'Brownies / kue coklat'}, sizeT:5.1, nabati:28, leader:'Nabati', growth:9.0, maps:'brownlava', head:{en:'High',id:'Tinggi'}},
+    {cat:{en:'Savoury snack',id:'Snack gurih'}, sizeT:11.2, nabati:12, leader:'Competitor', growth:4.1, maps:'ayam', head:{en:'Medium',id:'Sedang'}},
+    {cat:{en:'Young-adult indulgence',id:'Indulgence young adult'}, sizeT:6.7, nabati:9, leader:'Competitor', growth:11.5, maps:'youngcheese', head:{en:'High',id:'Tinggi'}},
+    {cat:{en:'Instant noodle',id:'Mi instan'}, sizeT:34.0, nabati:3, leader:'Competitor', growth:2.0, maps:'noodle', head:{en:'Low (challenger)',id:'Rendah (challenger)'}}
+  ];
+
+  /* ============ i18n ============ */
+  var T = {
+    en:{
+      brandSub:'Pull the P&L forward — Stage-1 shortlist to launch call, on Atomic logic',
+      tagCeo:'CEO VIEW · ATOMIC DECISION MODEL', engine:'Atomic Engine',
+      illus:'Illustrative planning model — forward-looking Atomic math, not verified financials. COGM engine is anchored to the two Sip 3.5g figures from the transcript; concept names and Nielsen figures are editable placeholders.',
+      footBrand:'Atomic P&L · "What kills an NPL is EBT, not GP1." · Small but compounding — the first atom cell never loses money.',
+      nav1:'10 NPL — Pak Aristo', nav2:'COGM Calculator', nav3:'Reverse EBT → Net Sales', nav4:'Market Share · Nielsen', nav5:'Ranking & Launch',
+      // p1
+      p1title:'10 NPL from Pak Aristo', p1sub:'Stage-1 shortlist — concepts that passed the CEO taste gate, curated from Nifty’s 100 → 50 → 10.',
+      p1note:'<b>Stage 1 before Stage 2.</b> Start from the business challenge, not from “I found a tasty martabak, make it.” Play to our strength — cheese & brownies — and never fight a competitor’s strength with our weakness.',
+      p1q:'"Iya dong, ya harus suka dulu lah! Kalau enggak, ngapain kita bikin?" — the CEO must like it first; Atomic only runs on what survives the gate.',
+      selected:'Selected', clickHint:'Click a concept to carry it into the COGM, Reverse-EBT and Ranking pages.',
+      pillarCheese:'Cheese pillar', pillarBrownies:'Brownies pillar', pillarYoung:'Young-adult', pillarSavoury:'Savoury', pillarNoodle:'Challenger',
+      baseSame:'Same flavour-house', baseDiff:'Different base · heavy R&D', cann:'Cannibalisation', cannlow:'low', cannmed:'medium', cannhigh:'high',
+      gram:'Gramasi', price:'Price point',
+      // p2
+      p2title:'COGM Calculator — capacity utilisation', p2sub:'Every standard COGM assumes FULL capacity. Below it, fixed cost (depreciation + OMC) per carton balloons and GP1 collapses.',
+      p2note:'Machine <b>Sip 3.5g 500</b>. At full capacity <b>95,000 ctn/mo (~Rp9.5B)</b> → COGM <b>Rp65,000</b>, GP1 <b>31%</b>. At 1/3 (<b>30,000 ctn</b>) depreciation & OMC triple per unit → COGM <b>Rp73,000 (+Rp8,000)</b>, GP1 drops to <b>22%</b>.',
+      volume:'Monthly volume', utilisation:'Capacity utilisation', cogmPerCtn:'COGM / carton', gp1pct:'GP1 %', nsarMo:'NSAR / month', fixedPerCtn:'Fixed cost / carton', varPerCtn:'Variable (RMP) / carton',
+      atFull:'at full capacity', breakdown:'Cost / carton breakdown', anchorNote:'The curve passes through both transcript anchor points exactly (95k→65k→31% and 30k→73k→22%).',
+      // p3
+      p3title:'Reverse EBT → Net Sales', p3sub:'Goal-Seek the minimum net sales & volume so the product does not lose money — the first atom cell, worst case still break-even.',
+      p3note:'Guard rails baked in: A&P capped at <b>3%</b> while volume is small; PPN, listing fee and trading term are counted. Distribution (SM2) and listing fee vary by PMA cluster — <b>DP2 Central/East Java is cheapest</b>.',
+      targetEbt:'Target EBT', breakEven:'Break-even (EBT 0)', reqVol:'Required volume', reqNsar:'Required net sales', reqUtil:'Required utilisation', gp1there:'GP1 at that volume', verdict:'Feasibility',
+      withinCap:'Within capturable capacity', overCap:'Exceeds capturable capacity — re-size (gramasi / price / cluster)',
+      pnlAt:'P&L at required volume', item:'Item', amount:'Amount', pctNsar:'% NSAR',
+      cluster:'PMA cluster', family:'Family group (3 flavours, shelf cannibalisation)', famOff:'Independent (5+5+5)', famOn:'Co-exist (haircut)',
+      cogmLine:'(−) COGM / HPP', gp1line:'GP1 — Gross Margin', sm1l:'SM1 — Sales Force', sm2l:'SM2 — Distribution', sm3l:'SM3 — Trade Spending', sm4l:'SM4 — Overhead', apl:'A&P (cap 3%)', listl:'Listing / trading term', ebtl:'EBT',
+      // p4
+      p4title:'Market Share — Nielsen / NIQ', p4sub:'Category size, Nabati share and headroom per NPL. Illustrative — no live Nielsen feed is connected in this session.',
+      category:'Category', mktSize:'Market size', nabShare:'Nabati share', leader:'Category leader', catGrowth:'Growth YoY', mapsTo:'Maps to NPL', headroom:'Headroom',
+      nielsenSrc:'Not connected: Nielsen/NIQ retail-audit is not wired into this mockup. Figures are plausible placeholders, clearly marked — replace with the real panel before any decision.',
+      // p5
+      p5title:'Ranking Score & Launch Suggestion', p5sub:'Ranked by EBT and the compounding route — not by “probability of success”. Atomic gives a route to small-but-compounding, never a success guarantee.',
+      p5note:'"Atomic enggak bikin probability of success! Atomic hitung P&L, kasih rute supaya aku bisa small but compounding." The filter here is <b>EBT-centric</b>, deliberately not GP1-only.',
+      rank:'#', npl:'NPL', beVolC:'Break-even vol', ebtTgt:'EBT @ target', ebtpctC:'EBT %', fit:'Strength fit', score:'Score', suggestion:'Suggestion',
+      why:'Why this call', heur:'Heuristic (visible, adjustable): break even inside capturable volume AND already profitable at the realistic target AND plays to a core strength → LAUNCH. Break-even reachable but the target still needs a ramp → PILOT. Break-even only beyond capturable volume → REWORK. Never breaks even even at full capacity → HOLD. The win is the first atom cell, not a high GP1.',
+      launch:'LAUNCH', pilot:'PILOT', rework:'REWORK', hold:'HOLD',
+      rBE:'Breaks even at {v} ctn — {u}% of line capacity.', rBEno:'Cannot break even even at full capacity — re-size before anything else.',
+      rEBT:'EBT at the realistic target is {v} of net sales.', rFit:'Plays to a core strength ({p}).', rFitNo:'Fights a competitor strength with our weakness ({p}).',
+      rCann:'Cannibalisation risk {c} — judge inside the family group.',
+      ctn:'ctn', mo:'/mo'
+    },
+    id:{
+      brandSub:'Tarik P&L ke depan — dari shortlist Stage-1 ke keputusan launch, pakai logika Atomic',
+      tagCeo:'TAMPILAN CEO · MODEL KEPUTUSAN ATOMIC', engine:'Atomic Engine',
+      illus:'Model perencanaan ilustratif — matematika Atomic ke depan, bukan laporan terverifikasi. Engine COGM di-anchor ke dua angka Sip 3.5g dari transkrip; nama konsep & angka Nielsen adalah placeholder yang bisa diedit.',
+      footBrand:'Atomic P&L · "Yang membunuh NPL adalah EBT, bukan GP1." · Small but compounding — sel atom pertama tak pernah rugi.',
+      nav1:'10 NPL — Pak Aristo', nav2:'Kalkulator COGM', nav3:'Reverse EBT → Net Sales', nav4:'Market Share · Nielsen', nav5:'Ranking & Launch',
+      p1title:'10 NPL dari Pak Aristo', p1sub:'Shortlist Stage-1 — konsep yang lolos gate rasa CEO, dikurasi dari 100 → 50 → 10 milik Nifty.',
+      p1note:'<b>Stage 1 sebelum Stage 2.</b> Berangkat dari business challenge, bukan “ketemu martabak enak, bikinin dong.” Main di kekuatan kita — keju & brownies — dan jangan lawan strength kompetitor pakai kelemahan.',
+      p1q:'"Iya dong, ya harus suka dulu lah! Kalau enggak, ngapain kita bikin?" — CEO harus suka dulu; Atomic hanya menghitung yang lolos gate.',
+      selected:'Terpilih', clickHint:'Klik konsep untuk membawanya ke halaman COGM, Reverse-EBT, dan Ranking.',
+      pillarCheese:'Pilar keju', pillarBrownies:'Pilar brownies', pillarYoung:'Young-adult', pillarSavoury:'Gurih', pillarNoodle:'Challenger',
+      baseSame:'Satu flavour-house', baseDiff:'Beda basis · R&D berat', cann:'Kanibalisasi', cannlow:'rendah', cannmed:'sedang', cannhigh:'tinggi',
+      gram:'Gramasi', price:'Price point',
+      p2title:'Kalkulator COGM — utilisasi kapasitas', p2sub:'Semua COGM standar mengasumsikan kapasitas PENUH. Di bawahnya, biaya tetap (depresiasi + OMC) per karton membengkak dan GP1 anjlok.',
+      p2note:'Mesin <b>Sip 3.5g 500</b>. Pada kapasitas penuh <b>95.000 ktn/bln (~Rp9,5 M)</b> → COGM <b>Rp65.000</b>, GP1 <b>31%</b>. Pada 1/3 (<b>30.000 ktn</b>) depresiasi & OMC 3× per unit → COGM <b>Rp73.000 (+Rp8.000)</b>, GP1 turun ke <b>22%</b>.',
+      volume:'Volume bulanan', utilisation:'Utilisasi kapasitas', cogmPerCtn:'COGM / karton', gp1pct:'GP1 %', nsarMo:'NSAR / bulan', fixedPerCtn:'Biaya tetap / karton', varPerCtn:'Variabel (RMP) / karton',
+      atFull:'pada kapasitas penuh', breakdown:'Rincian biaya / karton', anchorNote:'Kurva melewati kedua titik anchor transkrip persis (95rb→65rb→31% dan 30rb→73rb→22%).',
+      p3title:'Reverse EBT → Net Sales', p3sub:'Goal-Seek net sales & volume minimal agar produk tidak rugi — sel atom pertama, worst case tetap break-even.',
+      p3note:'Guard rail sudah terpasang: A&P di-cap <b>3%</b> selama volume kecil; PPN, listing fee, dan trading term dihitung. Distribusi (SM2) & listing fee berbeda per cluster PMA — <b>DP2 Jateng/Jatim termurah</b>.',
+      targetEbt:'Target EBT', breakEven:'Break-even (EBT 0)', reqVol:'Volume dibutuhkan', reqNsar:'Net sales dibutuhkan', reqUtil:'Utilisasi dibutuhkan', gp1there:'GP1 di volume itu', verdict:'Kelayakan',
+      withinCap:'Dalam kapasitas yang dapat diraih', overCap:'Melebihi kapasitas yang dapat diraih — ukur ulang (gramasi / harga / cluster)',
+      pnlAt:'P&L di volume dibutuhkan', item:'Item', amount:'Nilai', pctNsar:'% NSAR',
+      cluster:'Cluster PMA', family:'Family group (3 rasa, kanibalisasi rak)', famOff:'Independen (5+5+5)', famOn:'Co-exist (haircut)',
+      cogmLine:'(−) COGM / HPP', gp1line:'GP1 — Margin Kotor', sm1l:'SM1 — Tenaga Penjual', sm2l:'SM2 — Distribusi', sm3l:'SM3 — Trade Spending', sm4l:'SM4 — Overhead', apl:'A&P (cap 3%)', listl:'Listing / trading term', ebtl:'EBT',
+      p4title:'Market Share — Nielsen / NIQ', p4sub:'Ukuran kategori, share Nabati, dan headroom per NPL. Ilustratif — tidak ada feed Nielsen live di sesi ini.',
+      category:'Kategori', mktSize:'Ukuran pasar', nabShare:'Share Nabati', leader:'Pemimpin kategori', catGrowth:'Pertumbuhan YoY', mapsTo:'Terhubung ke NPL', headroom:'Headroom',
+      nielsenSrc:'Tidak terhubung: retail-audit Nielsen/NIQ belum tersambung ke mockup ini. Angka adalah placeholder yang masuk akal dan ditandai jelas — ganti dengan panel asli sebelum keputusan apa pun.',
+      p5title:'Ranking Score & Saran Launch', p5sub:'Diurutkan berdasarkan EBT dan rute compounding — bukan “probability of success”. Atomic memberi rute small-but-compounding, bukan jaminan sukses.',
+      p5note:'"Atomic enggak bikin probability of success! Atomic hitung P&L, kasih rute supaya aku bisa small but compounding." Filter di sini <b>berbasis EBT</b>, sengaja bukan GP1 saja.',
+      rank:'#', npl:'NPL', beVolC:'Volume break-even', ebtTgt:'EBT @ target', ebtpctC:'EBT %', fit:'Fit strength', score:'Skor', suggestion:'Saran',
+      why:'Alasan keputusan', heur:'Heuristik (terlihat, bisa disesuaikan): break-even dalam volume yang dapat diraih DAN sudah untung di target realistis DAN main di kekuatan inti → LAUNCH. Break-even tercapai tapi target masih perlu ramp → PILOT. Break-even hanya di luar kapasitas → REWORK. Tak pernah break-even bahkan di kapasitas penuh → HOLD. Kemenangannya sel atom pertama, bukan GP1 tinggi.',
+      launch:'LAUNCH', pilot:'PILOT', rework:'REWORK', hold:'HOLD',
+      rBE:'Break-even di {v} ktn — {u}% kapasitas lini.', rBEno:'Tidak break-even bahkan di kapasitas penuh — ukur ulang dulu.',
+      rEBT:'EBT pada target realistis {v} dari net sales.', rFit:'Main di kekuatan inti ({p}).', rFitNo:'Melawan strength kompetitor pakai kelemahan kita ({p}).',
+      rCann:'Risiko kanibalisasi {c} — nilai di dalam family group.',
+      ctn:'ktn', mo:'/bln'
+    }
+  };
+  function t(k,v){ var d=T[lang]||T.en, s=d[k]; if(s==null)s=T.en[k]; if(s==null)return k;
+    if(v)Object.keys(v).forEach(function(x){ s=s.replace(new RegExp('\\{'+x+'\\}','g'),v[x]); }); return s; }
+  function L(o){ return o?(o[lang]||o.en):''; }
+
+  /* ============ format ============ */
+  function grp(n){ return Math.round(n).toLocaleString(lang==='id'?'id-ID':'en-US'); }
+  function dec(x,d){ var s=(+x).toFixed(d==null?1:d); return lang==='id'?s.replace('.',','):s; }
+  function rpShort(n){ var neg=n<0?'−':''; n=Math.abs(n);
+    if(n>=1e12)return neg+'Rp'+dec(n/1e12)+'T'; if(n>=1e9)return neg+'Rp'+dec(n/1e9)+'B'; if(n>=1e6)return neg+'Rp'+dec(n/1e6)+'Jt'; return neg+'Rp'+grp(n); }
+  function rpFull(n){ return (n<0?'−Rp':'Rp')+grp(Math.abs(n)); }
+  function pct(n){ return dec(n)+'%'; }
+  function pctS(n){ return (n<0?'−':'+')+dec(Math.abs(n))+'%'; }
+
+  /* ============ state ============ */
+  var state = { page:1, sel:'nori', simVol:42000, cluster:'dp2', target:'be', family:false };
+
+  /* ============ NAV ============ */
+  function renderNav(){
+    var n=document.getElementById('nav'); var labels=['nav1','nav2','nav3','nav4','nav5'];
+    n.innerHTML=labels.map(function(l,i){ return '<button type="button" data-p="'+(i+1)+'" class="'+(state.page===i+1?'active':'')+'"><span class="sn">'+(i+1)+'</span>'+t(l)+'</button>'; }).join('');
+    n.querySelectorAll('button').forEach(function(b){ b.addEventListener('click',function(){ state.page=+b.getAttribute('data-p'); render(); window.scrollTo({top:0,behavior:'smooth'}); }); });
+  }
+
+  /* ============ PAGE 1 — 10 NPL ============ */
+  function page1(){
+    var pillMap={cheese:'pillarCheese',brownies:'pillarBrownies','young-adult':'pillarYoung',savoury:'pillarSavoury',noodle:'pillarNoodle'};
+    var cards=NPLS.map(function(c){
+      var pc=c.pillar==='noodle'?'warn':'pillar';
+      var baseChip=c.base==='same'?'<span class="chip base">'+t('baseSame')+'</span>':'<span class="chip warn">'+t('baseDiff')+'</span>';
+      return '<div class="npl'+(c.k===state.sel?' sel':'')+'" data-k="'+c.k+'">'+
+        '<div class="nh"><span class="emoji">'+c.emoji+'</span><div><div class="nm">'+c.name+'</div><div class="cat">'+L(c.cat)+'</div></div></div>'+
+        '<div class="chips"><span class="chip '+pc+'">'+t(pillMap[c.pillar])+'</span>'+baseChip+
+          '<span class="chip">'+t('gram')+' '+c.gram+'g</span><span class="chip">Rp'+grp(c.price)+'</span></div>'+
+        '<div class="why">'+L(c.why)+'</div>'+
+        '<div class="chips"><span class="chip">'+t('cann')+': '+t('cann'+c.cann)+'</span></div>'+
+      '</div>';
+    }).join('');
+    return card('🧪',t('p1title'),t('p1sub'),
+      '<div class="stage-note"><span>🎯</span><div>'+t('p1note')+'<div class="quote">'+t('p1q')+'</div></div></div>'+
+      '<div class="card-body"><div class="npl-grid" id="nplGrid">'+cards+'</div>'+
+      '<p class="note">'+t('clickHint')+'</p></div>');
+  }
+
+  /* ============ PAGE 2 — COGM ============ */
+  function cogmTiles(c,vol){
+    var p=pnlAt(vol,c,cluster(state.cluster));
+    var fixPerCtn=ENG.fixedPerMo/vol, varc=c.varPerCtn||ENG.varPerCtn;
+    var cogmCls=p.cogm<=66000?'good':p.cogm>=72000?'bad':'';
+    var gpCls=p.gp1pct>=30?'good':p.gp1pct<24?'bad':'';
+    return tile(t('utilisation'),pct(p.util),p.util>=80?'good':p.util<45?'bad':'',grp(vol)+' / '+grp(ENG.fullCap)+' '+t('ctn'))+
+      tile(t('cogmPerCtn'),rpFull(p.cogm),cogmCls,'Rp65.000 '+t('atFull'))+
+      tile(t('gp1pct'),pct(p.gp1pct),gpCls,'31% '+t('atFull'))+
+      tile(t('nsarMo'),rpShort(p.nsar),'hi')+
+      tile(t('fixedPerCtn'),rpFull(fixPerCtn),'',t('varPerCtn')+' '+rpFull(varc));
+  }
+  function cogmMeterFill(vol){
+    var util=vol/ENG.fullCap*100;
+    return '<div class="fill" style="width:'+Math.min(100,util)+'%;background:'+(util>=80?'var(--green)':util>=45?'var(--amber)':'var(--red)')+'"></div>'+
+      '<div class="marker" style="left:'+(30000/ENG.fullCap*100)+'%"><span>1/3 · 73k</span></div>'+
+      '<div class="marker" style="left:100%"><span>full · 65k</span></div>';
+  }
+  function page2(){
+    var c=npl(state.sel), vol=state.simVol;
+    var body='<div class="card-body">'+
+      '<div class="controls"><div class="ctl" style="flex:1;min-width:260px">'+
+        '<div class="slider-head"><span>'+t('volume')+'</span><span class="slider-val" id="cogmVal">'+grp(vol)+' '+t('ctn')+' '+t('mo')+'</span></div>'+
+        '<input type="range" id="volR" min="12000" max="110000" step="1000" value="'+vol+'">'+
+        '<div class="meter" id="cogmMeter">'+cogmMeterFill(vol)+'</div>'+
+      '</div></div>'+
+      '<div class="tiles" id="cogmTiles">'+cogmTiles(c,vol)+'</div>'+
+      '<div id="cogmChart">'+cogmCurve(c)+'</div>'+
+      '<p class="note">'+t('anchorNote')+'</p>'+
+      srcbar()+'</div>';
+    return card('🏭',t('p2title'),t('p2sub'),
+      '<div class="stage-note"><span>⚙️</span><div>'+t('p2note')+'</div></div>'+body, nplPicker());
+  }
+  function cogmCurve(c){
+    var W=640,H=230,padL=58,padR=18,padT=16,padB=34;
+    var vmin=15000,vmax=100000, cmin=60000,cmax=85000;
+    function X(v){ return padL+(v-vmin)/(vmax-vmin)*(W-padL-padR); }
+    function Y(cg){ return padT+(cmax-cg)/(cmax-cmin)*(H-padT-padB); }
+    var pts=[]; for(var v=vmin;v<=vmax;v+=2000){ pts.push(X(v)+','+Y(cogmAt(v,c))); }
+    var ticks=[20000,40000,60000,80000,100000].map(function(v){ return '<line x1="'+X(v)+'" y1="'+padT+'" x2="'+X(v)+'" y2="'+(H-padB)+'" stroke="var(--border)" stroke-width="1"/>'+
+      '<text x="'+X(v)+'" y="'+(H-padB+16)+'" font-size="10" fill="var(--muted)" text-anchor="middle" font-family="JetBrains Mono">'+(v/1000)+'k</text>'; }).join('');
+    var yt=[60000,65000,70000,75000,80000,85000].map(function(cg){ return '<line x1="'+padL+'" y1="'+Y(cg)+'" x2="'+(W-padR)+'" y2="'+Y(cg)+'" stroke="var(--border)" stroke-width="1" opacity=".6"/>'+
+      '<text x="'+(padL-8)+'" y="'+(Y(cg)+3)+'" font-size="10" fill="var(--muted)" text-anchor="end" font-family="JetBrains Mono">'+(cg/1000)+'k</text>'; }).join('');
+    function dot(v,label,col){ return '<circle cx="'+X(v)+'" cy="'+Y(cogmAt(v,c))+'" r="4.5" fill="'+col+'"/>'+
+      '<text x="'+X(v)+'" y="'+(Y(cogmAt(v,c))-10)+'" font-size="10.5" fill="'+col+'" text-anchor="middle" font-weight="700" font-family="JetBrains Mono">'+label+'</text>'; }
+    var curVol=state.simVol;
+    var curDot = curVol>=vmin&&curVol<=vmax ? '<circle cx="'+X(curVol)+'" cy="'+Y(cogmAt(curVol,c))+'" r="5.5" fill="var(--blue)" stroke="var(--surface)" stroke-width="2"/>' : '';
+    var svg='<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="COGM vs volume">'+yt+ticks+
+      '<polyline points="'+pts.join(' ')+'" fill="none" stroke="var(--blue)" stroke-width="2.5"/>'+
+      dot(95000,'65k',getComputedStyle(document.documentElement).getPropertyValue('--green')||'green')+
+      dot(30000,'73k',getComputedStyle(document.documentElement).getPropertyValue('--red')||'red')+
+      curDot+'</svg>';
+    return '<div class="chart-wrap">'+svg+'</div><div class="legend"><span><i style="background:var(--blue)"></i>'+t('cogmPerCtn')+'</span><span><i style="background:var(--green)"></i>95k '+t('atFull')+'</span><span><i style="background:var(--red)"></i>30k (1/3)</span></div>';
+  }
+
+  /* ============ PAGE 3 — Reverse EBT ============ */
+  function page3(){
+    var c=npl(state.sel), cl=cluster(state.cluster);
+    var target = state.target==='be'?0 : state.target;
+    var rv=reverseVol(target,c,cl);
+    var fam=state.family? 0.78 : 1; // co-exist haircut on required capturable (illustrative)
+    var pres='<div class="seg-toggle" id="tgT">'+
+      '<button data-tv="be" class="'+(state.target==='be'?'on':'')+'">'+t('breakEven')+'</button>'+
+      [0.5e9,1e9].map(function(x){ return '<button data-tv="'+x+'" class="'+(state.target===x?'on':'')+'">EBT '+rpShort(x)+'</button>'; }).join('')+'</div>';
+    var clSel='<div class="seg-toggle" id="clT">'+CLUSTERS.map(function(x){ return '<button data-cl="'+x.k+'" class="'+(state.cluster===x.k?'on':'')+'">'+x.code+'</button>'; }).join('')+'</div>';
+    var famSel='<div class="seg-toggle" id="famT"><button data-f="0" class="'+(!state.family?'on':'')+'">'+t('famOff')+'</button><button data-f="1" class="'+(state.family?'on':'')+'">'+t('famOn')+'</button></div>';
+    var out='';
+    if(rv.feasible){
+      var p=pnlAt(rv.vol,c,cl);
+      var capVol=c.capVol*fam;
+      var within=rv.vol<=capVol;
+      out='<div class="tiles">'+
+        tile(t('reqVol'),grp(Math.round(rv.vol))+' '+t('ctn'),'hi',t('reqUtil')+' '+pct(p.util))+
+        tile(t('reqNsar'),rpShort(p.nsar),'hi')+
+        tile(t('gp1there'),pct(p.gp1pct),p.gp1pct>=28?'good':p.gp1pct<24?'bad':'')+
+        tile(t('verdict'),within?'✓':'✕',within?'good':'bad',within?t('withinCap'):t('overCap'))+
+      '</div>'+ pnlTable(p,c,cl);
+    } else {
+      out='<div class="tiles">'+tile(t('reqVol'),'∞','bad',t('overCap'))+'</div>'+
+        '<p class="note txt-red">'+t('overCap')+'</p>';
+    }
+    var body='<div class="card-body">'+
+      '<div class="controls">'+
+        '<div class="ctl"><label>'+t('targetEbt')+'</label>'+pres+'</div>'+
+        '<div class="ctl"><label>'+t('cluster')+'</label>'+clSel+'</div>'+
+        '<div class="ctl"><label>'+t('family')+'</label>'+famSel+'</div>'+
+      '</div>'+
+      '<p class="note">'+L(cl.note)+'</p>'+ out + srcbar()+'</div>';
+    return card('🧮',t('p3title'),t('p3sub'),
+      '<div class="stage-note"><span>↩️</span><div>'+t('p3note')+'</div></div>'+body, nplPicker());
+  }
+  function pnlTable(p,c,cl){
+    function r(label,amt,pctv,cls){ return '<tr class="'+(cls||'')+'"><td>'+label+'</td><td class="num">'+amt+'</td><td class="num txt-muted">'+(pctv==null?'—':pctv)+'</td></tr>'; }
+    return '<h4 style="margin:16px 0 0;font-size:13px">'+t('pnlAt')+'</h4><div class="table-wrap"><table class="dt" style="min-width:420px">'+
+      '<thead><tr><th>'+t('item')+'</th><th class="num">'+t('amount')+'</th><th class="num">'+t('pctNsar')+'</th></tr></thead><tbody>'+
+      r('NSAR',rpFull(p.nsar),pct(100),'tot')+
+      r(t('cogmLine'),rpFull(-(p.nsar-p.gp1)),pct((p.nsar-p.gp1)/p.nsar*100))+
+      r(t('gp1line'),rpFull(p.gp1),pct(p.gp1pct),'tot')+
+      r(t('sm1l'),rpFull(-p.sm1),pct(SM.sm1))+
+      r(t('sm2l'),rpFull(-p.sm2),pct(cl.sm2))+
+      r(t('sm3l'),rpFull(-p.sm3),pct(cl.sm3||SM.sm3))+
+      r(t('sm4l'),rpFull(-p.sm4),pct(SM.sm4))+
+      r(t('apl'),rpFull(-p.ap),pct(SM.ap))+
+      r(t('listl'),rpFull(-p.listing),pct(p.listing/p.nsar*100))+
+      r(t('ebtl'),rpFull(p.ebt),pct(p.ebtpct),'tot')+
+      '</tbody></table></div>';
+  }
+
+  /* ============ PAGE 4 — Nielsen ============ */
+  function page4(){
+    var rows=NIELSEN.map(function(m){
+      var share=(m.sizeT*m.nabShare/100);
+      return '<tr><td>'+L(m.cat)+'</td><td class="num">Rp'+dec(m.sizeT)+'T</td><td class="num">'+pct(m.nabShare)+'</td>'+
+        '<td>'+m.leader+'</td><td class="num txt-green">'+pctS(m.growth)+'</td><td>'+npl(m.maps).name+'</td><td>'+L(m.head)+'</td></tr>';
+    }).join('');
+    var bars=NIELSEN.map(function(m){
+      var w=Math.min(100,m.nabShare/40*100);
+      return '<div style="display:flex;align-items:center;gap:10px;margin:7px 0;font-size:12px"><span style="width:160px;color:var(--ink-2)">'+L(m.cat)+'</span>'+
+        '<div style="flex:1;background:var(--surface-2);border-radius:6px;height:18px;overflow:hidden;min-width:60px"><div style="width:'+w+'%;height:100%;background:var(--blue)"></div></div>'+
+        '<span class="mono" style="width:48px;text-align:right">'+pct(m.nabShare)+'</span></div>';
+    }).join('');
+    var body='<div class="card-body"><div class="table-wrap"><table class="dt">'+
+      '<thead><tr><th>'+t('category')+'</th><th class="num">'+t('mktSize')+'</th><th class="num">'+t('nabShare')+'</th><th>'+t('leader')+'</th><th class="num">'+t('catGrowth')+'</th><th>'+t('mapsTo')+'</th><th>'+t('headroom')+'</th></tr></thead>'+
+      '<tbody>'+rows+'</tbody></table></div>'+
+      '<h4 style="margin:16px 0 2px;font-size:13px">'+t('nabShare')+'</h4>'+bars+
+      '<div class="srcbar"><span>📊</span><span>'+t('nielsenSrc')+'</span></div></div>';
+    return card('📈',t('p4title'),t('p4sub'),body);
+  }
+
+  /* ============ PAGE 5 — Ranking ============ */
+  function scoreNpl(c){
+    var cl=cluster('dp2'); // rank on the natural first atom cell (cheapest cluster)
+    var be=reverseVol(0,c,cl);
+    var pTgt=pnlAt(c.target,c,cl);
+    var strong=(c.pillar==='cheese'||c.pillar==='brownies'||c.pillar==='young-adult');
+    var beWithin=be.feasible && be.vol<=c.capVol;       // can break even inside what we can actually sell
+    var profitTgt=be.feasible && c.target>=be.vol;       // already past break-even at the realistic target
+    var beRatio=be.feasible? be.vol/c.capVol : Infinity;
+    // EBT-centric score (NOT probability): compounding room 50, break-even headroom 30, strength fit 20
+    var ebtScore=Math.max(0,Math.min(50, (pTgt.ebtpct+5)/15*50)); // −5%→0, +10%→50
+    var beScore = be.feasible? Math.max(0,Math.min(30,(1-beRatio)/0.7*30)) : 0;
+    var fitScore= strong?20:(c.pillar==='savoury'?10:0);
+    var score=Math.round(ebtScore+beScore+fitScore);
+    // Small-but-compounding call: break even inside capturable volume is the win.
+    var sug;
+    if(!be.feasible) sug='hold';                         // never breaks even, even at full capacity
+    else if(!beWithin) sug='rework';                     // break-even only beyond capturable volume
+    else if(profitTgt && strong) sug='launch';           // profitable at target AND plays to strength
+    else sug='pilot';                                    // reachable but needs ramp (or a non-core pillar)
+    if(c.pillar==='noodle' && (sug==='launch'||sug==='pilot')) sug = beWithin?'rework':'hold'; // weakness vs competitor strength
+    return {c:c, be:be, pTgt:pTgt, score:score, sug:sug, strong:strong, beWithin:beWithin, profitTgt:profitTgt};
+  }
+  function page5(){
+    var ranked=NPLS.map(scoreNpl).sort(function(a,b){ return b.score-a.score; });
+    var rows=ranked.map(function(r,i){
+      var c=r.c, sugMap={launch:'b-go',pilot:'b-pilot',rework:'b-rework',hold:'b-hold'};
+      var beTxt=r.be.feasible?grp(Math.round(r.be.vol)):'∞';
+      var ebtCls=r.pTgt.ebtpct>=5?'txt-green':r.pTgt.ebtpct<0?'txt-red':'txt-amber';
+      return '<tr class="'+(c.k===state.sel?'sel':'')+'" data-k="'+c.k+'">'+
+        '<td class="num">'+(i+1)+'</td>'+
+        '<td>'+c.emoji+' '+c.name+'</td>'+
+        '<td class="num">'+beTxt+'</td>'+
+        '<td class="num">'+rpShort(r.pTgt.ebt)+'</td>'+
+        '<td class="num '+ebtCls+'">'+pct(r.pTgt.ebtpct)+'</td>'+
+        '<td>'+(r.strong?'<span class="txt-green">✓</span>':c.pillar==='noodle'?'<span class="txt-red">✕</span>':'<span class="txt-amber">~</span>')+'</td>'+
+        '<td class="num">'+r.score+'</td>'+
+        '<td><span class="badge '+sugMap[r.sug]+'">'+t(r.sug)+'</span></td></tr>';
+    }).join('');
+    // reasons for the selected npl
+    var sel=ranked.filter(function(r){return r.c.k===state.sel;})[0]||ranked[0];
+    var rs=[];
+    if(sel.be.feasible) rs.push({ok:sel.beWithin, txt:t('rBE',{v:grp(Math.round(sel.be.vol)),u:dec(sel.be.vol/ENG.fullCap*100,0)})});
+    else rs.push({ok:false, txt:t('rBEno')});
+    rs.push({ok:sel.profitTgt, txt:t('rEBT',{v:pct(sel.pTgt.ebtpct)})});
+    rs.push({ok:sel.strong, txt: sel.strong? t('rFit',{p:sel.c.pillar}) : t('rFitNo',{p:sel.c.pillar})});
+    rs.push({ok:sel.c.cann==='low', txt:t('rCann',{c:t('cann'+sel.c.cann)})});
+    var reasons=rs.map(function(x){ return '<div class="ri"><span class="'+(x.ok?'ok':'no')+'">'+(x.ok?'✓':'⚠')+'</span>'+x.txt+'</div>'; }).join('');
+    var body='<div class="card-body"><div class="table-wrap"><table class="dt" id="rankT">'+
+      '<thead><tr><th class="num">'+t('rank')+'</th><th>'+t('npl')+'</th><th class="num">'+t('beVolC')+'</th><th class="num">'+t('ebtTgt')+'</th><th class="num">'+t('ebtpctC')+'</th><th>'+t('fit')+'</th><th class="num">'+t('score')+'</th><th>'+t('suggestion')+'</th></tr></thead>'+
+      '<tbody>'+rows+'</tbody></table></div>'+
+      '<h4 style="margin:16px 0 4px;font-size:13px">'+sel.c.emoji+' '+sel.c.name+' — '+t('why')+'</h4><div class="reasons">'+reasons+'</div>'+
+      '<p class="note">'+t('heur')+'</p>'+srcbar()+'</div>';
+    return card('🏁',t('p5title'),t('p5sub'),
+      '<div class="stage-note"><span>🧭</span><div>'+t('p5note')+'</div></div>'+body);
+  }
+
+  /* ============ shared bits ============ */
+  function card(ico,title,sub,inner,headRight){
+    return '<section class="card"><div class="card-head"><div class="ico">'+ico+'</div><div><h2>'+title+'</h2><div class="sub">'+sub+'</div></div>'+
+      (headRight?'<div class="right">'+headRight+'</div>':'')+'</div>'+inner+'</section>';
+  }
+  function tile(label,val,cls,sub){ return '<div class="tile '+(cls||'')+'"><div class="tl">'+label+'</div><div class="tv">'+val+'</div>'+(sub?'<div class="tsub">'+sub+'</div>':'')+'</div>'; }
+  function nplPicker(){
+    return '<select id="nplSel" aria-label="NPL">'+NPLS.map(function(c){ return '<option value="'+c.k+'"'+(c.k===state.sel?' selected':'')+'>'+c.emoji+' '+c.name+'</option>'; }).join('')+'</select>';
+  }
+  function srcbar(){ return '<div class="srcbar"><span>📎</span><span>'+
+    (lang==='id'
+      ? 'Engine COGM di-anchor ke dua angka Sip 3.5g dari transkrip (95rb→65rb/31%, 30rb→73rb/22%). Struktur SM, listing fee, dan harga per konsep adalah placeholder yang bisa diedit — ganti dengan angka komersial asli sebelum keputusan.'
+      : 'COGM engine anchored to the two Sip 3.5g figures from the transcript (95k→65k/31%, 30k→73k/22%). SM structure, listing fees and per-concept prices are editable placeholders — replace with real commercial numbers before deciding.')+
+    '</span></div>'; }
+
+  /* ============ render + wire ============ */
+  function render(){
+    document.querySelectorAll('[data-i18n]').forEach(function(el){ el.innerHTML=t(el.getAttribute('data-i18n')); });
+    document.documentElement.setAttribute('lang',lang);
+    renderNav();
+    var v=document.getElementById('view');
+    v.innerHTML=[page1,page2,page3,page4,page5][state.page-1]();
+    wire();
+  }
+  function wire(){
+    var g=document.getElementById('nplGrid');
+    if(g) g.querySelectorAll('.npl').forEach(function(el){ el.addEventListener('click',function(){ state.sel=el.getAttribute('data-k'); var n=npl(state.sel); state.simVol=n.target; render(); }); });
+    var sel=document.getElementById('nplSel');
+    if(sel) sel.addEventListener('change',function(){ state.sel=sel.value; state.simVol=npl(state.sel).target; render(); });
+    var vr=document.getElementById('volR');
+    if(vr) vr.addEventListener('input',function(){
+      state.simVol=+vr.value; var c=npl(state.sel), vol=state.simVol;
+      var vEl=document.getElementById('cogmVal'); if(vEl) vEl.textContent=grp(vol)+' '+t('ctn')+' '+t('mo');
+      var mEl=document.getElementById('cogmMeter'); if(mEl) mEl.innerHTML=cogmMeterFill(vol);
+      var tEl=document.getElementById('cogmTiles'); if(tEl) tEl.innerHTML=cogmTiles(c,vol);
+      var cEl=document.getElementById('cogmChart'); if(cEl) cEl.innerHTML=cogmCurve(c);
+    });
+    var tg=document.getElementById('tgT');
+    if(tg) tg.querySelectorAll('button').forEach(function(b){ b.addEventListener('click',function(){ var v=b.getAttribute('data-tv'); state.target=v==='be'?'be':+v; render(); }); });
+    var cl=document.getElementById('clT');
+    if(cl) cl.querySelectorAll('button').forEach(function(b){ b.addEventListener('click',function(){ state.cluster=b.getAttribute('data-cl'); render(); }); });
+    var fam=document.getElementById('famT');
+    if(fam) fam.querySelectorAll('button').forEach(function(b){ b.addEventListener('click',function(){ state.family=b.getAttribute('data-f')==='1'; render(); }); });
+    var rt=document.getElementById('rankT');
+    if(rt) rt.querySelectorAll('tbody tr').forEach(function(tr){ tr.addEventListener('click',function(){ state.sel=tr.getAttribute('data-k'); render(); }); });
+  }
+
+  /* ============ theme + lang ============ */
+  function applyTheme(mode){ var r=document.documentElement;
+    if(mode==='light')r.setAttribute('data-theme','light'); else if(mode==='dark')r.setAttribute('data-theme','dark'); else r.removeAttribute('data-theme');
+    var lbl=document.getElementById('themeLabel'); if(lbl)lbl.textContent=mode==='light'?(lang==='id'?'Terang':'Light'):mode==='dark'?(lang==='id'?'Gelap':'Dark'):(lang==='id'?'Sistem':'System');
+    try{localStorage.setItem('npl-theme',mode);}catch(e){} }
+  (function(){ var s='system'; try{s=localStorage.getItem('npl-theme')||'system';}catch(e){} applyTheme(s);
+    document.getElementById('themeBtn').addEventListener('click',function(){ var c='system'; try{c=localStorage.getItem('npl-theme')||'system';}catch(e){} applyTheme(c==='system'?'light':c==='light'?'dark':'system'); }); })();
+  document.getElementById('langBtn').addEventListener('click',function(){ lang=lang==='en'?'id':'en'; saveJSON('npl-lang',lang);
+    document.getElementById('langLabel').textContent=lang==='id'?'ID':'EN'; var s='system'; try{s=localStorage.getItem('npl-theme')||'system';}catch(e){} applyTheme(s); render(); });
+  document.getElementById('langLabel').textContent=lang==='id'?'ID':'EN';
+
+  render();
+})();
+</script>
+</body>
+</html>
