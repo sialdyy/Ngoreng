@@ -139,6 +139,8 @@
   .chip.gold{background:var(--gold-soft); border-color:var(--gold-line); color:var(--gold);}
   .chip.brand{background:var(--navy); border-color:var(--navy); color:#fff;}
   .npl .why{font-size:11.5px; color:var(--ink-2); line-height:1.55;}
+  .mini-btn{width:24px;height:24px;border-radius:6px;border:1px solid var(--border);background:var(--surface-2);color:var(--muted);font-size:12px;line-height:1;display:flex;align-items:center;justify-content:center;}
+  .mini-btn:hover{color:var(--ink);border-color:var(--accent-line);}
 
   .table-wrap{overflow-x:auto;}
   table.dt{width:100%; border-collapse:collapse; font-size:12.5px; min-width:540px;}
@@ -201,21 +203,22 @@
   .foot{max-width:var(--maxw); margin:6px auto 0; padding:16px 24px 34px; color:var(--muted); font-size:11px;}
   svg{display:block; max-width:100%;}
 
-  /* tab5 map + ranking */
-  .rank-wrap{display:grid; grid-template-columns:420px 1fr; gap:18px; align-items:start;}
-  @media (max-width:900px){ .rank-wrap{grid-template-columns:1fr;} }
-  #mapBox{height:420px; border-radius:12px; overflow:hidden; position:relative; background:radial-gradient(130% 130% at 30% 18%, #1a3a63 0%, #0e2544 50%, #081a30 100%); border:1px solid var(--border);}
-  .map-legend{position:absolute; top:10px; left:12px; display:flex; gap:10px; z-index:3; flex-wrap:wrap;}
+  /* tab5 map (full width) + why overlay */
+  #mapBox{height:380px; border-radius:12px; overflow:hidden; position:relative; background:radial-gradient(130% 130% at 30% 18%, #1a3a63 0%, #0e2544 50%, #081a30 100%); border:1px solid var(--border);}
+  .map-legend{position:absolute; top:10px; left:12px; display:flex; gap:10px; z-index:4; flex-wrap:wrap;}
   .map-legend span{display:inline-flex; align-items:center; gap:5px; font-size:10px; color:#d6e3f5; background:rgba(8,20,36,.6); padding:3px 7px; border-radius:999px;}
   .map-legend i{width:8px;height:8px;border-radius:50%;}
-  .whycard{border:1px solid var(--border); border-radius:11px; background:var(--surface); margin-top:12px; overflow:hidden;}
-  .whycard .wh{display:flex; align-items:center; gap:9px; padding:11px 13px; border-bottom:1px solid var(--border);}
-  .whycard .wh .ws{margin-left:auto; font-family:"JetBrains Mono",monospace; font-weight:800; font-size:15px; color:#fff; border-radius:7px; padding:2px 9px;}
-  .whycard .wrow{display:flex; justify-content:space-between; padding:6px 13px; font-size:12px; border-bottom:1px solid var(--border);}
-  .whycard .wrow:last-child{border-bottom:none;}
-  .whycard .wrow .wl{color:var(--muted);} .whycard .wrow .wv{font-family:"JetBrains Mono",monospace; font-weight:700;}
-  .drill{display:flex; flex-wrap:wrap; gap:5px; padding:10px 13px; font-size:11px; color:var(--muted);}
+  .whyover{position:absolute; top:12px; right:12px; width:270px; max-width:calc(100% - 24px); z-index:4; background:var(--surface); border:1px solid var(--border); border-radius:11px; box-shadow:0 10px 30px rgba(5,11,24,.4); overflow:hidden;}
+  @media (max-width:560px){ .whyover{position:static; width:auto; margin:10px; } }
+  .whyover .wh{display:flex; align-items:center; gap:9px; padding:10px 13px; border-bottom:1px solid var(--border);}
+  .whyover .wh b{font-family:"Fraunces",serif; font-size:14px;}
+  .whyover .wh .ws{margin-left:auto; font-family:"JetBrains Mono",monospace; font-weight:800; font-size:15px; color:#fff; border-radius:7px; padding:2px 9px;}
+  .whyover .wrow{display:flex; justify-content:space-between; padding:5px 13px; font-size:12px; border-bottom:1px solid var(--border);}
+  .whyover .wrow .wl{color:var(--muted);} .whyover .wrow .wv{font-family:"JetBrains Mono",monospace; font-weight:700;}
+  .drill{display:flex; flex-wrap:wrap; gap:5px; padding:9px 13px; font-size:10.5px; color:var(--muted); line-height:1.6;}
   .drill b{color:var(--ink);}
+  tr.detailrow:hover{background:var(--surface)!important;}
+  tr.detailrow .detail{margin:0; border-radius:0; border-left:none; border-right:none;}
 
   .detail{border:1px solid var(--accent-line); border-radius:12px; margin-top:14px; overflow:hidden;}
   .detail-head{display:flex; align-items:center; gap:12px; padding:13px 16px; background:var(--surface); border-bottom:1px solid var(--border);}
@@ -343,6 +346,16 @@
       gt:{en:'GT: by Province (WHS total)',id:'GT: per Provinsi (WHS total)'},mt:{en:'DB Reg heavy MT + Others',id:'DB Reg heavy MT + Others'},uniq:{en:'Snack Shop (no listing fee), e-Commerce',id:'Snack Shop (tanpa listing fee), e-Commerce'}}
   };
   var CAPRATE={GT:0.12, MT:0.07};
+  // Accounts per country/channel (launch detail). `load` = extra % on top of the channel load; `capF` scales capturable.
+  var ACCOUNTS={
+    Indonesia:{GT:[{k:'DP',name:'DP',load:0,capF:1},{k:'LP',name:'LP',load:1.5,capF:0.6}],
+               MT:[{k:'IDM',name:'Indomaret',load:0,capF:1},{k:'ALF',name:'Alfamart',load:0.5,capF:1},{k:'C80',name:'Club80s',load:-1,capF:0.4}]},
+    Malaysia:{GT:[{k:'TOT',name:'Total',load:0,capF:1}],
+              MT:[{k:'99SM',name:'99 Speedmart',load:0,capF:1},{k:'ECO',name:'Eco-Shop',load:0.5,capF:0.7},{k:'DIY',name:'Mr DIY',load:1,capF:0.6},{k:'MTI',name:'MTI',load:0,capF:0.8}]},
+    China:{GT:[{k:'PROV',name:'Province WHS',load:0,capF:1}],
+           MT:[{k:'DBR',name:'DB Reg',load:0,capF:1},{k:'SNK',name:'Snack Shop',load:-2,capF:0.9},{k:'ECM',name:'e-Commerce',load:-1,capF:0.7}]}
+  };
+  function accountsOf(country,channel){ return (ACCOUNTS[country]&&ACCOUNTS[country][channel])||[{k:'-',name:channel,load:0,capF:1}]; }
 
   /* ============ SCORING ENGINE (concept book) ============ */
   // weights
@@ -351,16 +364,17 @@
   var READY_W={market:0.20, product:0.20, price:0.10, channel:0.15, financial:0.15, execution:0.10, supply:0.10};
   function clamp(x,a,b){ return Math.max(a,Math.min(b,x)); }
 
-  // Evaluate one candidate: members[] (npl keys), countryName, channel 'GT'|'MT'
-  function evaluate(memberKeys, countryName, channel){
-    var co=COUNTRY[countryName], load=channel==='GT'?co.loadGT:co.loadMT;
+  // Evaluate one candidate: members[] (npl keys), countryName, channel 'GT'|'MT', account {k,name,load,capF}
+  function evaluate(memberKeys, countryName, channel, account){
+    var co=COUNTRY[countryName]; account=account||accountsOf(countryName,channel)[0];
+    var load=(channel==='GT'?co.loadGT:co.loadMT)+(account.load||0);
     var members=memberKeys.map(npl);
     var combo=members.length>1;
     // per-member realistic volume & EBT
     var agg={nsar:0, ebt:0}, flavors=[], beList=[], capList=[], anyWhite=false;
     members.forEach(function(m){
       var fl=flavor(m.nielsen); flavors.push(fl);
-      var cap = fl ? (fl.val*1e6/12)*CAPRATE[channel]*co.capF/m.dbp : null;
+      var cap = fl ? (fl.val*1e6/12)*CAPRATE[channel]*co.capF*(account.capF||1)/m.dbp : null;
       if(!fl) anyWhite=true;
       var realVol = cap!=null ? Math.min(m.fullCap, cap) : m.fullCap*0.4;
       var gpv=gpPctAt(realVol,m), ebtPct=gpv-load, nsar=realVol*m.dbp;
@@ -420,13 +434,15 @@
     else if(gates.capacity && (anyWhite || co.exec<60 || ebtPct<2)) decision='pilot';
     else decision='pilot';
 
-    return {members:members, memberKeys:memberKeys, country:countryName, channel:channel, combo:combo,
+    return {members:members, memberKeys:memberKeys, country:countryName, channel:channel, account:account, combo:combo,
       nsar:agg.nsar, ebt:agg.ebt, ebtPct:ebtPct, avgGp:avgGp, feas:feas, feasKnown:feasKnown, anyWhite:anyWhite,
       dims:d, oppBase:oppBase, oppFinal:oppFinal, risk:r, riskTotal:riskTotal, riskBand:riskBand, riskPenalty:riskPenalty,
       readiness:Math.round(readiness), prob:prob, conf:conf, decision:decision, gates:gates, load:load, repFl:repFl};
   }
-  function candidatesSingle(){ var out=[]; DATA.npls.forEach(function(m){ Object.keys(COUNTRY).forEach(function(co){ ['GT','MT'].forEach(function(ch){ out.push(evaluate([m.k],co,ch)); }); }); }); return out.sort(function(a,b){return b.oppFinal-a.oppFinal;}); }
-  function candidatesCombo(){ var out=[], ns=DATA.npls; for(var i=0;i<ns.length;i++)for(var j=i+1;j<ns.length;j++){ Object.keys(COUNTRY).forEach(function(co){ ['GT','MT'].forEach(function(ch){ out.push(evaluate([ns[i].k,ns[j].k],co,ch)); }); }); } return out.sort(function(a,b){return b.oppFinal-a.oppFinal;}); }
+  function eachContext(fn){ DATA.npls, Object.keys(COUNTRY).forEach(function(co){ ['GT','MT'].forEach(function(ch){ accountsOf(co,ch).forEach(function(ac){ fn(co,ch,ac); }); }); }); }
+  function candidatesSingle(){ var out=[]; DATA.npls.forEach(function(m){ eachContext(function(co,ch,ac){ out.push(evaluate([m.k],co,ch,ac)); }); }); return out.sort(function(a,b){return b.oppFinal-a.oppFinal;}); }
+  function candidatesCombo(){ var out=[], ns=DATA.npls; for(var i=0;i<ns.length;i++)for(var j=i+1;j<ns.length;j++){ (function(a,b){ eachContext(function(co,ch,ac){ out.push(evaluate([a.k,b.k],co,ch,ac)); }); })(ns[i],ns[j]); } return out.sort(function(a,b){return b.oppFinal-a.oppFinal;}); }
+  function areaLabel(e){ return e.country+' · '+e.channel+' · '+e.account.name; }
   function bestOppByCountry(){ var m={}; candidatesSingle().forEach(function(e){ if(m[e.country]==null||e.oppFinal>m[e.country]) m[e.country]=e.oppFinal; }); return m; }
 
   /* ============ i18n ============ */
@@ -435,8 +451,8 @@
     footBrand:'Atomic P&L — EBT = 0 is only break-even, not success. A launch must have a realistic path to positive EBT inside its capturable market.',
     n1:'Concepts', n2:'COGM', n3:'Reverse EBT', n4:'Market Share', n5:'Launch Ranking',
     p1t:'NPL Concepts', p1l:'Stage-1 concepts that passed the taste gate. Pick one to carry through every tab; add as many as you need.',
-    cogmF:'COGM/ctn', gpF:'GP full', cat:'Category', brand:'Brand', addNpl:'Add NPL', newName:'NPL name', newRm:'RM / carton', newBrand:'Brand', newCat:'Nielsen category', add:'Add', cancel:'Cancel',
-    p2t:'COGM — per SKU', p2l:'One editable column per SKU (sorted by brand). Full capacity is per SKU. Depreciation & OMC are fixed per month, so per-carton cost rises when the operating volume is below capacity.',
+    cogmF:'COGM/ctn', gpF:'GP full', cat:'Category', brand:'Brand', addNpl:'Add NPL', newName:'NPL name', newRm:'RM / carton', newBrand:'Brand', newCat:'Nielsen category', add:'Add', save:'Save', cancel:'Cancel',
+    p2t:'COGM — per SKU', p2l:'One editable row per SKU, columns are the cost components (grouped by brand). Full capacity is per SKU. Depreciation & OMC are fixed per month, so per-carton cost rises when the operating volume is below capacity.',
     sortBrand:'Sort by brand', lDepre:'Depreciation', lOmc:'OMC', lDl:'Direct Labour', lListrik:'Electricity', lGas:'Gas', lRm:'RM (seasoning)', lPm:'PM (packaging)', lTot:'COGM / carton (full)', lDbp:'DBP (base price)', lFull:'Full capacity (ctn/mo)', lGpFull:'GP % at full', lVol:'Operating volume', lCogmVol:'COGM at volume', lGpVol:'GP % at volume', fixedMo:'fixed/mo',
     p3t:'Reverse EBT → Net Sales', p3l:'Target an EBT on a country P&L. Only Net Sales, COGM and EBT move in rupiah; SM/GA hold their amount, so their ratio flexes. Listing fee, trading term and VAT (PPN) are shown for MT.',
     baseline:'Baseline', nplCogm:'NPL COGM', target:'Target EBT', custom:'Custom', breakEven:'Break-even', channel:'Channel',
@@ -457,7 +473,7 @@
     p5t:'Launch Ranking — SKU × Country', p5l:'Where each SIIP SKU should launch, scored by the concept-book method. Click a row for the full Opportunity, Probability, Risk and Confidence breakdown.',
     optSingle:'Single SKU', optCombo:'Combination (Core + Halo)',
     rkH:'#', skuH:'SKU', areaH:'Launch area', oppH:'Opportunity', probH:'Probability', riskH:'Risk', confH:'Confidence', ebtH:'EBT @ scale', callH:'Decision',
-    whyT:'Why this market', wMarket:'Best opportunity', wEbt:'Best EBT @ scale', wConf:'Confidence', wDrill:'Drill-down', dCountry:'Country', dChannel:'Channel', dRegion:'Region', dSku:'SKU',
+    whyT:'Why this market', whyC:'Why {c}?', wMktSize:'Market size', wCap:'Capturable market', wMarket:'Best opportunity', wEbt:'Expected EBT', wConf:'Confidence', wDrill:'Drill-down', dCountry:'Country', dChannel:'Channel', dAccount:'Account', dRegion:'Region', dSku:'SKU', clickRow:'Click a row to open its full scoring inside the table.',
     sliceT:'Launch area by country', cC:'Country', cG:'GT channel', cM:'MT channel', cU:'Country-unique',
     expEbt:'Expected EBT at realistic scale', nsScale:'Net Sales at scale',
     methodT:'How the score is built', oppScore:'Opportunity Score', probSucc:'Probability', riskL:'Risk', confL:'Confidence',
@@ -480,8 +496,8 @@
     footBrand:'Atomic P&L — EBT = 0 hanya break-even, bukan sukses. Launch harus punya jalur realistis ke EBT positif di dalam pasar yang dapat diraih.',
     n1:'Konsep', n2:'COGM', n3:'Reverse EBT', n4:'Market Share', n5:'Ranking Launch',
     p1t:'Konsep NPL', p1l:'Konsep Stage-1 yang lolos gate rasa. Pilih satu untuk dibawa ke semua tab; tambah sebanyak yang perlu.',
-    cogmF:'COGM/ktn', gpF:'GP penuh', cat:'Kategori', brand:'Brand', addNpl:'Tambah NPL', newName:'Nama NPL', newRm:'RM / karton', newBrand:'Brand', newCat:'Kategori Nielsen', add:'Tambah', cancel:'Batal',
-    p2t:'COGM — per SKU', p2l:'Satu kolom editable per SKU (diurutkan per brand). Kapasitas penuh per SKU. Depresiasi & OMC tetap per bulan, jadi biaya per karton naik saat volume operasi di bawah kapasitas.',
+    cogmF:'COGM/ktn', gpF:'GP penuh', cat:'Kategori', brand:'Brand', addNpl:'Tambah NPL', newName:'Nama NPL', newRm:'RM / karton', newBrand:'Brand', newCat:'Kategori Nielsen', add:'Tambah', save:'Simpan', cancel:'Batal',
+    p2t:'COGM — per SKU', p2l:'Satu baris editable per SKU, kolom = komponen biaya (dikelompokkan per brand). Kapasitas penuh per SKU. Depresiasi & OMC tetap per bulan, jadi biaya per karton naik saat volume operasi di bawah kapasitas.',
     sortBrand:'Urutkan per brand', lDepre:'Depresiasi', lOmc:'OMC', lDl:'Tenaga Kerja', lListrik:'Listrik', lGas:'Gas', lRm:'RM (bumbu)', lPm:'PM (kemasan)', lTot:'COGM / karton (penuh)', lDbp:'DBP (harga dasar)', lFull:'Kapasitas penuh (ktn/bln)', lGpFull:'GP % di penuh', lVol:'Volume operasi', lCogmVol:'COGM di volume', lGpVol:'GP % di volume', fixedMo:'tetap/bln',
     p3t:'Reverse EBT → Net Sales', p3l:'Target EBT pada P&L negara. Hanya Net Sales, COGM, EBT bergerak rupiah; SM/GA menahan nominal, rasionya bergeser. Listing fee, trading term & PPN ditampilkan untuk MT.',
     baseline:'Baseline', nplCogm:'COGM NPL', target:'Target EBT', custom:'Custom', breakEven:'Break-even', channel:'Channel',
@@ -502,7 +518,7 @@
     p5t:'Ranking Launch — SKU × Negara', p5l:'Di mana tiap SKU SIIP sebaiknya launch, dinilai dengan metode concept-book. Klik baris untuk rincian penuh Opportunity, Probability, Risk & Confidence.',
     optSingle:'SKU Satuan', optCombo:'Kombinasi (Core + Halo)',
     rkH:'#', skuH:'SKU', areaH:'Area launch', oppH:'Opportunity', probH:'Probabilitas', riskH:'Risk', confH:'Confidence', ebtH:'EBT @ skala', callH:'Keputusan',
-    whyT:'Kenapa pasar ini', wMarket:'Opportunity terbaik', wEbt:'EBT terbaik @ skala', wConf:'Confidence', wDrill:'Drill-down', dCountry:'Negara', dChannel:'Channel', dRegion:'Region', dSku:'SKU',
+    whyT:'Kenapa pasar ini', whyC:'Kenapa {c}?', wMktSize:'Ukuran pasar', wCap:'Pasar dapat diraih', wMarket:'Opportunity terbaik', wEbt:'Ekspektasi EBT', wConf:'Confidence', wDrill:'Drill-down', dCountry:'Negara', dChannel:'Channel', dAccount:'Akun', dRegion:'Region', dSku:'SKU', clickRow:'Klik baris untuk membuka rincian skor di dalam tabel.',
     sliceT:'Area launch per negara', cC:'Negara', cG:'Channel GT', cM:'Channel MT', cU:'Khusus-negara',
     expEbt:'Ekspektasi EBT di skala realistis', nsScale:'Net Sales di skala',
     methodT:'Cara skor dibangun', oppScore:'Opportunity Score', probSucc:'Probabilitas', riskL:'Risk', confL:'Confidence',
@@ -531,7 +547,8 @@
   function pctS(n){ return (n<0?'−':'+')+dec(Math.abs(n))+'%'; }
   function scoreColor(s){ return s>=70?'var(--green)':s>=50?'var(--gold)':'var(--red)'; }
 
-  var st={ page:1, sel:'nori', base:'id', revChannel:'MT', target:0.085, customT:12, sortBrand:true, rankOpt:'single', selRank:0, mapCountry:'Indonesia', addOpen:false };
+  var st={ page:1, sel:'nori', base:'id', revChannel:'MT', target:0.085, customT:12, rankOpt:'single', selRank:-1, mapCountry:'Indonesia', addOpen:false, editKey:null,
+    fees:{listPct:2.0, tradePct:3.0, ppnPct:11.0} };
   var globe=null;
 
   /* ============ NAV ============ */
@@ -546,42 +563,55 @@
   function nplPicker(){ return '<select id="nplSel">'+DATA.npls.map(function(c){ return '<option value="'+c.k+'"'+(c.k===st.sel?' selected':'')+'>'+c.emoji+' '+c.name+'</option>'; }).join('')+'</select>'; }
 
   /* ============ PAGE 1 ============ */
+  function nplForm(c){ // c=null for add
+    return '<div class="npl" style="cursor:default;gap:7px">'+
+      '<input id="aName" type="text" placeholder="'+t('newName')+'" value="'+(c?c.name.replace(/"/g,'&quot;'):'')+'">'+
+      '<select id="aBrand">'+BRANDS.map(function(b){return '<option'+(c&&c.brand===b?' selected':'')+'>'+b+'</option>';}).join('')+'</select>'+
+      '<select id="aCat">'+NIELSEN.flavors.map(function(f){return '<option value="'+f.k+'"'+(c&&c.nielsen===f.k?' selected':'')+'>'+L(f.n)+'</option>';}).join('')+'<option value=""'+(c&&!c.nielsen?' selected':'')+'>white space</option></select>'+
+      '<input id="aRm" type="number" value="'+(c?Math.round(c.cogm.rm):26000)+'" placeholder="RM">'+
+      '<div style="display:flex;gap:6px"><button class="btn" id="aSave">'+(c?t('save'):t('add'))+'</button><button class="btn ghost" id="aCancel">'+t('cancel')+'</button></div></div>';
+  }
   function page1(){
-    var cards=DATA.npls.map(function(c){ var fl=flavor(c.nielsen), gpv=gpFull(c), cgm=cogmFull(c);
+    var cards=DATA.npls.map(function(c){
+      if(st.editKey===c.k) return nplForm(c);
+      var fl=flavor(c.nielsen), gpv=gpFull(c), cgm=cogmFull(c);
       var demand=fl?(fl.chg>=10?'<span class="chip good">▲ '+pctS(fl.chg)+'</span>':fl.chg<0?'<span class="chip bad">▼ '+pctS(fl.chg)+'</span>':'<span class="chip warn">'+pctS(fl.chg)+'</span>'):'<span class="chip">white space</span>';
       var gpc=gpv>=22?'txt-green':gpv>=18?'txt-amber':'txt-red';
       return '<div class="npl'+(c.k===st.sel?' sel':'')+'" data-k="'+c.k+'">'+
-        '<div class="nh"><span class="emoji">'+c.emoji+'</span><div><div class="nm">'+c.name+'</div><div class="sku">'+c.sku+'</div></div></div>'+
+        '<div class="nh"><span class="emoji">'+c.emoji+'</span><div style="flex:1"><div class="nm">'+c.name+'</div><div class="sku">'+c.sku+'</div></div>'+
+          '<div style="display:flex;gap:4px"><button class="mini-btn" data-edit="'+c.k+'" title="edit">✎</button><button class="mini-btn" data-del="'+c.k+'" title="delete">🗑</button></div></div>'+
         '<div class="chips"><span class="chip brand">'+c.brand+'</span><span class="chip gold">'+(fl?L(fl.n):'—')+'</span>'+demand+'</div>'+
         '<div class="statrow"><div><div class="sv">'+rpShort(cgm)+'</div><div class="sl">'+t('cogmF')+'</div></div><div><div class="sv '+gpc+'">'+pct(gpv)+'</div><div class="sl">'+t('gpF')+'</div></div></div>'+
       '</div>';
     }).join('');
-    var addCard = st.addOpen ?
-      '<div class="npl" style="cursor:default;gap:7px"><input id="aName" type="text" placeholder="'+t('newName')+'">'+
-      '<select id="aBrand">'+BRANDS.map(function(b){return '<option>'+b+'</option>';}).join('')+'</select>'+
-      '<select id="aCat">'+NIELSEN.flavors.map(function(f){return '<option value="'+f.k+'">'+L(f.n)+'</option>';}).join('')+'<option value="">white space</option></select>'+
-      '<input id="aRm" type="number" value="26000" placeholder="RM">'+
-      '<div style="display:flex;gap:6px"><button class="btn" id="aAdd">'+t('add')+'</button><button class="btn ghost" id="aCancel">'+t('cancel')+'</button></div></div>'
+    var addCard = st.addOpen ? nplForm(null)
       : '<div class="npl empty" id="addSlot"><div style="font-size:24px">＋</div><div style="font-weight:700;margin-top:4px">'+t('addNpl')+'</div></div>';
     return pagehead(t('p1t'),t('p1l'))+card('🧪',t('n1'),DATA.npls.length+' SKU',null,'<div class="card-body"><div class="npl-grid">'+cards+addCard+'</div></div>',nplPicker());
   }
 
-  /* ============ PAGE 2 — COGM per-SKU horizontal matrix ============ */
+  /* ============ PAGE 2 — COGM matrix: rows = SKU, columns = components ============ */
   function page2(){
     var list=DATA.npls.slice();
     if(st.sortBrand) list.sort(function(a,b){ return BRANDS.indexOf(a.brand)-BRANDS.indexOf(b.brand) || a.name.localeCompare(b.name); });
-    var lines=[['lDepre','depreF',1],['lOmc','omcF',1],['lDl','dl',0],['lListrik','listrik',0],['lGas','gas',0],['lRm','rm',0],['lPm','pm',0]];
-    function headRow(){ return '<tr><th style="text-align:left">'+t('brand')+' / SKU</th>'+list.map(function(c){return '<th>'+c.emoji+' '+c.name+'<div style="font-size:9px;opacity:.8;font-weight:400">'+c.brand+'</div></th>';}).join('')+'</tr>'; }
-    var rows=lines.map(function(ln){ return '<tr><td class="lab">'+t(ln[0])+(ln[2]?' <span class="chip warn" style="font-size:9px">'+t('fixedMo')+'</span>':'')+'</td>'+
-      list.map(function(c){ return '<td class="num"><input type="number" data-k="'+c.k+'" data-f="'+ln[1]+'" value="'+(Math.round(c.cogm[ln[1]]*100)/100)+'" step="100"></td>'; }).join('')+'</tr>'; }).join('');
-    var sumCogm='<tr class="sum"><td class="lab">'+t('lTot')+'</td>'+list.map(function(c){return '<td class="num">'+rpFull(cogmFull(c))+'</td>';}).join('')+'</tr>';
-    var dbpRow='<tr><td class="lab">'+t('lDbp')+'</td>'+list.map(function(c){return '<td class="num"><input type="number" data-k="'+c.k+'" data-f="dbp" value="'+Math.round(c.dbp)+'" step="100"></td>';}).join('')+'</tr>';
-    var fullRow='<tr><td class="lab">'+t('lFull')+'</td>'+list.map(function(c){return '<td class="num"><input type="number" data-k="'+c.k+'" data-f="fullCap" value="'+Math.round(c.fullCap)+'" step="1000"></td>';}).join('')+'</tr>';
-    var gpFullRow='<tr class="sum"><td class="lab">'+t('lGpFull')+'</td>'+list.map(function(c){var g=gpFull(c);return '<td class="num '+(g>=22?'txt-green':g<16?'txt-red':'txt-amber')+'">'+pct(g)+'</td>';}).join('')+'</tr>';
-    var volRow='<tr><td class="lab">'+t('lVol')+'</td>'+list.map(function(c){return '<td class="num"><input type="number" data-k="'+c.k+'" data-f="vol" value="'+Math.round(c.vol)+'" step="1000"></td>';}).join('')+'</tr>';
-    var cogmVolRow='<tr><td class="lab">'+t('lCogmVol')+'</td>'+list.map(function(c){return '<td class="num">'+rpFull(cogmAt(c.vol,c))+'</td>';}).join('')+'</tr>';
-    var gpVolRow='<tr class="sum"><td class="lab">'+t('lGpVol')+'</td>'+list.map(function(c){var g=gpPctAt(c.vol,c);return '<td class="num '+(g>=22?'txt-green':g<16?'txt-red':'txt-amber')+'">'+pct(g)+'</td>';}).join('')+'</tr>';
-    var table='<div class="table-wrap"><table class="matrix"><thead>'+headRow()+'</thead><tbody>'+rows+sumCogm+dbpRow+fullRow+gpFullRow+'<tr><td class="lab" colspan="'+(list.length+1)+'" style="background:var(--surface);border:none;height:8px"></td></tr>'+volRow+cogmVolRow+gpVolRow+'</tbody></table></div>';
+    var cols=[['lDepre','depreF',1,100],['lOmc','omcF',1,100],['lDl','dl',0,100],['lListrik','listrik',0,10],['lGas','gas',0,10],['lRm','rm',0,100],['lPm','pm',0,100]];
+    var head='<tr><th style="text-align:left">'+t('brand')+' / SKU</th>'+
+      cols.map(function(cl){return '<th>'+t(cl[0])+(cl[2]?'<div style="font-size:8px;opacity:.8;font-weight:400">'+t('fixedMo')+'</div>':'')+'</th>';}).join('')+
+      '<th>'+t('lDbp')+'</th><th>'+t('lFull')+'</th><th>'+t('lTot')+'</th><th>'+t('lGpFull')+'</th><th>'+t('lVol')+'</th><th>'+t('lCogmVol')+'</th><th>'+t('lGpVol')+'</th></tr>';
+    var curBrand=null, rows='';
+    list.forEach(function(c){
+      if(st.sortBrand && c.brand!==curBrand){ curBrand=c.brand; rows+='<tr class="sum"><td class="lab" colspan="'+(cols.length+8)+'" style="text-align:left">'+c.brand+'</td></tr>'; }
+      var gpf=gpFull(c), gpv=gpPctAt(c.vol,c);
+      rows+='<tr><td class="lab">'+c.emoji+' '+c.name+'</td>'+
+        cols.map(function(cl){ return '<td class="num"><input type="number" data-k="'+c.k+'" data-f="'+cl[1]+'" value="'+(Math.round(c.cogm[cl[1]]*100)/100)+'" step="'+cl[3]+'"></td>'; }).join('')+
+        '<td class="num"><input type="number" data-k="'+c.k+'" data-f="dbp" value="'+Math.round(c.dbp)+'" step="100"></td>'+
+        '<td class="num"><input type="number" data-k="'+c.k+'" data-f="fullCap" value="'+Math.round(c.fullCap)+'" step="1000"></td>'+
+        '<td class="num" style="font-weight:700;background:var(--surface-2)">'+rpFull(cogmFull(c))+'</td>'+
+        '<td class="num '+(gpf>=22?'txt-green':gpf<16?'txt-red':'txt-amber')+'" style="font-weight:700;background:var(--surface-2)">'+pct(gpf)+'</td>'+
+        '<td class="num"><input type="number" data-k="'+c.k+'" data-f="vol" value="'+Math.round(c.vol)+'" step="1000"></td>'+
+        '<td class="num">'+rpFull(cogmAt(c.vol,c))+'</td>'+
+        '<td class="num '+(gpv>=22?'txt-green':gpv<16?'txt-red':'txt-amber')+'" style="font-weight:700">'+pct(gpv)+'</td></tr>';
+    });
+    var table='<div class="table-wrap"><table class="matrix"><thead>'+head+'</thead><tbody>'+rows+'</tbody></table></div>';
     var right='<label style="font-size:12px;display:inline-flex;gap:6px;align-items:center"><input type="checkbox" id="sortChk" '+(st.sortBrand?'checked':'')+'> '+t('sortBrand')+'</label>';
     return pagehead(t('p2t'),t('p2l'))+card('🏭',t('n2'),null,null,'<div class="card-body">'+table+srcbar('cogm')+'</div>',right);
   }
@@ -593,8 +623,8 @@
     var rc=cogmFull(c)/c.dbp, target= st.target==='custom'?st.customT/100:st.target;
     var fixedBelow=b.sm1+b.sm2+b.sm3+b.sm4+b.ga1+b.ga2+b.ga3;
     var mt=st.revChannel==='MT';
-    // MT extras as % of nsar (listing+trading), PPN pass-through shown only
-    var listPct=mt?2.0:0, tradePct=mt?3.0:0, ppnPct=11.0;
+    // MT extras as % of nsar — manual, vary by MT account. PPN is pass-through (shown, not reducing EBT).
+    var listPct=mt?st.fees.listPct:0, tradePct=mt?st.fees.tradePct:0, ppnPct=st.fees.ppnPct;
     var denom=1-rc-target-(listPct+tradePct)/100;
     var feasible=denom>0;
     var asisGross=b.nsar/0.98, asisRet=asisGross-b.nsar; // approximate 2% return
@@ -631,86 +661,102 @@
       tile(t('cogmR'),pct(rc*100),rc<=0.75?'good':rc>=0.82?'bad':'warn',c.name)+
       tile(t('decision'),'<span class="badge '+decMap[dec]+'">'+t('dec'+dec.charAt(0).toUpperCase()+dec.slice(1))+'</span>',dec==='go'?'good':dec==='nogo'?'bad':'warn',feasible?(gap<=25?t('feasEasy'):t('feasMed')):t('feasNo'))+'</div>';
     var read= feasible?'<p class="note">'+t('p3read',{name:c.name,ns:rpShort(ns),g:pctS(gap),t:pct(target*100,1)})+'</p>':'';
+    var feeRow = mt ? '<div class="selbar" style="margin-top:12px">'+
+      '<div class="fld"><label>'+t('iList')+' %</label><input type="number" id="feeList" value="'+st.fees.listPct+'" step="0.5" style="width:90px"></div>'+
+      '<div class="fld"><label>'+t('iTrade')+' %</label><input type="number" id="feeTrade" value="'+st.fees.tradePct+'" step="0.5" style="width:90px"></div>'+
+      '<div class="fld"><label>'+t('iPPN')+' %</label><input type="number" id="feePpn" value="'+st.fees.ppnPct+'" step="0.5" style="width:90px"></div>'+
+      '<span class="note" style="margin:0;align-self:center">'+(lang==='id'?'Isi manual — beda per akun MT.':'Set manually — varies per MT account.')+'</span></div>' : '';
     var body='<div class="card-body"><div class="selbar">'+
       '<div class="fld"><label>'+t('baseline')+'</label>'+baseSel+'</div><div class="fld"><label>'+t('nplCogm')+'</label>'+nplPicker()+'</div>'+
       '<div class="fld"><label>'+t('channel')+'</label>'+chSeg+'</div><div class="fld"><label>'+t('target')+'</label>'+seg+'</div></div>'+
-      tiles+'<div class="table-wrap" style="margin-top:14px"><table class="aistobe"><thead><tr><th>'+t('item')+'</th><th>'+t('asis')+'</th><th>'+t('ratio')+'</th><th class="col-tobe">'+t('tobe')+'</th><th class="col-tobe">'+t('ratio')+'</th></tr></thead><tbody>'+rows+'</tbody></table></div>'+read+
+      feeRow+tiles+'<div class="table-wrap" style="margin-top:14px"><table class="aistobe"><thead><tr><th>'+t('item')+'</th><th>'+t('asis')+'</th><th>'+t('ratio')+'</th><th class="col-tobe">'+t('tobe')+'</th><th class="col-tobe">'+t('ratio')+'</th></tr></thead><tbody>'+rows+'</tbody></table></div>'+read+
       '<div class="srcbar"><span>💡</span><span>'+t('tobeHint')+'</span></div>'+srcbar('rev')+'</div>';
     return pagehead(t('p3t'),t('p3l'))+card('🧮',t('n3'),b.name+' · '+c.name+' · '+st.revChannel,null,body);
   }
 
-  /* ============ PAGE 4 — Market Share by category ============ */
-  function page4(){
+  /* ============ PAGE 4 — Market Share grouped by brand category ============ */
+  function verdictCard(c){ var f=flavor(c.nielsen), v, reason;
+    if(!f){ v='avoid'; reason=lang==='id'?'White space — demand belum terbukti, validasi dulu (pilot).':'White space — demand unproven, validate first (pilot).'; }
+    else if(f.chg>=5 && f.cont>=2){ v='ride'; reason=lang==='id'?'Kategori tumbuh '+pctS(f.chg)+' & cukup besar ('+pct(f.cont)+' pasar) — tunggangi.':'Category growing '+pctS(f.chg)+' & sizeable ('+pct(f.cont)+' of market) — ride it.'; }
+    else if(f.chg>=0){ v='watch'; reason=lang==='id'?'Tumbuh tipis — launch selektif.':'Flat growth — launch selectively.'; }
+    else { v='avoid'; reason=lang==='id'?'Kategori menurun '+pctS(f.chg)+' — hindari kecuali ada diferensiasi kuat.':'Category declining '+pctS(f.chg)+' — avoid unless strongly differentiated.'; }
+    var vb=v==='ride'?'b-go':v==='watch'?'b-rework':'b-nogo';
+    return '<div class="npl" style="cursor:default"><div class="nh"><span class="emoji">'+c.emoji+'</span><div><div class="nm">'+c.name+'</div><div class="sku">'+(f?L(f.n)+' · '+pctS(f.chg):'white space')+'</div></div><div style="margin-left:auto"><span class="badge '+vb+'">'+t('v'+v.charAt(0).toUpperCase()+v.slice(1))+'</span></div></div><div class="why">'+reason+'</div></div>';
+  }
+  function snackMarketBlock(){
     var N=NIELSEN, fl=flavor('seaweed');
     var tiles='<div class="tiles">'+tile(t('mktSize'),rpShort(N.marketT*1e6),'hi',N.period)+tile(t('siipSh'),pct(5.2),'warn','Rp493'+t('bil'))+tile(t('siipTr'),pctS(-2.5),'bad','')+tile(t('fastest'),L(fl.n),'good',pctS(fl.chg))+'</div>';
-    // category table limited to the NPL categories (+ context top flavours), with SIIP est share
-    var catKeys={}; DATA.npls.forEach(function(c){ if(c.nielsen) catKeys[c.nielsen]=true; });
     var frows=N.flavors.map(function(f){ var m=DATA.npls.filter(function(x){return x.nielsen===f.k;})[0]; var cc=f.chg>=10?'delta-up':f.chg<0?'delta-dn':'';
-      var estShare = m? dec(5.2*(f.cont/7),1)+'%' : '—';
+      var estShare=m?dec(5.2*(f.cont/7),1)+'%':'—';
       return '<tr'+(m?' class="hl"':'')+'><td>'+L(f.n)+'</td><td class="num">'+grp(f.val)+'</td><td class="num '+cc+'">'+pctS(f.chg)+'</td><td class="num txt-muted">'+pct(f.cont)+'</td><td class="num">'+estShare+'</td><td>'+(m?m.emoji+' '+m.name:'—')+'</td></tr>'; }).join('');
     var ftab='<div class="table-wrap"><table class="dt"><thead><tr><th>'+t('flavorH')+'</th><th class="num">'+t('valH')+'</th><th class="num">'+t('chgH')+'</th><th class="num">'+t('contH')+'</th><th class="num">'+t('shareH')+'</th><th>'+t('mapH')+'</th></tr></thead><tbody>'+frows+'</tbody></table></div>';
-    // verdict per NPL (logic: category growth + size + SIIP channel fit)
-    var verdicts=DATA.npls.map(function(c){ var f=flavor(c.nielsen);
-      var v, reason;
-      if(!f){ v='avoid'; reason=lang==='id'?'White space — demand belum terbukti, validasi dulu (pilot).':'White space — demand unproven, validate first (pilot).'; }
-      else if(f.chg>=5 && f.cont>=2){ v='ride'; reason=lang==='id'?'Kategori tumbuh '+pctS(f.chg)+' & cukup besar ('+pct(f.cont)+' pasar) — tunggangi.':'Category growing '+pctS(f.chg)+' & sizeable ('+pct(f.cont)+' of market) — ride it.'; }
-      else if(f.chg>=0){ v='watch'; reason=lang==='id'?'Tumbuh tipis — launch selektif, jangan over-invest.':'Flat growth — launch selectively, do not over-invest.'; }
-      else { v='avoid'; reason=lang==='id'?'Kategori menurun '+pctS(f.chg)+' — hindari kecuali ada diferensiasi kuat.':'Category declining '+pctS(f.chg)+' — avoid unless strongly differentiated.'; }
-      var vb=v==='ride'?'b-go':v==='watch'?'b-rework':'b-nogo';
-      return '<div class="npl" style="cursor:default"><div class="nh"><span class="emoji">'+c.emoji+'</span><div><div class="nm">'+c.name+'</div><div class="sku">'+(f?L(f.n)+' · '+pctS(f.chg):'white space')+'</div></div><div style="margin-left:auto"><span class="badge '+vb+'">'+t('v'+v.charAt(0).toUpperCase()+v.slice(1))+'</span></div></div><div class="why">'+reason+'</div></div>';
-    }).join('');
     var pmax=Math.max.apply(null,N.channels.map(function(x){return x.pot;}));
     var chBars=N.channels.map(function(ch){ var w=ch.pot/pmax*100; return '<div class="barrow"><span class="bl">'+L(ch.n)+' · '+pct(ch.sh)+'</span><div class="bt"><i style="width:'+w+'%;background:var(--accent)"></i></div><span class="bv">'+ch.pot.toLocaleString()+t('bil')+'</span></div><div style="font-size:10px;color:var(--muted);margin:-2px 0 2px 170px">'+t('chGrow')+': <span class="'+(ch.gNab>=0?'txt-green':'txt-red')+'">'+pctS(ch.gNab)+'</span> / '+pctS(ch.gCat)+'</div>'; }).join('');
-    var body='<div class="card-body">'+tiles+
-      '<h4 style="font-size:12.5px;margin:16px 0 8px">'+t('nplVerdictT')+'</h4><div class="npl-grid">'+verdicts+'</div>'+
-      '<h4 style="font-size:12.5px;margin:18px 0 8px">'+t('catShareT')+'</h4>'+ftab+
-      '<h4 style="font-size:12.5px;margin:18px 0 8px">'+t('chFit')+'</h4><div class="bars">'+chBars+'</div>'+
-      '<p class="note">'+t('siipPos')+'</p><div class="srcbar"><span>📊</span><span>'+t('nielsenSrc')+'</span></div></div>';
-    return pagehead(t('p4t'),t('p4l'))+card('📈',t('n4'),N.period,null,body);
+    return tiles+'<h4 style="font-size:12px;margin:14px 0 8px">'+t('catShareT')+'</h4>'+ftab+
+      '<h4 style="font-size:12px;margin:16px 0 8px">'+t('chFit')+'</h4><div class="bars">'+chBars+'</div><p class="note">'+t('siipPos')+'</p>';
+  }
+  function page4(){
+    var out='';
+    // group NPLs by brand category, in BRANDS order
+    var byBrand={}; DATA.npls.forEach(function(c){ (byBrand[c.brand]=byBrand[c.brand]||[]).push(c); });
+    BRANDS.forEach(function(br){ if(!byBrand[br]) return;
+      var verdicts=byBrand[br].map(verdictCard).join('');
+      var marketBlock = br==='Snack' ? snackMarketBlock() : '<div class="srcbar" style="margin-top:0"><span>📊</span><span>'+(lang==='id'?'Belum ada audit Nielsen untuk kategori '+br+'. Upload data untuk mengisinya.':'No Nielsen audit loaded for '+br+' yet. Upload data to populate it.')+'</span></div>';
+      out+=card('📈', br, byBrand[br].length+' SKU', null,
+        '<div class="card-body"><h4 style="font-size:12px;margin:0 0 8px">'+t('nplVerdictT')+'</h4><div class="npl-grid" style="margin-bottom:14px">'+verdicts+'</div>'+marketBlock+'</div>');
+    });
+    out+='<div class="srcbar"><span>📎</span><span>'+t('nielsenSrc')+'</span></div>';
+    return pagehead(t('p4t'),t('p4l'))+out;
   }
 
   /* ============ PAGE 5 — Launch Ranking ============ */
   function page5(){
     var evals= st.rankOpt==='single'?candidatesSingle():candidatesCombo();
-    if(st.selRank>=evals.length) st.selRank=0;
     var decMap={go:'b-go',pilot:'b-pilot',rework:'b-rework',hold:'b-hold',nogo:'b-nogo'};
     var trs=evals.map(function(e,i){
       var sku=e.members.map(function(m){return m.emoji+' '+m.name;}).join(' + ');
-      return '<tr class="click'+(i===st.selRank?' sel':'')+'" data-i="'+i+'"><td class="num">'+(i+1)+'</td><td>'+sku+'</td>'+
-        '<td>'+COUNTRY[e.country].flag+' '+e.country+' · '+e.channel+'</td>'+
+      var row='<tr class="click'+(i===st.selRank?' sel':'')+'" data-i="'+i+'"><td class="num">'+(i+1)+'</td><td>'+sku+'</td>'+
+        '<td style="white-space:normal;min-width:150px">'+COUNTRY[e.country].flag+' '+e.country+' · '+e.channel+' · '+e.account.name+'</td>'+
         '<td class="num"><b>'+e.oppFinal+'</b></td><td class="num">'+e.prob+'%</td>'+
         '<td class="num '+(e.riskBand==='Low'?'txt-green':e.riskBand==='High'?'txt-red':'txt-amber')+'">'+t('risk'+e.riskBand)+'</td>'+
         '<td class="num '+(e.conf==='High'?'txt-green':e.conf==='Low'?'txt-red':'txt-amber')+'">'+t('conf'+e.conf)+'</td>'+
         '<td class="num '+(e.ebtPct>=0?'txt-green':'txt-red')+'">'+pct(e.ebtPct)+'</td>'+
         '<td><span class="badge '+decMap[e.decision]+'">'+t('dec'+e.decision.charAt(0).toUpperCase()+e.decision.slice(1))+'</span></td></tr>';
+      return row;
     }).join('');
-    var table='<div class="table-wrap"><table class="dt" id="rankT" style="min-width:720px"><thead><tr><th class="num">'+t('rkH')+'</th><th>'+t('skuH')+'</th><th>'+t('areaH')+'</th><th class="num">'+t('oppH')+'</th><th class="num">'+t('probH')+'</th><th class="num">'+t('riskH')+'</th><th class="num">'+t('confH')+'</th><th class="num">'+t('ebtH')+'</th><th>'+t('callH')+'</th></tr></thead><tbody>'+trs+'</tbody></table></div>';
+    var detailBlock = (st.selRank>=0 && evals[st.selRank]) ? '<div id="rankDetail">'+comboDetail(evals[st.selRank])+'</div>' : '';
+    var table='<div class="table-wrap"><table class="dt" id="rankT" style="min-width:760px"><thead><tr><th class="num">'+t('rkH')+'</th><th>'+t('skuH')+'</th><th>'+t('areaH')+'</th><th class="num">'+t('oppH')+'</th><th class="num">'+t('probH')+'</th><th class="num">'+t('riskH')+'</th><th class="num">'+t('confH')+'</th><th class="num">'+t('ebtH')+'</th><th>'+t('callH')+'</th></tr></thead><tbody>'+trs+'</tbody></table></div>';
     var opt='<div class="seg" id="optSeg"><button data-o="single" class="'+(st.rankOpt==='single'?'on':'')+'">'+t('optSingle')+'</button><button data-o="combo" class="'+(st.rankOpt==='combo'?'on':'')+'">'+t('optCombo')+'</button></div>';
-    // recommendation
     var best=evals[0], recHtml='';
     if(best && (best.decision==='go'||best.decision==='pilot') && best.ebtPct>=0){
       var sku=best.members.map(function(m){return m.name;}).join(' + ');
-      recHtml='<div class="tile hi" style="display:flex;gap:13px;align-items:center;margin-bottom:12px"><div style="font-size:26px">🏆</div><div><div class="tl">'+t('recFirst')+'</div><div style="font-weight:700;font-size:15px;font-family:Fraunces,serif;margin:2px 0">'+sku+' · '+best.country+' '+best.channel+'</div><div style="font-size:11.5px;color:var(--ink-2)">Opportunity '+best.oppFinal+'/100 · '+t('expEbt')+' '+pct(best.ebtPct)+' · '+t('conf'+best.conf)+' confidence</div></div></div>';
+      recHtml='<div class="tile hi" style="display:flex;gap:13px;align-items:center;margin-bottom:12px"><div style="font-size:26px">🏆</div><div><div class="tl">'+t('recFirst')+'</div><div style="font-weight:700;font-size:15px;font-family:Fraunces,serif;margin:2px 0">'+sku+' · '+areaLabel(best)+'</div><div style="font-size:11.5px;color:var(--ink-2)">Opportunity '+best.oppFinal+'/100 · '+t('expEbt')+' '+pct(best.ebtPct)+' · '+t('conf'+best.conf)+' confidence</div></div></div>';
     } else { recHtml='<div class="tile warn" style="margin-bottom:12px"><div class="tl">'+t('recFirst')+'</div><div style="font-size:12px;color:var(--ink-2);margin-top:4px">'+t('recNone')+'</div></div>'; }
-    var detail=comboDetail(evals[st.selRank]);
-    var map=mapBlock();
     var slice=Object.keys(COUNTRY).map(function(k){var a=COUNTRY[k];return '<tr><td>'+a.flag+' '+k+'</td><td style="white-space:normal">'+L(a.gt)+'</td><td style="white-space:normal">'+L(a.mt)+'</td><td style="white-space:normal">'+L(a.uniq)+'</td></tr>';}).join('');
     var sliceTab='<div class="table-wrap"><table class="dt" style="min-width:640px"><thead><tr><th>'+t('cC')+'</th><th>'+t('cG')+'</th><th>'+t('cM')+'</th><th>'+t('cU')+'</th></tr></thead><tbody>'+slice+'</tbody></table></div>';
-    var right='<div style="min-width:0">'+recHtml+table+detail+'</div>';
-    var body='<div class="card-body"><div class="rank-wrap"><div style="min-width:0">'+map+'</div>'+right+'</div>'+
+    var body='<div class="card-body">'+mapBlock()+
+      '<div style="margin-top:16px">'+recHtml+'<p class="note" style="margin:0 0 8px">'+t('clickRow')+'</p>'+table+detailBlock+'</div>'+
       '<h4 style="font-size:12.5px;margin:16px 0 8px">'+t('sliceT')+'</h4>'+sliceTab+srcbar('rank')+'</div>';
     return pagehead(t('p5t'),t('p5l'))+card('🌐',t('n5'),null,null,body,opt);
   }
   function mapBlock(){
-    var bestBy=bestOppByCountry(), co=COUNTRY[st.mapCountry], score=bestBy[st.mapCountry]||0;
+    var co=COUNTRY[st.mapCountry];
     var best=candidatesSingle().filter(function(e){return e.country===st.mapCountry;}).sort(function(a,b){return b.oppFinal-a.oppFinal;})[0];
+    var score=best?best.oppFinal:0;
+    var fl=best&&best.repFl;
+    var mktSize = fl? fl.val*1e6 : null;
+    var capturable = (fl&&best)? fl.val*1e6/12*CAPRATE[best.channel]*co.capF*(best.account.capF||1)*12 : null;
     var legend='<div class="map-legend"><span><i style="background:#1C8560"></i>≥70</span><span><i style="background:#B6873B"></i>50–69</span><span><i style="background:#C13A49"></i>&lt;50</span></div>';
-    var why='<div class="whycard"><div class="wh"><span style="font-size:18px">'+co.flag+'</span><b>'+st.mapCountry+'</b><span class="ws" style="background:'+scoreColor(score)+'">'+score+'</span></div>'+
-      '<div class="wrow"><span class="wl">'+t('wMarket')+'</span><span class="wv">'+(best?best.oppFinal:'—')+'/100</span></div>'+
-      '<div class="wrow"><span class="wl">'+t('wEbt')+'</span><span class="wv '+(best&&best.ebtPct>=0?'txt-green':'txt-red')+'">'+(best?pct(best.ebtPct):'—')+'</span></div>'+
-      '<div class="wrow"><span class="wl">'+t('wConf')+'</span><span class="wv">'+(best?t('conf'+best.conf):'—')+'</span></div>'+
-      '<div class="drill"><b>'+t('dCountry')+'</b> '+st.mapCountry+' › <b>'+t('dChannel')+'</b> '+(best?best.channel:'GT')+' › <b>'+t('dSku')+'</b> '+(best?best.members[0].name:'—')+'</div></div>';
-    return '<div id="mapBox">'+legend+'</div>'+why;
+    function wrow(l,v,cls){ return '<div class="wrow"><span class="wl">'+l+'</span><span class="wv '+(cls||'')+'">'+v+'</span></div>'; }
+    var why='<div class="whyover"><div class="wh"><span style="font-size:18px">'+co.flag+'</span><b>'+t('whyC',{c:st.mapCountry})+'</b><span class="ws" style="background:'+scoreColor(score)+'">'+score+'</span></div>'+
+      wrow(t('wMktSize'), mktSize?rpShort(mktSize):'—')+
+      wrow(t('wCap'), capturable?rpShort(capturable):'—')+
+      wrow(t('wEbt'), best?pct(best.ebtPct):'—', best&&best.ebtPct>=0?'txt-green':'txt-red')+
+      wrow(t('probSucc'), best?best.prob+'%':'—')+
+      wrow(t('riskL'), best?t('risk'+best.riskBand):'—', best?(best.riskBand==='Low'?'txt-green':best.riskBand==='High'?'txt-red':'txt-amber'):'')+
+      wrow(t('confL'), best?t('conf'+best.conf):'—')+
+      '<div class="drill"><b>'+t('dCountry')+'</b> '+st.mapCountry+' › <b>'+t('dChannel')+'</b> '+(best?best.channel:'GT')+' › <b>'+t('dAccount')+'</b> '+(best?best.account.name:'—')+' › <b>'+t('dSku')+'</b> '+(best?best.members[0].name:'—')+'</div></div>';
+    return '<div id="mapBox">'+legend+why+'</div>';
   }
   function comboDetail(e){
     if(!e) return '';
@@ -727,7 +773,7 @@
     var drvName=t('r'+drv[0].charAt(0).toUpperCase()+drv[0].slice(1));
     var risk=e.riskBand==='Low'?'txt-green':e.riskBand==='Medium'?'txt-amber':'txt-red';
     var conf=e.conf==='High'?'txt-green':e.conf==='Medium'?'txt-amber':'txt-red';
-    return '<div class="detail"><div class="detail-head"><span class="de">'+e.members[0].emoji+'</span><div><h4>'+sku+' — '+e.country+' '+e.channel+'</h4><div class="dsub">'+(e.repFl?L(e.repFl.n)+' '+pctS(e.repFl.chg):'white space')+' · '+t('nsScale')+' '+rpShort(e.nsar)+'</div></div><div class="dcall"><span class="badge '+decMap[e.decision]+'" style="font-size:12px;padding:4px 12px">'+t('dec'+e.decision.charAt(0).toUpperCase()+e.decision.slice(1))+'</span></div></div>'+
+    return '<div class="detail"><div class="detail-head"><span class="de">'+e.members[0].emoji+'</span><div><h4>'+sku+' — '+areaLabel(e)+'</h4><div class="dsub">'+(e.repFl?L(e.repFl.n)+' '+pctS(e.repFl.chg):'white space')+' · '+t('nsScale')+' '+rpShort(e.nsar)+'</div></div><div class="dcall"><span class="badge '+decMap[e.decision]+'" style="font-size:12px;padding:4px 12px">'+t('dec'+e.decision.charAt(0).toUpperCase()+e.decision.slice(1))+'</span></div></div>'+
       '<div class="detail-body"><div class="kpi4">'+
         '<div class="kpi"><div class="kv">'+e.oppFinal+'<span style="font-size:11px;color:var(--muted)">/100</span></div><div class="kl">'+t('oppScore')+'</div></div>'+
         '<div class="kpi"><div class="kv">'+e.prob+'%</div><div class="kl">'+t('probSucc')+'</div></div>'+
@@ -771,11 +817,12 @@
     }catch(e){ mapFallback(el,markers); }
   }
   function mapFallback(el,markers){
-    var pts={Indonesia:[210,175],Malaysia:[183,140],China:[220,80]};
-    el.innerHTML=(el.innerHTML.indexOf('map-legend')>=0?el.querySelector('.map-legend').outerHTML:'')+
-      '<svg viewBox="0 0 400 300" style="width:100%;height:100%"><defs><radialGradient id="mg" cx="36%" cy="30%" r="75%"><stop offset="0%" stop-color="#2b5e9e"/><stop offset="60%" stop-color="#143a66"/><stop offset="100%" stop-color="#0a1f38"/></radialGradient></defs>'+
-      '<circle cx="200" cy="150" r="125" fill="url(#mg)" stroke="#6aa0e0" stroke-opacity=".35"/>'+
-      markers.map(function(m){var p=pts[m.name];var col=scoreColor(m.score);return '<g style="cursor:pointer" class="mk" data-c="'+m.name+'"><circle cx="'+p[0]+'" cy="'+p[1]+'" r="6" fill="'+col+'"/><text x="'+(p[0]+10)+'" y="'+(p[1]+4)+'" font-size="11" fill="#dce8f8">'+m.flag+' '+m.name+' '+m.score+'</text></g>';}).join('')+'</svg>';
+    var pts={Indonesia:[320,205],Malaysia:[270,160],China:[340,80]};
+    var svg='<svg viewBox="0 0 640 300" preserveAspectRatio="xMidYMid slice" style="position:absolute;inset:0;width:100%;height:100%;z-index:1"><defs><radialGradient id="mg" cx="40%" cy="30%" r="80%"><stop offset="0%" stop-color="#1c4472"/><stop offset="60%" stop-color="#113258"/><stop offset="100%" stop-color="#081a30"/></radialGradient></defs>'+
+      '<rect width="640" height="300" fill="url(#mg)"/>'+
+      markers.map(function(m){var p=pts[m.name];var col=scoreColor(m.score);return '<g style="cursor:pointer" class="mk" data-c="'+m.name+'"><circle cx="'+p[0]+'" cy="'+p[1]+'" r="20" fill="'+col+'" opacity=".2"/><circle cx="'+p[0]+'" cy="'+p[1]+'" r="7" fill="'+col+'"/><text x="'+p[0]+'" y="'+(p[1]-14)+'" font-size="13" fill="#fff" text-anchor="middle" font-weight="700">'+m.flag+' '+m.name+' '+m.score+'</text></g>';}).join('')+'</svg>';
+    var old=el.querySelector('svg.mapfb'); if(old) old.remove();
+    el.insertAdjacentHTML('afterbegin', svg.replace('<svg ','<svg class="mapfb" '));
     el.querySelectorAll('.mk').forEach(function(g){ g.addEventListener('click',function(){ st.mapCountry=g.getAttribute('data-c'); render(); }); });
   }
 
@@ -833,12 +880,16 @@
     if(st.page===5) setTimeout(initGlobe,30);
   }
   function wire(){
-    document.querySelectorAll('.npl[data-k]').forEach(function(el){ el.addEventListener('click',function(){ st.sel=el.getAttribute('data-k'); render(); }); });
-    var add=document.getElementById('addSlot'); if(add) add.addEventListener('click',function(){ st.addOpen=true; render(); });
-    var aAdd=document.getElementById('aAdd'); if(aAdd) aAdd.addEventListener('click',function(){ var base=npl('nori').cogm;
-      DATA.npls.push({k:'npl'+Date.now(), name:(document.getElementById('aName').value||'New NPL').trim(), sku:'3.5g', emoji:'🆕', brand:document.getElementById('aBrand').value, nielsen:document.getElementById('aCat').value, fullCap:95256, dbp:94734.973, vol:95256, cogm:{depreF:base.depreF,omcF:base.omcF,dl:base.dl,listrik:base.listrik,gas:base.gas,rm:+document.getElementById('aRm').value||26000,pm:base.pm}});
-      st.addOpen=false; saveData(); render(); });
-    var aC=document.getElementById('aCancel'); if(aC) aC.addEventListener('click',function(){ st.addOpen=false; render(); });
+    document.querySelectorAll('.npl[data-k]').forEach(function(el){ el.addEventListener('click',function(ev){ if(ev.target.closest('.mini-btn'))return; st.sel=el.getAttribute('data-k'); render(); }); });
+    document.querySelectorAll('[data-edit]').forEach(function(b){ b.addEventListener('click',function(ev){ ev.stopPropagation(); st.editKey=b.getAttribute('data-edit'); st.addOpen=false; render(); }); });
+    document.querySelectorAll('[data-del]').forEach(function(b){ b.addEventListener('click',function(ev){ ev.stopPropagation(); var k=b.getAttribute('data-del'); if(DATA.npls.length<=1)return; DATA.npls=DATA.npls.filter(function(x){return x.k!==k;}); if(st.sel===k)st.sel=DATA.npls[0].k; saveData(); render(); }); });
+    var add=document.getElementById('addSlot'); if(add) add.addEventListener('click',function(){ st.addOpen=true; st.editKey=null; render(); });
+    var aSave=document.getElementById('aSave'); if(aSave) aSave.addEventListener('click',function(){
+      var name=(document.getElementById('aName').value||'New NPL').trim(), brand=document.getElementById('aBrand').value, cat=document.getElementById('aCat').value, rm=+document.getElementById('aRm').value||26000;
+      if(st.editKey){ var c=npl(st.editKey); c.name=name; c.brand=brand; c.nielsen=cat; c.cogm.rm=rm; st.editKey=null; }
+      else { var base=npl(DATA.npls[0].k).cogm; DATA.npls.push({k:'npl'+Date.now(), name:name, sku:'3.5g', emoji:'🆕', brand:brand, nielsen:cat, fullCap:95256, dbp:94734.973, vol:95256, cogm:{depreF:base.depreF,omcF:base.omcF,dl:base.dl,listrik:base.listrik,gas:base.gas,rm:rm,pm:base.pm}}); st.addOpen=false; }
+      saveData(); render(); });
+    var aC=document.getElementById('aCancel'); if(aC) aC.addEventListener('click',function(){ st.addOpen=false; st.editKey=null; render(); });
     var sel=document.getElementById('nplSel'); if(sel) sel.addEventListener('change',function(){ st.sel=sel.value; render(); });
     // cogm matrix
     document.querySelectorAll('.matrix input[data-k]').forEach(function(inp){ inp.addEventListener('change',function(){ var c=npl(inp.getAttribute('data-k')), f=inp.getAttribute('data-f'), v=+inp.value||0;
@@ -849,9 +900,12 @@
     var chS=document.getElementById('chSeg'); if(chS) chS.querySelectorAll('button').forEach(function(b){ b.addEventListener('click',function(){ st.revChannel=b.getAttribute('data-c'); render(); }); });
     var tg=document.getElementById('tgtSeg'); if(tg) tg.querySelectorAll('button').forEach(function(b){ b.addEventListener('click',function(){ var v=b.getAttribute('data-tv'); st.target=v==='custom'?'custom':parseFloat(v); render(); }); });
     var ci=document.getElementById('customIn'); if(ci) ci.addEventListener('change',function(){ st.customT=+ci.value||10; render(); });
+    var fl1=document.getElementById('feeList'); if(fl1) fl1.addEventListener('change',function(){ st.fees.listPct=+fl1.value||0; render(); });
+    var ft1=document.getElementById('feeTrade'); if(ft1) ft1.addEventListener('change',function(){ st.fees.tradePct=+ft1.value||0; render(); });
+    var fp1=document.getElementById('feePpn'); if(fp1) fp1.addEventListener('change',function(){ st.fees.ppnPct=+fp1.value||0; render(); });
     // rank
-    var opt=document.getElementById('optSeg'); if(opt) opt.querySelectorAll('button').forEach(function(b){ b.addEventListener('click',function(){ st.rankOpt=b.getAttribute('data-o'); st.selRank=0; render(); }); });
-    var rt=document.getElementById('rankT'); if(rt) rt.querySelectorAll('tbody tr').forEach(function(tr){ tr.addEventListener('click',function(){ st.selRank=+tr.getAttribute('data-i'); render(); }); });
+    var opt=document.getElementById('optSeg'); if(opt) opt.querySelectorAll('button').forEach(function(b){ b.addEventListener('click',function(){ st.rankOpt=b.getAttribute('data-o'); st.selRank=-1; render(); }); });
+    var rt=document.getElementById('rankT'); if(rt) rt.querySelectorAll('tbody tr.click').forEach(function(tr){ tr.addEventListener('click',function(){ var i=+tr.getAttribute('data-i'); st.selRank = st.selRank===i ? -1 : i; render(); var d=document.getElementById('rankDetail'); if(d) d.scrollIntoView({behavior:'smooth',block:'nearest'}); }); });
   }
 
   /* ============ theme + lang + data btn ============ */
