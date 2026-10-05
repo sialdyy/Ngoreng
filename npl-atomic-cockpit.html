@@ -3,25 +3,25 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>NPL Atomic Launch Engine</title>
-<meta name="description" content="Atomic P&L decision engine for SIIP new-product launches: editable COGM, as-is/to-be reverse EBT, Nielsen market share with a world map, and an SKU-by-area launch ranking with full scoring. Data is uploadable and persists in the browser.">
+<title>NPL Launch Decision Engine</title>
+<meta name="description" content="End-to-end NPL launch decision engine for SIIP: concept register, per-SKU COGM, as-is/to-be reverse EBT, category market share, and a scored SKU-by-country launch ranking with full Opportunity, Probability, Risk and Confidence breakdowns. Data is uploadable and persists in the browser.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/globe.gl@2.34.4/dist/globe.gl.min.js"></script>
 <style>
-  /* identity: executive navy + warm paper; Fraunces display, Inter body, JetBrains data. minimal motion. */
+  /* executive navy + warm paper. Fraunces headings, Inter body (formal, readable), JetBrains data. minimal motion. */
   :root{
     --navy:#122B46; --navy-2:#1C3D5E; --accent:#2F6BD8; --accent-soft:#EAF1FC; --accent-line:#C6DAF6;
     --gold:#B6873B; --gold-soft:#FAF3E6; --gold-line:#ECDBB8;
     --green:#1C8560; --green-soft:#E7F5EF; --green-line:#C2E6D5;
     --amber:#B0781C; --amber-soft:#FBF2E0; --amber-line:#EFDCB2;
     --red:#C13A49; --red-soft:#FBEAEC; --red-line:#F1C6CB;
-    --bg:#F5F6F4; --surface:#FFFFFF; --surface-2:#F0F1EE; --paper:#FBFAF7;
-    --ink:#1A2230; --ink-2:#44506A; --muted:#6B7488; --border:#E0E2DD; --border-2:#D3D6CF;
+    --bg:#F4F5F3; --surface:#FFFFFF; --surface-2:#EFF0ED; --paper:#FBFAF7;
+    --ink:#182030; --ink-2:#434F67; --muted:#697183; --border:#E1E3DE; --border-2:#D2D5CE;
     --shadow:0 1px 2px rgba(18,43,70,.05), 0 2px 10px rgba(18,43,70,.06);
-    --maxw:1200px; --radius:12px;
+    --maxw:1220px; --radius:12px;
     color-scheme: light;
   }
   @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
@@ -48,69 +48,66 @@
   }
   *{box-sizing:border-box;}
   html,body{margin:0;padding:0;}
-  body{background:var(--bg); color:var(--ink); font-family:"Inter",-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; font-size:13.5px; line-height:1.55; -webkit-font-smoothing:antialiased;}
+  body{background:var(--bg); color:var(--ink); font-family:"Inter",-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; font-size:14px; line-height:1.6; -webkit-font-smoothing:antialiased;}
   h1,h2,h3,h4{margin:0; color:var(--ink); letter-spacing:-.01em;}
   h1,h2{font-family:"Fraunces","Georgia",serif; font-weight:600;}
   h3,h4{font-family:"Inter",sans-serif; font-weight:700;}
   .mono{font-family:"JetBrains Mono",monospace; font-variant-numeric:tabular-nums;}
   p{margin:0;} ul,ol{margin:0;padding:0;list-style:none;} button{font-family:inherit;cursor:pointer;}
   :focus-visible{outline:2px solid var(--accent); outline-offset:2px; border-radius:4px;}
-  .shell{max-width:var(--maxw); margin:0 auto; padding-left:22px; padding-right:22px;}
+  .shell{max-width:var(--maxw); margin:0 auto; padding-left:24px; padding-right:24px;}
   @media (max-width:640px){ .shell{padding-left:14px; padding-right:14px;} }
 
   .topbar{background:var(--navy); color:#fff;}
-  .topbar-inner{max-width:var(--maxw); margin:0 auto; padding:14px 22px; display:flex; align-items:center; gap:16px; flex-wrap:wrap;}
+  .topbar-inner{max-width:var(--maxw); margin:0 auto; padding:14px 24px; display:flex; align-items:center; gap:16px; flex-wrap:wrap;}
   .brand-mark{display:flex; align-items:center; gap:11px;}
   .brand-logo{width:34px;height:34px;border-radius:8px; background:var(--gold); display:flex;align-items:center;justify-content:center; font-family:"Fraunces",serif; font-weight:700; font-size:18px; color:#fff; flex:none;}
   .brand-title{font-family:"Fraunces",serif; font-weight:600; font-size:18px; color:#fff; display:block; line-height:1.15;}
   .brand-sub{font-size:11px; color:#AFC0DA; display:block;}
   .top-right{margin-left:auto; display:flex; align-items:center; gap:8px; flex-wrap:wrap;}
-  .icon-btn{display:inline-flex; align-items:center; gap:6px; background:rgba(255,255,255,.1); color:#fff; border:1px solid rgba(255,255,255,.2); border-radius:8px; padding:6px 11px; font-size:12px; font-weight:600;}
+  .icon-btn{display:inline-flex; align-items:center; gap:6px; background:rgba(255,255,255,.1); color:#fff; border:1px solid rgba(255,255,255,.2); border-radius:8px; padding:7px 11px; font-size:12px; font-weight:600;}
   .icon-btn:hover{background:rgba(255,255,255,.18);}
+  .icon-btn.data{background:var(--gold); border-color:var(--gold);}
 
   .rail{background:var(--surface); border-bottom:1px solid var(--border); position:sticky; top:env(safe-area-inset-top,0px); z-index:30;}
-  .rail-inner{max-width:var(--maxw); margin:0 auto; padding:7px 22px; display:flex; align-items:center; gap:4px; flex-wrap:wrap;}
-  .nav{display:flex; align-items:center; gap:2px; flex-wrap:wrap;}
-  .nav button{display:inline-flex; align-items:center; gap:7px; padding:7px 12px; border-radius:8px; color:var(--muted); font-weight:600; font-size:12.5px; background:transparent; border:1px solid transparent;}
-  .nav button .sn{width:19px;height:19px;border-radius:5px; background:var(--surface-2); color:var(--muted); display:flex;align-items:center;justify-content:center; font-size:10.5px; font-weight:700; border:1px solid var(--border); font-family:"JetBrains Mono",monospace;}
+  .rail-inner{max-width:var(--maxw); margin:0 auto; padding:7px 24px; display:flex; align-items:center; gap:3px; flex-wrap:wrap;}
+  .nav button{display:inline-flex; align-items:center; gap:8px; padding:8px 13px; border-radius:8px; color:var(--muted); font-weight:600; font-size:13px; background:transparent; border:1px solid transparent;}
+  .nav button .sn{width:20px;height:20px;border-radius:5px; background:var(--surface-2); color:var(--muted); display:flex;align-items:center;justify-content:center; font-size:11px; font-weight:700; border:1px solid var(--border); font-family:"JetBrains Mono",monospace;}
   .nav button:hover{color:var(--ink); background:var(--surface-2);}
   .nav button.active{color:var(--ink); background:var(--accent-soft); border-color:var(--accent-line);}
   .nav button.active .sn{background:var(--accent); color:#fff; border-color:var(--accent);}
-  .nav .dataBtn{margin-left:6px; color:var(--muted);}
-  .nav .dataBtn.active{color:var(--gold); background:var(--gold-soft); border-color:var(--gold-line);}
 
-  main{padding:18px 0 46px;}
-  .pagehead{margin-bottom:14px;}
-  .pagehead h1{font-size:22px;}
-  .pagehead .lead{font-size:12.5px; color:var(--muted); margin-top:2px; max-width:80ch;}
+  main{padding:20px 0 48px;}
+  .pagehead{margin-bottom:16px;}
+  .pagehead h1{font-size:23px;}
+  .pagehead .lead{font-size:13px; color:var(--muted); margin-top:3px; max-width:82ch;}
 
-  .card{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow); margin-bottom:16px; overflow:hidden;}
+  .card{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow); margin-bottom:18px; overflow:hidden;}
   .card-head{display:flex; align-items:center; gap:10px; padding:13px 16px; border-bottom:1px solid var(--border);}
   .card-head .ico{width:28px;height:28px;border-radius:7px; background:var(--accent-soft); color:var(--accent); display:flex;align-items:center;justify-content:center; font-size:14px; flex:none;}
-  .card-head h3{font-size:14px; color:var(--ink);}
-  .card-head .hsub{font-size:11px; color:var(--muted);}
+  .card-head h3{font-size:14.5px;}
+  .card-head .hsub{font-size:11.5px; color:var(--muted);}
   .card-head .right{margin-left:auto; display:flex; gap:8px; align-items:center; flex-wrap:wrap;}
   .card-body{padding:16px;}
 
-  .note-strip{display:flex; gap:9px; padding:10px 16px; background:var(--paper); border-bottom:1px solid var(--border); font-size:11.5px; color:var(--ink-2); line-height:1.55;}
+  .note-strip{display:flex; gap:9px; padding:11px 16px; background:var(--paper); border-bottom:1px solid var(--border); font-size:12px; color:var(--ink-2); line-height:1.6;}
   .note-strip b{color:var(--ink);}
 
   .selbar{display:flex; flex-wrap:wrap; gap:14px; align-items:flex-end;}
   .fld{display:flex; flex-direction:column; gap:4px; min-width:130px;}
-  .fld label{font-size:10.5px; color:var(--muted); font-weight:700; text-transform:uppercase; letter-spacing:.04em;}
+  .fld label{font-size:10.5px; color:var(--muted); font-weight:700; text-transform:uppercase; letter-spacing:.05em;}
   select, input[type=number], input[type=text]{font-family:inherit; font-size:13px; padding:8px 10px; border:1px solid var(--border-2); border-radius:8px; background:var(--surface); color:var(--ink); min-width:0;}
-  input[type=number]{font-family:"JetBrains Mono",monospace; text-align:right; width:118px;}
+  input[type=number]{font-family:"JetBrains Mono",monospace; text-align:right;}
   input[type=range]{accent-color:var(--accent); width:100%;}
-  .seg{display:inline-flex; background:var(--surface-2); border:1px solid var(--border); border-radius:8px; padding:3px; gap:2px; flex-wrap:wrap;}
+  .seg{display:inline-flex; background:var(--surface-2); border:1px solid var(--border); border-radius:8px; padding:3px; gap:2px; flex-wrap:wrap; align-items:center;}
   .seg button{border:none; background:transparent; color:var(--ink-2); font-weight:700; font-size:12px; padding:6px 12px; border-radius:6px;}
   .seg button.on{background:var(--accent); color:#fff;}
-  .slider-head{display:flex; justify-content:space-between; font-size:11px; color:var(--muted); font-weight:700; margin-bottom:4px;}
-  .slider-head b{color:var(--ink); font-family:"JetBrains Mono",monospace;}
+  .seg input[type=number]{width:72px; margin-left:4px; padding:5px 7px;}
   .btn{display:inline-flex; align-items:center; gap:6px; background:var(--accent); color:#fff; border:none; border-radius:8px; padding:8px 13px; font-size:12.5px; font-weight:600;}
   .btn.ghost{background:var(--surface-2); color:var(--ink-2); border:1px solid var(--border);}
   .btn:hover{opacity:.92;}
 
-  .tiles{display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:10px;}
+  .tiles{display:grid; grid-template-columns:repeat(auto-fit,minmax(132px,1fr)); gap:11px;}
   .tile{background:var(--paper); border:1px solid var(--border); border-radius:10px; padding:11px 12px;}
   .tile .tl{font-size:10px; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); font-weight:700;}
   .tile .tv{font-weight:700; font-size:18px; font-family:"JetBrains Mono",monospace; margin-top:4px;}
@@ -120,11 +117,11 @@
   .tile.bad{background:var(--red-soft); border-color:var(--red-line);}
   .tile.warn{background:var(--amber-soft); border-color:var(--amber-line);}
 
-  .npl-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(248px,1fr)); gap:12px;}
+  .npl-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(250px,1fr)); gap:13px;}
   .npl{border:1px solid var(--border); border-radius:11px; background:var(--surface); padding:13px; cursor:pointer; display:flex; flex-direction:column; gap:8px; min-width:0;}
   .npl:hover{border-color:var(--accent-line);}
   .npl.sel{border-color:var(--accent); box-shadow:inset 0 0 0 1px var(--accent);}
-  .npl.empty{border-style:dashed; background:var(--paper); align-items:center; justify-content:center; text-align:center; color:var(--muted); min-height:118px;}
+  .npl.empty{border-style:dashed; background:var(--paper); align-items:center; justify-content:center; text-align:center; color:var(--muted); min-height:120px;}
   .npl .nh{display:flex; align-items:center; gap:10px;}
   .npl .emoji{width:38px;height:38px;border-radius:9px; background:var(--gold-soft); display:flex;align-items:center;justify-content:center; font-size:20px; flex:none;}
   .npl .nm{font-weight:700; font-size:14px;}
@@ -140,7 +137,8 @@
   .chip.warn{background:var(--amber-soft); border-color:var(--amber-line); color:var(--amber);}
   .chip.bad{background:var(--red-soft); border-color:var(--red-line); color:var(--red);}
   .chip.gold{background:var(--gold-soft); border-color:var(--gold-line); color:var(--gold);}
-  .npl .why{font-size:11.5px; color:var(--ink-2); line-height:1.5;}
+  .chip.brand{background:var(--navy); border-color:var(--navy); color:#fff;}
+  .npl .why{font-size:11.5px; color:var(--ink-2); line-height:1.55;}
 
   .table-wrap{overflow-x:auto;}
   table.dt{width:100%; border-collapse:collapse; font-size:12.5px; min-width:540px;}
@@ -152,84 +150,105 @@
   table.dt tbody tr.sel{background:var(--accent-soft); box-shadow:inset 3px 0 0 var(--accent);}
   table.dt tr.grp td{font-weight:700; background:var(--surface-2);}
   table.dt tr.hl td{background:var(--gold-soft);}
-  table.dt td input[type=number]{width:104px; padding:5px 7px;}
+  table.dt td input{width:98px; padding:5px 7px; font-size:12px;}
   .delta-up{color:var(--green); font-weight:700;} .delta-dn{color:var(--red); font-weight:700;}
   .badge{display:inline-block; font-size:10px; font-weight:800; padding:2px 10px; border-radius:999px; border:1px solid;}
   .b-go{background:var(--green-soft); border-color:var(--green-line); color:var(--green);}
   .b-pilot{background:var(--accent-soft); border-color:var(--accent-line); color:var(--accent);}
-  .b-rework{background:var(--amber-soft); border-color:var(--amber-line); color:var(--amber);}
-  .b-hold{background:var(--red-soft); border-color:var(--red-line); color:var(--red);}
+  .b-rework,.b-hold{background:var(--amber-soft); border-color:var(--amber-line); color:var(--amber);}
+  .b-nogo{background:var(--red-soft); border-color:var(--red-line); color:var(--red);}
+
+  /* horizontal COGM matrix */
+  table.matrix{border-collapse:collapse; font-size:12.5px;}
+  table.matrix th,table.matrix td{border:1px solid var(--border); padding:7px 10px; white-space:nowrap;}
+  table.matrix thead th{background:var(--navy); color:#fff; font-size:11px; font-weight:700; text-align:center;}
+  table.matrix td.lab{text-align:left; color:var(--ink-2); background:var(--paper); font-weight:600; position:sticky; left:0;}
+  table.matrix td.num{text-align:right; font-family:"JetBrains Mono",monospace;}
+  table.matrix tr.sum td{font-weight:700; background:var(--surface-2);}
+  table.matrix tr.sum td.lab{background:var(--surface-2);}
+  table.matrix input{width:92px; padding:4px 6px; font-size:12px; text-align:right;}
 
   .aistobe{width:100%; border-collapse:collapse; font-size:12.5px;}
-  .aistobe th,.aistobe td{padding:8px 11px; border-bottom:1px solid var(--border); white-space:nowrap;}
+  .aistobe th,.aistobe td{padding:7px 11px; border-bottom:1px solid var(--border); white-space:nowrap;}
   .aistobe th{font-size:10px; text-transform:uppercase; color:var(--muted); font-weight:700; text-align:right;}
   .aistobe th:first-child{text-align:left;}
   .aistobe td.lab{text-align:left; color:var(--ink-2);}
+  .aistobe td.sub{padding-left:24px; color:var(--muted); font-size:11.5px;}
   .aistobe td.num{text-align:right; font-family:"JetBrains Mono",monospace;}
   .aistobe .col-tobe{background:var(--accent-soft);}
   .aistobe tr.move td{font-weight:700;} .aistobe tr.move .col-tobe{color:var(--accent);}
   .aistobe tr.ebt td{font-weight:800; background:var(--gold-soft);}
-  .aistobe tr.gp td{font-weight:700;}
-
-  .capmeter{height:26px; border-radius:7px; background:var(--surface-2); border:1px solid var(--border); position:relative; overflow:hidden;}
-  .capmeter .fill{position:absolute; top:0; bottom:0; left:0;}
-  .capmeter .mk{position:absolute; top:-3px; bottom:-3px; width:2px; background:var(--ink); opacity:.45;}
-  .capmeter .mk span{position:absolute; top:-14px; left:50%; transform:translateX(-50%); font-size:9px; color:var(--muted); white-space:nowrap; font-weight:700;}
+  .aistobe tr.gp td{font-weight:700; background:var(--paper);}
 
   .legend{display:flex; gap:14px; flex-wrap:wrap; font-size:11px; color:var(--muted); margin-top:8px;}
   .legend span{display:inline-flex; align-items:center; gap:6px;}
   .legend i{width:10px;height:10px;border-radius:3px; display:inline-block;}
   .bars{display:flex; flex-direction:column; gap:6px;}
   .barrow{display:flex; align-items:center; gap:10px; font-size:12px;}
-  .barrow .bl{width:150px; color:var(--ink-2); flex:none; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
-  .barrow .bt{flex:1; background:var(--surface-2); border-radius:5px; height:18px; overflow:hidden; min-width:60px;}
+  .barrow .bl{width:160px; color:var(--ink-2); flex:none; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .barrow .bt{flex:1; background:var(--surface-2); border-radius:5px; height:18px; overflow:hidden; min-width:50px;}
   .barrow .bt i{display:block; height:100%;}
   .barrow .bv{width:66px; text-align:right; font-family:"JetBrains Mono",monospace; flex:none;}
 
-  .reasons{display:flex; flex-direction:column; gap:6px;}
-  .ri{display:flex; gap:8px; font-size:12px; color:var(--ink-2); align-items:flex-start;}
+  .reasons{display:flex; flex-direction:column; gap:7px;}
+  .ri{display:flex; gap:8px; font-size:12.5px; color:var(--ink-2); align-items:flex-start; line-height:1.5;}
   .ri .ok{color:var(--green); font-weight:800;} .ri .no{color:var(--red); font-weight:800;} .ri .wn{color:var(--amber); font-weight:800;}
-  .note{font-size:11px; color:var(--muted); line-height:1.6; margin-top:10px;}
-  .srcbar{display:flex; gap:9px; align-items:flex-start; font-size:11px; color:var(--muted); background:var(--paper); border:1px dashed var(--border-2); border-radius:9px; padding:9px 12px; margin-top:12px; line-height:1.55;}
+  .note{font-size:11.5px; color:var(--muted); line-height:1.6; margin-top:10px;}
+  .srcbar{display:flex; gap:9px; align-items:flex-start; font-size:11px; color:var(--muted); background:var(--paper); border:1px dashed var(--border-2); border-radius:9px; padding:10px 12px; margin-top:14px; line-height:1.6;}
   .grid2{display:grid; grid-template-columns:1fr 1fr; gap:16px;}
   @media (max-width:820px){ .grid2{grid-template-columns:1fr;} }
   .txt-green{color:var(--green);} .txt-amber{color:var(--amber);} .txt-red{color:var(--red);} .txt-muted{color:var(--muted);} .txt-accent{color:var(--accent);}
-  .foot{max-width:var(--maxw); margin:6px auto 0; padding:14px 22px 34px; color:var(--muted); font-size:11px;}
+  .foot{max-width:var(--maxw); margin:6px auto 0; padding:16px 24px 34px; color:var(--muted); font-size:11px;}
   svg{display:block; max-width:100%;}
 
-  /* globe + market layout */
-  .mkt-wrap{display:grid; grid-template-columns:380px 1fr; gap:18px; align-items:start;}
-  @media (max-width:860px){ .mkt-wrap{grid-template-columns:1fr;} }
-  #globeBox{height:360px; border-radius:12px; overflow:hidden; background:radial-gradient(130% 130% at 30% 20%, #16365e 0%, #0c203a 55%, #081627 100%); border:1px solid var(--border); position:relative;}
-  .globe-cap{position:absolute; left:12px; bottom:10px; color:#cfe0f5; font-size:11px; z-index:2;}
-  .cmb{display:flex; gap:10px; align-items:center; padding:10px 12px; border:1px solid var(--border); border-radius:10px; background:var(--surface); margin-bottom:9px; cursor:pointer;}
-  .cmb:hover{border-color:var(--accent-line);}
-  .cmb .ce{font-size:20px;}
-  .cmb .cn{font-weight:700; font-size:13px;}
-  .cmb .cs{font-size:11px; color:var(--muted);}
-  .cmb .cv{margin-left:auto; text-align:right;}
+  /* tab5 map + ranking */
+  .rank-wrap{display:grid; grid-template-columns:420px 1fr; gap:18px; align-items:start;}
+  @media (max-width:900px){ .rank-wrap{grid-template-columns:1fr;} }
+  #mapBox{height:420px; border-radius:12px; overflow:hidden; position:relative; background:radial-gradient(130% 130% at 30% 18%, #1a3a63 0%, #0e2544 50%, #081a30 100%); border:1px solid var(--border);}
+  .map-legend{position:absolute; top:10px; left:12px; display:flex; gap:10px; z-index:3; flex-wrap:wrap;}
+  .map-legend span{display:inline-flex; align-items:center; gap:5px; font-size:10px; color:#d6e3f5; background:rgba(8,20,36,.6); padding:3px 7px; border-radius:999px;}
+  .map-legend i{width:8px;height:8px;border-radius:50%;}
+  .whycard{border:1px solid var(--border); border-radius:11px; background:var(--surface); margin-top:12px; overflow:hidden;}
+  .whycard .wh{display:flex; align-items:center; gap:9px; padding:11px 13px; border-bottom:1px solid var(--border);}
+  .whycard .wh .ws{margin-left:auto; font-family:"JetBrains Mono",monospace; font-weight:800; font-size:15px; color:#fff; border-radius:7px; padding:2px 9px;}
+  .whycard .wrow{display:flex; justify-content:space-between; padding:6px 13px; font-size:12px; border-bottom:1px solid var(--border);}
+  .whycard .wrow:last-child{border-bottom:none;}
+  .whycard .wrow .wl{color:var(--muted);} .whycard .wrow .wv{font-family:"JetBrains Mono",monospace; font-weight:700;}
+  .drill{display:flex; flex-wrap:wrap; gap:5px; padding:10px 13px; font-size:11px; color:var(--muted);}
+  .drill b{color:var(--ink);}
 
-  /* detail panel (ranking) */
-  .detail{border:1px solid var(--accent-line); background:var(--accent-soft); border-radius:12px; padding:0; margin-top:14px; overflow:hidden;}
+  .detail{border:1px solid var(--accent-line); border-radius:12px; margin-top:14px; overflow:hidden;}
   .detail-head{display:flex; align-items:center; gap:12px; padding:13px 16px; background:var(--surface); border-bottom:1px solid var(--border);}
-  .detail-head .de{font-size:24px;}
-  .detail-head h4{font-size:15px; font-family:"Fraunces",serif; font-weight:600;}
+  .detail-head .de{font-size:22px;}
+  .detail-head h4{font-size:14.5px;}
   .detail-head .dsub{font-size:11.5px; color:var(--muted);}
   .detail-head .dcall{margin-left:auto;}
   .detail-body{padding:16px; background:var(--surface);}
-  .scorebars{display:flex; flex-direction:column; gap:9px; margin-top:4px;}
-  .sb{display:flex; align-items:center; gap:10px; font-size:12px;}
-  .sb .sbl{width:140px; flex:none; color:var(--ink-2);}
-  .sb .sbt{flex:1; background:var(--surface-2); border-radius:5px; height:16px; overflow:hidden; min-width:60px;}
-  .sb .sbt i{display:block;height:100%;background:var(--accent);}
-  .sb .sbv{width:54px; text-align:right; font-family:"JetBrains Mono",monospace; flex:none;}
   .kpi4{display:grid; grid-template-columns:repeat(4,1fr); gap:10px;}
   @media (max-width:560px){ .kpi4{grid-template-columns:repeat(2,1fr);} }
-  .kpi{text-align:center; border:1px solid var(--border); border-radius:10px; padding:10px; background:var(--paper);}
+  .kpi{text-align:center; border:1px solid var(--border); border-radius:10px; padding:11px; background:var(--paper);}
   .kpi .kv{font-weight:700; font-size:18px; font-family:"JetBrains Mono",monospace;}
   .kpi .kl{font-size:10px; color:var(--muted); text-transform:uppercase; margin-top:2px;}
+  .scorebars{display:flex; flex-direction:column; gap:7px; margin-top:4px;}
+  .sb{display:flex; align-items:center; gap:10px; font-size:11.5px;}
+  .sb .sbl{width:150px; flex:none; color:var(--ink-2);}
+  .sb .sbw{width:34px; flex:none; color:var(--muted); font-family:"JetBrains Mono",monospace; font-size:10.5px;}
+  .sb .sbt{flex:1; background:var(--surface-2); border-radius:5px; height:14px; overflow:hidden; min-width:50px;}
+  .sb .sbt i{display:block;height:100%;background:var(--accent);}
+  .sb .sbv{width:40px; text-align:right; font-family:"JetBrains Mono",monospace; flex:none;}
 
-  .drop{border:1.5px dashed var(--border-2); border-radius:12px; padding:22px; text-align:center; background:var(--paper); color:var(--muted);}
+  /* right data sidebar */
+  .scrim{position:fixed; inset:0; background:rgba(10,16,24,.45); z-index:48; opacity:0; pointer-events:none;}
+  .scrim.open{opacity:1; pointer-events:auto;}
+  .sidebar{position:fixed; top:0; right:0; bottom:0; width:380px; max-width:92vw; background:var(--surface); border-left:1px solid var(--border); box-shadow:-8px 0 30px rgba(10,16,24,.2); z-index:49; transform:translateX(100%); display:flex; flex-direction:column;}
+  .sidebar.open{transform:translateX(0);}
+  .sb-head{display:flex; align-items:center; gap:10px; padding:16px; border-bottom:1px solid var(--border);}
+  .sb-head h3{font-size:15px;}
+  .sb-close{margin-left:auto; width:28px;height:28px;border-radius:7px; border:1px solid var(--border); background:var(--surface-2); color:var(--muted); font-size:16px;}
+  .sb-body{padding:16px; overflow-y:auto; flex:1;}
+  .sb-sec{margin-bottom:18px;}
+  .sb-sec h4{font-size:12px; margin-bottom:8px;}
+  .drop{border:1.5px dashed var(--border-2); border-radius:10px; padding:18px; text-align:center; background:var(--paper); color:var(--muted); font-size:12px;}
   .drop.hot{border-color:var(--accent); background:var(--accent-soft); color:var(--ink);}
   .hidden{display:none;}
 </style>
@@ -239,9 +258,10 @@
   <div class="topbar-inner">
     <div class="brand-mark">
       <div class="brand-logo">S</div>
-      <div><span class="brand-title">NPL Atomic Launch Engine</span><span class="brand-sub" data-i18n="brandSub">SIIP · concept to best launch area</span></div>
+      <div><span class="brand-title">NPL Launch Decision Engine</span><span class="brand-sub" data-i18n="brandSub">SIIP · what, where, how big & when to launch</span></div>
     </div>
     <div class="top-right">
+      <button type="button" class="icon-btn data" id="dataBtn">⬆ <span data-i18n="data">Data</span></button>
       <button type="button" class="icon-btn" id="langBtn">🌐 <span id="langLabel">EN</span></button>
       <button type="button" class="icon-btn" id="themeBtn">◐ <span id="themeLabel">System</span></button>
     </div>
@@ -249,542 +269,600 @@
 </header>
 
 <nav class="rail"><div class="rail-inner"><div class="nav" id="nav"></div></div></nav>
-
 <main><div class="shell"><div id="view"></div></div></main>
-<footer class="foot"><span data-i18n="footBrand">Atomic P&L — what kills an NPL is EBT, not GP1. The first atom cell must not lose money.</span></footer>
+<footer class="foot"><span data-i18n="footBrand">Atomic P&L — EBT = 0 is only break-even, not success. A launch must have a realistic path to positive EBT inside its capturable market.</span></footer>
+
+<div class="scrim" id="scrim"></div>
+<aside class="sidebar" id="sidebar" aria-hidden="true"></aside>
 
 <script>
 (function(){
   "use strict";
   function lget(k,f){ try{ var r=localStorage.getItem(k); if(r) return JSON.parse(r);}catch(e){} return f; }
   function lset(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e){} }
-  var lang = lget('npla-lang','en');
+  var lang=lget('nple-lang','en');
 
-  /* ========== DEFAULT DATA (real SIIP workbook + Nielsen audit) ========== */
+  /* ============ DEFAULT DATA ============ */
+  var BRANDS=['Snack','Wafer','Biscuit','Beverage','Noodle','Other'];
   function defaultData(){ return {
-    eng:{ fullCap:95256, dbp:94734.973 },
     npls:[
-      {k:'nori', name:'SIIP Nori', sku:'3.5g', emoji:'🍙', nielsen:'seaweed',
+      {k:'nori', name:'SIIP Nori', sku:'3.5g', emoji:'🍙', brand:'Snack', nielsen:'seaweed', fullCap:95256, dbp:94734.973, vol:95256,
        cogm:{depreF:1394.1082, omcF:2492.1861, dl:6067.2232, listrik:732.3372, gas:413.1461, rm:28661.4524, pm:35171.9998}},
-      {k:'karaage', name:'SIIP Karaage', sku:'3.5g', emoji:'🍗', nielsen:'kaldu',
+      {k:'karaage', name:'SIIP Karaage', sku:'3.5g', emoji:'🍗', brand:'Snack', nielsen:'kaldu', fullCap:95256, dbp:94734.973, vol:95256,
        cogm:{depreF:1394.1082, omcF:2492.1861, dl:6067.2232, listrik:732.4241, gas:413.1951, rm:34313.0064, pm:35171.9998}},
-      {k:'kari', name:'SIIP Kari', sku:'3.5g', emoji:'🍛', nielsen:'curry',
+      {k:'kari', name:'SIIP Kari', sku:'3.5g', emoji:'🍛', brand:'Snack', nielsen:'curry', fullCap:95256, dbp:94734.973, vol:95256,
        cogm:{depreF:1394.1082, omcF:2492.1861, dl:6067.2232, listrik:732.4241, gas:413.1951, rm:24220.9457, pm:35171.9998}}
-    ]
+    ],
+    // Country baseline P&L (estimate; Indonesia based on existing figures). Replace via Data upload.
+    base:{
+      id:{name:'Indonesia',flag:'🇮🇩',real:true, nsar:5.1e9,cogs:3.7e9,sm1:295.8e6,sm2:173.4e6,sm3:367.2e6,sm4:132.6e6,ga1:40e6,ga2:30e6,ga3:20e6},
+      my:{name:'Malaysia',flag:'🇲🇾',real:false,nsar:3.0e9,cogs:2.04e9,sm1:180e6,sm2:120e6,sm3:255e6,sm4:102e6,ga1:30e6,ga2:22e6,ga3:15e6},
+      cn:{name:'China',flag:'🇨🇳',real:false,nsar:4.2e9,cogs:2.73e9,sm1:273e6,sm2:172e6,sm3:336e6,sm4:168e6,ga1:38e6,ga2:28e6,ga3:18e6}
+    }
   };}
-  var DATA = lget('npla-data', defaultData());
-  function saveData(){ lset('npla-data', DATA); }
+  var DATA=lget('nple-data', defaultData());
+  function saveData(){ lset('nple-data',DATA); }
   function resetData(){ DATA=defaultData(); saveData(); }
-  function ENG(){ return DATA.eng; }
   function npl(k){ for(var i=0;i<DATA.npls.length;i++) if(DATA.npls[i].k===k) return DATA.npls[i]; return DATA.npls[0]; }
 
-  /* ========== COGM ENGINE ==========
-     COGM(vol)= dl+listrik+gas+rm+pm + (depreF+omcF)*fullCap/vol  (Depre & OMC fixed per month -> balloon) */
-  function cogmAt(vol,c){ var g=c.cogm, e=ENG(); return g.dl+g.listrik+g.gas+g.rm+g.pm + (g.depreF+g.omcF)*e.fullCap/vol; }
-  function gpPctAt(vol,c){ return (1 - cogmAt(vol,c)/ENG().dbp)*100; }
-  function cogmFull(c){ return cogmAt(ENG().fullCap,c); }
-  function gpFull(c){ return gpPctAt(ENG().fullCap,c); }
+  /* ============ COGM ENGINE ============ */
+  function fixedMo(c){ return (c.cogm.depreF+c.cogm.omcF)*c.fullCap; }
+  function constCtn(c){ var g=c.cogm; return g.dl+g.listrik+g.gas+g.rm+g.pm; }
+  function cogmAt(vol,c){ return constCtn(c)+fixedMo(c)/vol; }
+  function gpPctAt(vol,c){ return (1-cogmAt(vol,c)/c.dbp)*100; }
+  function cogmFull(c){ return cogmAt(c.fullCap,c); }
+  function gpFull(c){ return gpPctAt(c.fullCap,c); }
+  function beVol(c,load){ var denom=c.dbp*(1-load/100)-constCtn(c); return denom>0?fixedMo(c)/denom:Infinity; }
 
-  /* ========== Baseline P&L (Indonesia real; MY/CN planning) ========== */
-  var BASE = {
-    id:{name:'Indonesia', flag:'🇮🇩', real:true, nsar:5.1e9, cogs:3.7e9, sm1:295.8e6, sm2:173.4e6, sm3:367.2e6, sm4:132.6e6},
-    my:{name:'Malaysia', flag:'🇲🇾', real:false, nsar:3.0e9, cogs:2.04e9, sm1:180e6, sm2:120e6, sm3:255e6, sm4:102e6},
-    cn:{name:'China', flag:'🇨🇳', real:false, nsar:4.2e9, cogs:2.73e9, sm1:273e6, sm2:172e6, sm3:336e6, sm4:168e6}
-  };
-  function baseEbt(b){ return b.nsar-b.cogs-b.sm1-b.sm2-b.sm3-b.sm4; }
-  function baseFixed(b){ return b.sm1+b.sm2+b.sm3+b.sm4; }
-
-  /* ========== Nielsen (real audit) ========== */
-  var NIELSEN = {
-    marketT:9411074, period:'MAT TY · Apr-25',
+  /* ============ Nielsen (real) ============ */
+  var NIELSEN={ marketT:9411074, period:'MAT TY · Apr-25',
     flavors:[
-      {k:'kentang',n:{en:'Potato / French Fries',id:'Kentang Goreng'},val:1286349,chg:2.4,cont:13.67},
-      {k:'choco',n:{en:'Chocolate',id:'Coklat'},val:1080856,chg:16.2,cont:11.48},
-      {k:'corn',n:{en:'Roasted Corn',id:'Jagung Bakar'},val:1003967,chg:7.6,cont:10.67},
-      {k:'cheese',n:{en:'Cheese',id:'Keju'},val:841347,chg:6.3,cont:8.94},
-      {k:'seaweed',n:{en:'Seaweed (Nori)',id:'Seaweed (Nori)'},val:671213,chg:20.2,cont:7.13},
-      {k:'bbq',n:{en:'Potato Barbeque',id:'Potato Barbeque'},val:350685,chg:6.0,cont:3.73},
-      {k:'seasalt',n:{en:'Sea Salt',id:'Sea Salt'},val:218211,chg:15.4,cont:2.32},
-      {k:'ubi',n:{en:'Ubi',id:'Ubi'},val:154705,chg:13.3,cont:1.64},
-      {k:'pedas',n:{en:'Pedas Level 15',id:'Pedas Level 15'},val:121916,chg:-18.7,cont:1.30},
-      {k:'kaldu',n:{en:'Kaldu Ayam',id:'Kaldu Ayam'},val:110704,chg:-1.1,cont:1.18}
+      {k:'kentang',n:{en:'Potato / French Fries',id:'Kentang Goreng'},val:1286349,chg:2.4,cont:13.67,rank:1},
+      {k:'choco',n:{en:'Chocolate',id:'Coklat'},val:1080856,chg:16.2,cont:11.48,rank:2},
+      {k:'corn',n:{en:'Roasted Corn',id:'Jagung Bakar'},val:1003967,chg:7.6,cont:10.67,rank:3},
+      {k:'cheese',n:{en:'Cheese',id:'Keju'},val:841347,chg:6.3,cont:8.94,rank:4},
+      {k:'seaweed',n:{en:'Seaweed (Nori)',id:'Seaweed (Nori)'},val:671213,chg:20.2,cont:7.13,rank:5},
+      {k:'bbq',n:{en:'Potato Barbeque',id:'Potato Barbeque'},val:350685,chg:6.0,cont:3.73,rank:6},
+      {k:'seasalt',n:{en:'Sea Salt',id:'Sea Salt'},val:218211,chg:15.4,cont:2.32,rank:7},
+      {k:'ubi',n:{en:'Ubi',id:'Ubi'},val:154705,chg:13.3,cont:1.64,rank:8},
+      {k:'pedas',n:{en:'Pedas Level 15',id:'Pedas Level 15'},val:121916,chg:-18.7,cont:1.30,rank:9},
+      {k:'kaldu',n:{en:'Kaldu Ayam',id:'Kaldu Ayam'},val:110704,chg:-1.1,cont:1.18,rank:10}
     ],
-    brands:[
-      {n:'STT',val:1134369,sh:12.1,chg:6.0},{n:'TARO',val:826221,sh:8.8,chg:8.7},
-      {n:'CHIKI Balls+Twist',val:735306,sh:7.8,chg:1.5},{n:'SIIP',val:493277,sh:5.2,chg:-2.5,me:true},
-      {n:'OISHI Sponge',val:268104,sh:2.8,chg:38.2},{n:'GURIBEE',val:265584,sh:2.8,chg:46.9}
-    ],
-    channels:[
-      {n:{en:'GT Large',id:'GT Besar'},sh:7.5,pot:3982,gNab:-10.7,gCat:13.6},
-      {n:{en:'Minimarket',id:'Minimarket'},sh:1.7,pot:3514,gNab:53.3,gCat:9.5},
-      {n:{en:'GT Small',id:'GT Kecil'},sh:9.0,pot:838,gNab:3.8,gCat:21.7},
-      {n:{en:'Hyper / Super',id:'Hyper / Super'},sh:4.1,pot:584,gNab:8.0,gCat:2.7}
-    ]
+    brands:[{n:'STT',val:1134369,sh:12.1,chg:6.0},{n:'TARO',val:826221,sh:8.8,chg:8.7},{n:'CHIKI Balls+Twist',val:735306,sh:7.8,chg:1.5},{n:'SIIP',val:493277,sh:5.2,chg:-2.5,me:true},{n:'OISHI Sponge',val:268104,sh:2.8,chg:38.2},{n:'GURIBEE',val:265584,sh:2.8,chg:46.9}],
+    channels:[{n:{en:'GT Large',id:'GT Besar'},sh:7.5,pot:3982,gNab:-10.7,gCat:13.6},{n:{en:'Minimarket',id:'Minimarket'},sh:1.7,pot:3514,gNab:53.3,gCat:9.5},{n:{en:'GT Small',id:'GT Kecil'},sh:9.0,pot:838,gNab:3.8,gCat:21.7},{n:{en:'Hyper / Super',id:'Hyper / Super'},sh:4.1,pot:584,gNab:8.0,gCat:2.7}]
   };
   function flavor(k){ for(var i=0;i<NIELSEN.flavors.length;i++) if(NIELSEN.flavors[i].k===k) return NIELSEN.flavors[i]; return null; }
 
-  // Launch countries on the globe
-  var COUNTRIES = [
-    {k:'id',name:'Indonesia',flag:'🇮🇩',lat:-2.5,lng:118},
-    {k:'my',name:'Malaysia',flag:'🇲🇾',lat:4.2,lng:102},
-    {k:'cn',name:'China',flag:'🇨🇳',lat:35,lng:104}
-  ];
-  // Slice & dice areas
-  var AREAS=[
-    {c:'Indonesia',flag:'🇮🇩',gt:{en:'GT: DP / LP, GRBM (region-level if possible)',id:'GT: DP / LP, GRBM (per region bila bisa)'},mt:{en:'MT: Indomaret, Alfamart, Club80s',id:'MT: Indomaret, Alfamart, Club80s'},u:{en:'4 PMA clusters; DP2 Central/East Java cheapest',id:'4 cluster PMA; DP2 Jateng/Jatim termurah'}},
-    {c:'Malaysia',flag:'🇲🇾',gt:{en:'Total (skip deep GT)',id:'Total (lewati GT dalam)'},mt:{en:'99 Speedmart, Eco-Shop, MTI, Mr. DIY',id:'99 Speedmart, Eco-Shop, MTI, Mr. DIY'},u:{en:'MTI-led',id:'Dipimpin MTI'}},
-    {c:'China',flag:'🇨🇳',gt:{en:'GT: by Province',id:'GT: per Provinsi'},mt:{en:'DB Reg, heavy MT',id:'DB Reg, MT berat'},u:{en:'Snack Shop (no listing fee), e-Commerce',id:'Snack Shop (tanpa listing fee), e-Commerce'}}
-  ];
-  // Ranking combinations (SKU x area) with workbook field score
-  var COMBOS=[
-    {npl:'nori',country:'Indonesia',channel:'GT',sub:'DP',field:80},
-    {npl:'nori',country:'Indonesia',channel:'MT',sub:'IDM',field:78},
-    {npl:'kari',country:'Indonesia',channel:'GT',sub:'DP',field:null},
-    {npl:'kari',country:'Indonesia',channel:'MT',sub:'IDM',field:null},
-    {npl:'karaage',country:'Indonesia',channel:'GT',sub:'DP',field:null},
-    {npl:'karaage',country:'Indonesia',channel:'MT',sub:'IDM',field:null}
-  ];
-  var BUNDLE={label:'Nori + BBQ',country:'Indonesia',channel:'GT',sub:'DP',field:90};
+  /* ============ Countries / channels (launch areas from the slice & dice) ============ */
+  var COUNTRY={
+    Indonesia:{key:'id',flag:'🇮🇩',lat:-2.5,lng:118, loadGT:18,loadMT:24, capF:1.0, exec:85,reg:1,mktUnc:2,
+      gt:{en:'GT: DP / LP, GRBM',id:'GT: DP / LP, GRBM'},mt:{en:'MT: Indomaret, Alfamart, Club80s + Others',id:'MT: Indomaret, Alfamart, Club80s + Others'},uniq:{en:'4 PMA clusters; DP2 Central/East Java cheapest',id:'4 cluster PMA; DP2 Jateng/Jatim termurah'}},
+    Malaysia:{key:'my',flag:'🇲🇾',lat:4.2,lng:102, loadGT:20,loadMT:26, capF:0.55, exec:65,reg:2,mktUnc:3,
+      gt:{en:'GT: Total',id:'GT: Total'},mt:{en:'MT: 99 Speedmart, Eco-Shop, Mr DIY + Others (MTI)',id:'MT: 99 Speedmart, Eco-Shop, Mr DIY + Others (MTI)'},uniq:{en:'MTI-led route',id:'Rute dipimpin MTI'}},
+    China:{key:'cn',flag:'🇨🇳',lat:35,lng:104, loadGT:19.5,loadMT:25.5, capF:0.5, exec:55,reg:3,mktUnc:3,
+      gt:{en:'GT: by Province (WHS total)',id:'GT: per Provinsi (WHS total)'},mt:{en:'DB Reg heavy MT + Others',id:'DB Reg heavy MT + Others'},uniq:{en:'Snack Shop (no listing fee), e-Commerce',id:'Snack Shop (tanpa listing fee), e-Commerce'}}
+  };
+  var CAPRATE={GT:0.12, MT:0.07};
 
-  // channel SM load (% of NSAR) for standalone NPL EBT
-  var SMLOAD={ GT:{sm1:5.8,sm2:2.8,sm3:7.0,sm4:2.6,ap:3.0}, MT:{sm1:5.8,sm2:3.4,sm3:8.5,sm4:2.6,ap:3.0} };
-  function smTotal(ch){ var s=SMLOAD[ch]; return s.sm1+s.sm2+s.sm3+s.sm4+s.ap; }
+  /* ============ SCORING ENGINE (concept book) ============ */
+  // weights
+  var OPP_W={market:0.25, product:0.20, channel:0.15, financial:0.20, execution:0.10, evidence:0.10};
+  var RISK_W={market:20, rm:15, channel:15, execution:15, supply:10, regulatory:10, competitive:10, cannibal:5};
+  var READY_W={market:0.20, product:0.20, price:0.10, channel:0.15, financial:0.15, execution:0.10, supply:0.10};
+  function clamp(x,a,b){ return Math.max(a,Math.min(b,x)); }
 
-  /* ========== i18n (concise) ========== */
+  // Evaluate one candidate: members[] (npl keys), countryName, channel 'GT'|'MT'
+  function evaluate(memberKeys, countryName, channel){
+    var co=COUNTRY[countryName], load=channel==='GT'?co.loadGT:co.loadMT;
+    var members=memberKeys.map(npl);
+    var combo=members.length>1;
+    // per-member realistic volume & EBT
+    var agg={nsar:0, ebt:0}, flavors=[], beList=[], capList=[], anyWhite=false;
+    members.forEach(function(m){
+      var fl=flavor(m.nielsen); flavors.push(fl);
+      var cap = fl ? (fl.val*1e6/12)*CAPRATE[channel]*co.capF/m.dbp : null;
+      if(!fl) anyWhite=true;
+      var realVol = cap!=null ? Math.min(m.fullCap, cap) : m.fullCap*0.4;
+      var gpv=gpPctAt(realVol,m), ebtPct=gpv-load, nsar=realVol*m.dbp;
+      agg.nsar+=nsar; agg.ebt+=nsar*ebtPct/100;
+      beList.push(beVol(m,load)); capList.push(cap);
+    });
+    if(combo){ agg.nsar*=0.85; agg.ebt*=0.82; } // shelf cannibalisation haircut
+    var ebtPct=agg.nsar>0?agg.ebt/agg.nsar*100:-100;
+    // feasibility: can reach positive EBT within capturable market?
+    var feas = members.every(function(m,i){ var cap=capList[i]; var be=beList[i]; return isFinite(be) && (cap==null ? be<=m.fullCap : be<=cap); });
+    var feasKnown = members.every(function(m,i){ return capList[i]!=null; });
+    // representative flavor (best)
+    var repFl = flavors.filter(Boolean).sort(function(a,b){return b.chg-a.chg;})[0]||null;
+    var avgGp = members.reduce(function(s,m){return s+gpFull(m);},0)/members.length;
+
+    // ---- Opportunity dimensions (0-100) ----
+    var d={};
+    d.market = repFl ? clamp(35+repFl.chg*1.8+repFl.cont*3,0,100) : 30;
+    d.product = repFl ? clamp(45+repFl.chg*1.6,0,100) : 35;
+    d.channel = channel==='GT' ? (countryName==='Indonesia'?85:70) : (countryName==='Indonesia'?60:62);
+    d.financial = clamp(45+ebtPct*4,0,100);
+    d.execution = co.exec - (channel==='MT'?6:0);
+    d.evidence = repFl ? (repFl.rank<=5?85:65) : 30;
+    var oppBase = d.market*OPP_W.market+d.product*OPP_W.product+d.channel*OPP_W.channel+d.financial*OPP_W.financial+d.execution*OPP_W.execution+d.evidence*OPP_W.evidence;
+
+    // ---- Risk (ratings 1-5) ----
+    var r={};
+    r.market=co.mktUnc; r.rm=members.some(function(m){return m.cogm.rm>32000;})?4:3;
+    r.channel=(channel==='MT'?3:2)+(countryName!=='Indonesia'?1:0); r.channel=Math.min(5,r.channel);
+    r.execution=countryName==='Indonesia'?2:3; r.supply=2; r.regulatory=co.reg;
+    r.competitive=repFl?(repFl.chg<0?4:3):3; r.cannibal=combo?4:2;
+    var riskTotal=0, rk=Object.keys(RISK_W);
+    rk.forEach(function(x){ riskTotal += RISK_W[x]*(r[x]/5); });
+    riskTotal=Math.round(riskTotal);
+    var riskBand=riskTotal<=34?'Low':riskTotal<=64?'Medium':'High';
+    var riskPenalty=Math.round(riskTotal/10);
+    var oppFinal=Math.round(clamp(oppBase-riskPenalty,0,100));
+
+    // ---- Probability (readiness -> evidence success rate) ----
+    var rd={market:d.market,product:d.product,price:repFl?70:50,channel:d.channel,financial:d.financial,execution:d.execution,supply:70};
+    var readiness=rd.market*READY_W.market+rd.product*READY_W.product+rd.price*READY_W.price+rd.channel*READY_W.channel+rd.financial*READY_W.financial+rd.execution*READY_W.execution+rd.supply*READY_W.supply;
+    var conf = !repFl ? 'Low' : (repFl.chg>=5 && repFl.rank<=6 ? 'High' : 'Medium');
+    var confFactor = conf==='High'?0.90:conf==='Medium'?0.78:0.62;
+    var prob=Math.round(clamp(readiness*confFactor,5,95));
+
+    // ---- Decision gate ----
+    var decision, gates={
+      capacity: feas,                                   // required sales <= capturable
+      ebt: ebtPct>=0,                                   // positive EBT at realistic scale
+      evidence: !anyWhite,                              // comparable demand exists
+      capability: co.exec>=60                           // execution capability
+    };
+    if(!isFinite(beList[0]) && members.length===1){ decision='nogo'; }
+    else if(!feas || ebtPct< -8) decision='nogo';
+    else if(co.reg>=3 && !feas) decision='hold';
+    else if(gates.capacity && gates.ebt && gates.evidence && oppFinal>=65 && riskBand!=='High' && conf!=='Low') decision='go';
+    else if(gates.capacity && (anyWhite || co.exec<60 || ebtPct<2)) decision='pilot';
+    else decision='pilot';
+
+    return {members:members, memberKeys:memberKeys, country:countryName, channel:channel, combo:combo,
+      nsar:agg.nsar, ebt:agg.ebt, ebtPct:ebtPct, avgGp:avgGp, feas:feas, feasKnown:feasKnown, anyWhite:anyWhite,
+      dims:d, oppBase:oppBase, oppFinal:oppFinal, risk:r, riskTotal:riskTotal, riskBand:riskBand, riskPenalty:riskPenalty,
+      readiness:Math.round(readiness), prob:prob, conf:conf, decision:decision, gates:gates, load:load, repFl:repFl};
+  }
+  function candidatesSingle(){ var out=[]; DATA.npls.forEach(function(m){ Object.keys(COUNTRY).forEach(function(co){ ['GT','MT'].forEach(function(ch){ out.push(evaluate([m.k],co,ch)); }); }); }); return out.sort(function(a,b){return b.oppFinal-a.oppFinal;}); }
+  function candidatesCombo(){ var out=[], ns=DATA.npls; for(var i=0;i<ns.length;i++)for(var j=i+1;j<ns.length;j++){ Object.keys(COUNTRY).forEach(function(co){ ['GT','MT'].forEach(function(ch){ out.push(evaluate([ns[i].k,ns[j].k],co,ch)); }); }); } return out.sort(function(a,b){return b.oppFinal-a.oppFinal;}); }
+  function bestOppByCountry(){ var m={}; candidatesSingle().forEach(function(e){ if(m[e.country]==null||e.oppFinal>m[e.country]) m[e.country]=e.oppFinal; }); return m; }
+
+  /* ============ i18n ============ */
   var T={en:{
-    brandSub:'SIIP · concept to best launch area', footBrand:'Atomic P&L — what kills an NPL is EBT, not GP1. The first atom cell must not lose money.',
-    n1:'Concepts', n2:'COGM', n3:'Reverse EBT', n4:'Market Share', n5:'Launch Ranking', nData:'Data',
-    p1t:'NPL Concepts', p1l:'Stage-1 concepts that passed the taste gate. Pick one to carry through every tab.',
-    cogmF:'COGM/ctn', gpF:'GP full', cat:'Category', selected:'Selected', addNpl:'Add NPL', newName:'NPL name', newRm:'RM cost / carton', newCat:'Nielsen category', add:'Add', cancel:'Cancel',
-    p2t:'COGM Calculator', p2l:'Cost per carton from the seven lines. Edit any number; depreciation & OMC balloon as volume drops below capacity.',
-    volume:'Monthly volume', fullCapL:'Full capacity', setFull:'Set to full', util:'Utilisation', cogmCtn:'COGM/carton', gpPct:'GP margin', dbpL:'DBP', marginCtn:'Margin/carton',
-    line:'COGM line', perCtn:'Rp / carton (at full)', pctCogm:'% COGM', lDepre:'Depreciation', lOmc:'OMC', lDl:'Direct Labour', lListrik:'Electricity', lGas:'Gas', lRm:'RM (seasoning)', lPm:'PM (packaging)', lTot:'COGM / carton',
-    curveT:'COGM vs volume', atFull:'full', editHint:'Edit the full-capacity Rp/carton below — division inputs. Depre & OMC are fixed per month, so they rise per carton when volume falls.',
-    p3t:'Reverse EBT → Net Sales', p3l:'Target an EBT on a country P&L. Only Net Sales, COGM and EBT move in rupiah; SM1–SM4 hold their amount, so their ratio flexes.',
-    baseline:'Baseline', nplCogm:'NPL COGM', target:'Target EBT', custom:'Custom', breakEven:'Break-even',
-    asis:'As-is', tobe:'To-be', ratio:'Ratio', item:'Item', iN:'Net Sales (NSAR)', iC:'COGM (incl. COGS)', iG:'GP1', iS1:'SM1 Sales Force', iS2:'SM2 Distribution', iS3:'SM3 Trade', iS4:'SM4 Overhead', iE:'EBT',
-    salesGap:'Net Sales change', ebtTobe:'EBT to-be', cogmR:'COGM ratio', decision:'Decision',
-    decGo:'GO', decPilot:'PILOT', decRework:'REWORK', decHold:'HOLD',
-    p3read:'{name}: Net Sales must reach {ns} ({g}) to hold a {t} EBT. Lower COGM = smaller climb.',
-    p4t:'Market Share — Nielsen', p4l:'Snack-extruded audit (Indonesia). Each NPL mapped to its flavour; verdict per combination.',
+    brandSub:'SIIP · what, where, how big & when to launch', data:'Data',
+    footBrand:'Atomic P&L — EBT = 0 is only break-even, not success. A launch must have a realistic path to positive EBT inside its capturable market.',
+    n1:'Concepts', n2:'COGM', n3:'Reverse EBT', n4:'Market Share', n5:'Launch Ranking',
+    p1t:'NPL Concepts', p1l:'Stage-1 concepts that passed the taste gate. Pick one to carry through every tab; add as many as you need.',
+    cogmF:'COGM/ctn', gpF:'GP full', cat:'Category', brand:'Brand', addNpl:'Add NPL', newName:'NPL name', newRm:'RM / carton', newBrand:'Brand', newCat:'Nielsen category', add:'Add', cancel:'Cancel',
+    p2t:'COGM — per SKU', p2l:'One editable column per SKU (sorted by brand). Full capacity is per SKU. Depreciation & OMC are fixed per month, so per-carton cost rises when the operating volume is below capacity.',
+    sortBrand:'Sort by brand', lDepre:'Depreciation', lOmc:'OMC', lDl:'Direct Labour', lListrik:'Electricity', lGas:'Gas', lRm:'RM (seasoning)', lPm:'PM (packaging)', lTot:'COGM / carton (full)', lDbp:'DBP (base price)', lFull:'Full capacity (ctn/mo)', lGpFull:'GP % at full', lVol:'Operating volume', lCogmVol:'COGM at volume', lGpVol:'GP % at volume', fixedMo:'fixed/mo',
+    p3t:'Reverse EBT → Net Sales', p3l:'Target an EBT on a country P&L. Only Net Sales, COGM and EBT move in rupiah; SM/GA hold their amount, so their ratio flexes. Listing fee, trading term and VAT (PPN) are shown for MT.',
+    baseline:'Baseline', nplCogm:'NPL COGM', target:'Target EBT', custom:'Custom', breakEven:'Break-even', channel:'Channel',
+    asis:'As-is', tobe:'To-be', ratio:'Ratio', item:'Item',
+    iGross:'Gross Sales', iRet:'(−) Return', iN:'Net Sales (NSAR)', iC:'(−) COGM / COGS', iG:'GP1 — Gross Margin', iS1:'SM1 Sales Force', iS2:'SM2 Distribution', iS3:'SM3 Trade Spending', iS4:'SM4 Overhead', iGP2:'GP2 / Operating Profit', iGA1:'GA1 General & Admin', iGA2:'GA2 Finance', iGA3:'GA3 Other', iList:'Listing fee (MT)', iTrade:'Trading term (MT)', iPPN:'VAT / PPN (pass-through)', iE:'EBT',
+    salesGap:'Net Sales change', ebtTobe:'EBT to-be', cogmR:'COGM ratio', decision:'Feasibility',
+    decGo:'GO', decPilot:'PILOT', decRework:'REWORK', decHold:'HOLD', decNogo:'NO-GO',
+    feasEasy:'Reachable (≤25% uplift)', feasMed:'Needs a big jump', feasNo:'Infeasible at this target',
+    p3read:'{name}: Net Sales must reach {ns} ({g}) to hold a {t} EBT. The COGM ratio is the lever — the lower the COGM, the smaller the sales climb.',
+    tobeHint:'This tab is for exploration. The Launch Ranking (tab 5) decides feasibility automatically per combination — it does not ask for a manual EBT.',
+    p4t:'Market Share — by Category', p4l:'Snack-extruded audit (Indonesia). Market share read per flavour category, mapped to each NPL with a clear verdict.',
     mktSize:'Market', siipSh:'SIIP share', siipTr:'SIIP MAT', fastest:'Fastest flavour', verdict:'Verdict',
-    vRide:'RIDE', vWatch:'WATCH', vAvoid:'AVOID', vRideD:'hot category, launch with it', vWatchD:'flat/declining, launch selectively', vAvoidD:'white space, validate demand first',
-    flavorH:'Flavour', valH:'Value MAT (Rp Mill)', chgH:'Chg MAT', contH:'% market', mapH:'NPL', brandH:'Brand', shareH:'Share',
-    chFit:'Channel headroom', chGrow:'Nabati / category',
-    siipPos:'SIIP: Rp493B, 5.2% share, −2.5% MAT. Strong in GT (83% of SIIP); thin in Minimarket (1.7%) where the category grows +9.5% — the clearest headroom.',
-    nielsenSrc:'Nielsen/NIQ snack audit, MAT TY to Apr-25, Indonesia. Malaysia & China not in this file.',
-    p5t:'Launch Ranking — SKU × Area', p5l:'Where each flavour should launch first. Click a row for the full score and decision.',
-    bundleRec:'Recommended first launch', bundleWhy:'Nori + BBQ, Indonesia GT (DP). Field score {s}/100.',
-    rkH:'#', skuH:'SKU', areaH:'Area', gpH:'GP full', demandH:'Nielsen', oppH:'Opportunity', callH:'Decision',
+    vRide:'RIDE', vWatch:'WATCH', vAvoid:'AVOID',
+    catShareT:'Category market share (your NPL categories)', nplVerdictT:'NPL verdict', flavorH:'Flavour category', valH:'Value MAT (Rp Mill)', chgH:'Chg MAT', contH:'% market', shareH:'Est. SIIP share', mapH:'NPL', brandH:'Brand',
+    chFit:'Channel headroom for SIIP', chGrow:'Nabati / category',
+    siipPos:'SIIP: Rp493B, 5.2% share, −2.5% MAT. Strong in GT (83% of SIIP); thin in Minimarket (1.7%) where the category grows +9.5%.',
+    nielsenSrc:'Nielsen/NIQ snack audit, MAT TY to Apr-25, Indonesia. Malaysia & China audits not in this file.',
+    p5t:'Launch Ranking — SKU × Country', p5l:'Where each SIIP SKU should launch, scored by the concept-book method. Click a row for the full Opportunity, Probability, Risk and Confidence breakdown.',
+    optSingle:'Single SKU', optCombo:'Combination (Core + Halo)',
+    rkH:'#', skuH:'SKU', areaH:'Launch area', oppH:'Opportunity', probH:'Probability', riskH:'Risk', confH:'Confidence', ebtH:'EBT @ scale', callH:'Decision',
+    whyT:'Why this market', wMarket:'Best opportunity', wEbt:'Best EBT @ scale', wConf:'Confidence', wDrill:'Drill-down', dCountry:'Country', dChannel:'Channel', dRegion:'Region', dSku:'SKU',
     sliceT:'Launch area by country', cC:'Country', cG:'GT channel', cM:'MT channel', cU:'Country-unique',
-    oppScore:'Opportunity', probSucc:'Probability', riskL:'Risk', confL:'Confidence', expEbt:'Expected EBT at scale',
-    scoreBreak:'Score breakdown', sbDemand:'Nielsen demand', sbMargin:'COGM margin', sbChannel:'Channel fit',
-    rationale:'Rationale', caution:'Caution / next steps',
-    gMkt:'Market capacity sufficient', gEbt:'EBT sustainable at scale', gEvid:'Comparable demand evidence', gCap:'Execution capability available',
-    cautionTxt:'Monitor RM volatility and trade spending.',
-    riskLow:'Low', riskMed:'Medium', riskHigh:'High', confHigh:'High', confMed:'Medium', confLow:'Low',
-    pDatat:'Data & Upload', pDatal:'Upload the COGM workbook to refresh the numbers, or export/import a JSON snapshot. Everything is stored in this browser.',
-    upCogm:'Upload COGM workbook (.xlsx)', upHint:'Drop the COGM SIIP file here or click to choose. Reads Sheet1 rows 13–15 (Nori, Karaage, Kari) and capacity/DBP.',
-    expJson:'Export JSON', impJson:'Import JSON', resetD:'Reset to defaults', upOk:'Updated {n} SKU from the workbook.', upErr:'Could not read the workbook — check the layout matches the COGM SIIP file.',
-    curData:'Current data', ctn:'ctn', bil:'B'
+    expEbt:'Expected EBT at realistic scale', nsScale:'Net Sales at scale',
+    methodT:'How the score is built', oppScore:'Opportunity Score', probSucc:'Probability', riskL:'Risk', confL:'Confidence',
+    scoreBreak:'Opportunity breakdown (weight × score)', riskBreak:'Risk breakdown (weight × rating/5)', rationale:'Decision rationale', probBreak:'Probability basis',
+    dMarket:'Market Attractiveness', dProduct:'Product-Market Fit', dChannel:'Channel / Account Fit', dFinancial:'Financial Sustainability', dExecution:'Execution Readiness', dEvidence:'Evidence Strength',
+    rMarket:'Market Uncertainty', rRm:'RM & Cost Volatility', rChannel:'Channel / Account', rExecution:'Execution Complexity', rSupply:'Supply', rRegulatory:'Regulatory', rCompetitive:'Competitive', rCannibal:'Cannibalisation',
+    gCap:'Required sales ≤ capturable market', gEbt:'Positive EBT at realistic scale', gEvid:'Comparable demand evidence', gCapability:'Execution capability available',
+    probText:'Readiness {r}/100 × confidence factor ({c}) → probability {p}%. Readiness is not probability — evidence quality discounts it.',
+    riskText:'Total risk {t}/100 → {b}. Opportunity penalty −{p}. Top driver: {d}.',
+    riskLow:'Low', riskMedium:'Medium', riskHigh:'High', confHigh:'High', confMedium:'Medium', confLow:'Low',
+    recFirst:'Recommended first launch', recNone:'No combination reaches positive EBT within its capturable market yet — the leanest-COGM route is the pilot candidate.',
+    // data sidebar
+    dataT:'Data & Upload', dataL:'Uploads stay in this browser (localStorage). Replace the estimates with your real files.',
+    upCogmT:'COGM workbook (.xlsx)', upCogmH:'Reads Sheet1 rows 13–15 (Nori, Karaage, Kari) + capacity/DBP.',
+    upPnlT:'P&L by country', upPnlH:'Template: country, Net Sales, COGS, SM1–4, GA1–3. Download, fill, then import. (Excel format tuned when you send the real file.)',
+    dlTemplate:'Download template (JSON)', impPnl:'Import P&L', expAll:'Export all (JSON)', impAll:'Import all', resetAll:'Reset to defaults', upOk:'Updated {n} SKU.', pnlOk:'Updated {n} country baselines.', upErr:'Could not read the file — check the layout.',
+    ctn:'ctn', bil:'B'
   }, id:{
-    brandSub:'SIIP · dari konsep ke area launch terbaik', footBrand:'Atomic P&L — yang membunuh NPL adalah EBT, bukan GP1. Sel atom pertama tak boleh rugi.',
-    n1:'Konsep', n2:'COGM', n3:'Reverse EBT', n4:'Market Share', n5:'Ranking Launch', nData:'Data',
-    p1t:'Konsep NPL', p1l:'Konsep Stage-1 yang lolos gate rasa. Pilih satu untuk dibawa ke semua tab.',
-    cogmF:'COGM/ktn', gpF:'GP penuh', cat:'Kategori', selected:'Terpilih', addNpl:'Tambah NPL', newName:'Nama NPL', newRm:'Biaya RM / karton', newCat:'Kategori Nielsen', add:'Tambah', cancel:'Batal',
-    p2t:'Kalkulator COGM', p2l:'Biaya per karton dari tujuh lini. Edit angkanya; depresiasi & OMC membengkak saat volume turun di bawah kapasitas.',
-    volume:'Volume bulanan', fullCapL:'Kapasitas penuh', setFull:'Set ke penuh', util:'Utilisasi', cogmCtn:'COGM/karton', gpPct:'Margin GP', dbpL:'DBP', marginCtn:'Margin/karton',
-    line:'Lini COGM', perCtn:'Rp / karton (penuh)', pctCogm:'% COGM', lDepre:'Depresiasi', lOmc:'OMC', lDl:'Tenaga Kerja', lListrik:'Listrik', lGas:'Gas', lRm:'RM (bumbu)', lPm:'PM (kemasan)', lTot:'COGM / karton',
-    curveT:'COGM vs volume', atFull:'penuh', editHint:'Edit Rp/karton pada kapasitas penuh di bawah — input tiap divisi. Depre & OMC tetap per bulan, jadi naik per karton saat volume turun.',
-    p3t:'Reverse EBT → Net Sales', p3l:'Target EBT pada P&L negara. Hanya Net Sales, COGM, EBT bergerak rupiah; SM1–SM4 menahan nominal, rasionya bergeser.',
-    baseline:'Baseline', nplCogm:'COGM NPL', target:'Target EBT', custom:'Custom', breakEven:'Break-even',
-    asis:'As-is', tobe:'To-be', ratio:'Rasio', item:'Item', iN:'Net Sales (NSAR)', iC:'COGM (incl. COGS)', iG:'GP1', iS1:'SM1 Tenaga Penjual', iS2:'SM2 Distribusi', iS3:'SM3 Trade', iS4:'SM4 Overhead', iE:'EBT',
-    salesGap:'Perubahan Net Sales', ebtTobe:'EBT to-be', cogmR:'Rasio COGM', decision:'Keputusan',
-    decGo:'GO', decPilot:'PILOT', decRework:'REWORK', decHold:'HOLD',
-    p3read:'{name}: Net Sales harus mencapai {ns} ({g}) untuk menahan EBT {t}. COGM lebih rendah = kenaikan lebih kecil.',
-    p4t:'Market Share — Nielsen', p4l:'Audit snack-extruded (Indonesia). Tiap NPL dipetakan ke rasanya; verdict per kombinasi.',
+    brandSub:'SIIP · apa, di mana, seberapa besar & kapan launch', data:'Data',
+    footBrand:'Atomic P&L — EBT = 0 hanya break-even, bukan sukses. Launch harus punya jalur realistis ke EBT positif di dalam pasar yang dapat diraih.',
+    n1:'Konsep', n2:'COGM', n3:'Reverse EBT', n4:'Market Share', n5:'Ranking Launch',
+    p1t:'Konsep NPL', p1l:'Konsep Stage-1 yang lolos gate rasa. Pilih satu untuk dibawa ke semua tab; tambah sebanyak yang perlu.',
+    cogmF:'COGM/ktn', gpF:'GP penuh', cat:'Kategori', brand:'Brand', addNpl:'Tambah NPL', newName:'Nama NPL', newRm:'RM / karton', newBrand:'Brand', newCat:'Kategori Nielsen', add:'Tambah', cancel:'Batal',
+    p2t:'COGM — per SKU', p2l:'Satu kolom editable per SKU (diurutkan per brand). Kapasitas penuh per SKU. Depresiasi & OMC tetap per bulan, jadi biaya per karton naik saat volume operasi di bawah kapasitas.',
+    sortBrand:'Urutkan per brand', lDepre:'Depresiasi', lOmc:'OMC', lDl:'Tenaga Kerja', lListrik:'Listrik', lGas:'Gas', lRm:'RM (bumbu)', lPm:'PM (kemasan)', lTot:'COGM / karton (penuh)', lDbp:'DBP (harga dasar)', lFull:'Kapasitas penuh (ktn/bln)', lGpFull:'GP % di penuh', lVol:'Volume operasi', lCogmVol:'COGM di volume', lGpVol:'GP % di volume', fixedMo:'tetap/bln',
+    p3t:'Reverse EBT → Net Sales', p3l:'Target EBT pada P&L negara. Hanya Net Sales, COGM, EBT bergerak rupiah; SM/GA menahan nominal, rasionya bergeser. Listing fee, trading term & PPN ditampilkan untuk MT.',
+    baseline:'Baseline', nplCogm:'COGM NPL', target:'Target EBT', custom:'Custom', breakEven:'Break-even', channel:'Channel',
+    asis:'As-is', tobe:'To-be', ratio:'Rasio', item:'Item',
+    iGross:'Penjualan Kotor', iRet:'(−) Retur', iN:'Net Sales (NSAR)', iC:'(−) COGM / COGS', iG:'GP1 — Margin Kotor', iS1:'SM1 Tenaga Penjual', iS2:'SM2 Distribusi', iS3:'SM3 Trade Spending', iS4:'SM4 Overhead', iGP2:'GP2 / Laba Operasi', iGA1:'GA1 Umum & Admin', iGA2:'GA2 Keuangan', iGA3:'GA3 Lainnya', iList:'Listing fee (MT)', iTrade:'Trading term (MT)', iPPN:'PPN (pass-through)', iE:'EBT',
+    salesGap:'Perubahan Net Sales', ebtTobe:'EBT to-be', cogmR:'Rasio COGM', decision:'Kelayakan',
+    decGo:'GO', decPilot:'PILOT', decRework:'REWORK', decHold:'HOLD', decNogo:'NO-GO',
+    feasEasy:'Terjangkau (≤25%)', feasMed:'Perlu lonjakan besar', feasNo:'Tak layak di target ini',
+    p3read:'{name}: Net Sales harus capai {ns} ({g}) untuk menahan EBT {t}. Rasio COGM adalah tuasnya — makin rendah COGM, makin kecil kenaikan sales.',
+    tobeHint:'Tab ini untuk eksplorasi. Ranking Launch (tab 5) menentukan kelayakan otomatis per kombinasi — tak minta EBT manual.',
+    p4t:'Market Share — per Kategori', p4l:'Audit snack-extruded (Indonesia). Market share dibaca per kategori rasa, dipetakan ke tiap NPL dengan verdict jelas.',
     mktSize:'Pasar', siipSh:'Share SIIP', siipTr:'SIIP MAT', fastest:'Rasa tercepat', verdict:'Verdict',
-    vRide:'RIDE', vWatch:'WATCH', vAvoid:'AVOID', vRideD:'kategori panas, launch bareng', vWatchD:'datar/turun, launch selektif', vAvoidD:'white space, validasi demand dulu',
-    flavorH:'Rasa', valH:'Nilai MAT (Rp Juta)', chgH:'Chg MAT', contH:'% pasar', mapH:'NPL', brandH:'Brand', shareH:'Share',
-    chFit:'Headroom channel', chGrow:'Nabati / kategori',
-    siipPos:'SIIP: Rp493M, share 5,2%, −2,5% MAT. Kuat di GT (83% SIIP); tipis di Minimarket (1,7%) di mana kategori tumbuh +9,5% — headroom paling jelas.',
-    nielsenSrc:'Audit snack Nielsen/NIQ, MAT TY ke Apr-25, Indonesia. Malaysia & China tak ada di file ini.',
-    p5t:'Ranking Launch — SKU × Area', p5l:'Di mana tiap rasa launch duluan. Klik baris untuk skor penuh & keputusan.',
-    bundleRec:'Rekomendasi launch pertama', bundleWhy:'Nori + BBQ, Indonesia GT (DP). Field score {s}/100.',
-    rkH:'#', skuH:'SKU', areaH:'Area', gpH:'GP penuh', demandH:'Nielsen', oppH:'Opportunity', callH:'Keputusan',
+    vRide:'RIDE', vWatch:'WATCH', vAvoid:'AVOID',
+    catShareT:'Market share kategori (kategori NPL-mu)', nplVerdictT:'Verdict NPL', flavorH:'Kategori rasa', valH:'Nilai MAT (Rp Juta)', chgH:'Chg MAT', contH:'% pasar', shareH:'Est. share SIIP', mapH:'NPL', brandH:'Brand',
+    chFit:'Headroom channel SIIP', chGrow:'Nabati / kategori',
+    siipPos:'SIIP: Rp493M, share 5,2%, −2,5% MAT. Kuat di GT (83% SIIP); tipis di Minimarket (1,7%) di mana kategori tumbuh +9,5%.',
+    nielsenSrc:'Audit snack Nielsen/NIQ, MAT TY ke Apr-25, Indonesia. Audit Malaysia & China tak ada di file ini.',
+    p5t:'Ranking Launch — SKU × Negara', p5l:'Di mana tiap SKU SIIP sebaiknya launch, dinilai dengan metode concept-book. Klik baris untuk rincian penuh Opportunity, Probability, Risk & Confidence.',
+    optSingle:'SKU Satuan', optCombo:'Kombinasi (Core + Halo)',
+    rkH:'#', skuH:'SKU', areaH:'Area launch', oppH:'Opportunity', probH:'Probabilitas', riskH:'Risk', confH:'Confidence', ebtH:'EBT @ skala', callH:'Keputusan',
+    whyT:'Kenapa pasar ini', wMarket:'Opportunity terbaik', wEbt:'EBT terbaik @ skala', wConf:'Confidence', wDrill:'Drill-down', dCountry:'Negara', dChannel:'Channel', dRegion:'Region', dSku:'SKU',
     sliceT:'Area launch per negara', cC:'Negara', cG:'Channel GT', cM:'Channel MT', cU:'Khusus-negara',
-    oppScore:'Opportunity', probSucc:'Probabilitas', riskL:'Risiko', confL:'Keyakinan', expEbt:'Ekspektasi EBT di skala',
-    scoreBreak:'Rincian skor', sbDemand:'Demand Nielsen', sbMargin:'Margin COGM', sbChannel:'Fit channel',
-    rationale:'Dasar', caution:'Perhatian / langkah berikut',
-    gMkt:'Kapasitas pasar memadai', gEbt:'EBT berkelanjutan di skala', gEvid:'Bukti demand pembanding', gCap:'Kapabilitas eksekusi tersedia',
-    cautionTxt:'Pantau volatilitas RM dan trade spending.',
-    riskLow:'Rendah', riskMed:'Sedang', riskHigh:'Tinggi', confHigh:'Tinggi', confMed:'Sedang', confLow:'Rendah',
-    pDatat:'Data & Upload', pDatal:'Upload workbook COGM untuk memperbarui angka, atau export/import snapshot JSON. Semua tersimpan di browser ini.',
-    upCogm:'Upload workbook COGM (.xlsx)', upHint:'Taruh file COGM SIIP di sini atau klik untuk pilih. Membaca Sheet1 baris 13–15 (Nori, Karaage, Kari) dan kapasitas/DBP.',
-    expJson:'Export JSON', impJson:'Import JSON', resetD:'Reset ke default', upOk:'Memperbarui {n} SKU dari workbook.', upErr:'Gagal membaca workbook — pastikan layout sama dengan file COGM SIIP.',
-    curData:'Data saat ini', ctn:'ktn', bil:'M'
+    expEbt:'Ekspektasi EBT di skala realistis', nsScale:'Net Sales di skala',
+    methodT:'Cara skor dibangun', oppScore:'Opportunity Score', probSucc:'Probabilitas', riskL:'Risk', confL:'Confidence',
+    scoreBreak:'Rincian Opportunity (bobot × skor)', riskBreak:'Rincian Risk (bobot × rating/5)', rationale:'Dasar keputusan', probBreak:'Dasar probabilitas',
+    dMarket:'Market Attractiveness', dProduct:'Product-Market Fit', dChannel:'Channel / Account Fit', dFinancial:'Financial Sustainability', dExecution:'Execution Readiness', dEvidence:'Evidence Strength',
+    rMarket:'Market Uncertainty', rRm:'RM & Cost Volatility', rChannel:'Channel / Account', rExecution:'Execution Complexity', rSupply:'Supply', rRegulatory:'Regulatory', rCompetitive:'Competitive', rCannibal:'Kanibalisasi',
+    gCap:'Required sales ≤ pasar capturable', gEbt:'EBT positif di skala realistis', gEvid:'Bukti demand pembanding', gCapability:'Kapabilitas eksekusi tersedia',
+    probText:'Readiness {r}/100 × faktor confidence ({c}) → probabilitas {p}%. Readiness ≠ probabilitas — kualitas bukti mendiskon.',
+    riskText:'Total risk {t}/100 → {b}. Penalti opportunity −{p}. Driver utama: {d}.',
+    riskLow:'Rendah', riskMedium:'Sedang', riskHigh:'Tinggi', confHigh:'Tinggi', confMedium:'Sedang', confLow:'Rendah',
+    recFirst:'Rekomendasi launch pertama', recNone:'Belum ada kombinasi yang mencapai EBT positif di dalam pasar capturable-nya — rute COGM paling ramping jadi kandidat pilot.',
+    dataT:'Data & Upload', dataL:'Upload tersimpan di browser ini (localStorage). Ganti estimasi dengan file asli-mu.',
+    upCogmT:'Workbook COGM (.xlsx)', upCogmH:'Membaca Sheet1 baris 13–15 (Nori, Karaage, Kari) + kapasitas/DBP.',
+    upPnlT:'P&L per negara', upPnlH:'Template: country, Net Sales, COGS, SM1–4, GA1–3. Download, isi, lalu import. (Format Excel disesuaikan saat kamu kirim file asli.)',
+    dlTemplate:'Download template (JSON)', impPnl:'Import P&L', expAll:'Export semua (JSON)', impAll:'Import semua', resetAll:'Reset ke default', upOk:'Memperbarui {n} SKU.', pnlOk:'Memperbarui {n} baseline negara.', upErr:'Gagal membaca file — cek layout.',
+    ctn:'ktn', bil:'M'
   }};
   function t(k,v){ var d=T[lang]||T.en, s=d[k]; if(s==null)s=T.en[k]; if(s==null)return k; if(v)Object.keys(v).forEach(function(x){ s=s.replace(new RegExp('\\{'+x+'\\}','g'),v[x]); }); return s; }
   function L(o){ return o?(o[lang]||o.en):''; }
 
-  /* ========== format ========== */
   function grp(n){ return Math.round(n).toLocaleString(lang==='id'?'id-ID':'en-US'); }
   function dec(x,d){ var s=(+x).toFixed(d==null?1:d); return lang==='id'?s.replace('.',','):s; }
   function rpShort(n){ var s=n<0?'−':''; n=Math.abs(n); if(n>=1e12)return s+'Rp'+dec(n/1e12)+'T'; if(n>=1e9)return s+'Rp'+dec(n/1e9)+(lang==='id'?'M':'B'); if(n>=1e6)return s+'Rp'+dec(n/1e6)+(lang==='id'?'Jt':'M'); return s+'Rp'+grp(n); }
   function rpFull(n){ return (n<0?'−Rp':'Rp')+grp(Math.abs(n)); }
   function pct(n,d){ return dec(n,d)+'%'; }
   function pctS(n){ return (n<0?'−':'+')+dec(Math.abs(n))+'%'; }
+  function scoreColor(s){ return s>=70?'var(--green)':s>=50?'var(--gold)':'var(--red)'; }
 
-  /* ========== state ========== */
-  var st={ page:1, sel:'nori', vol:ENG().fullCap, base:'id', target:0.085, customT:12, selCombo:0, addOpen:false };
+  var st={ page:1, sel:'nori', base:'id', revChannel:'MT', target:0.085, customT:12, sortBrand:true, rankOpt:'single', selRank:0, mapCountry:'Indonesia', addOpen:false };
   var globe=null;
 
-  /* ========== decision / scoring engine (prototype-aligned) ========== */
-  function expectedEbt(c,ch){ return gpFull(c) - smTotal(ch); } // % of NSAR at full capacity
-  function evalCombo(cm){
-    var c=npl(cm.npl), fl=flavor(c.nielsen), ebt=expectedEbt(c,cm.channel), gp=gpFull(c);
-    // sub-scores
-    var demand = !fl ? 12 : Math.max(4,Math.min(40, 18 + fl.chg*0.8 + Math.min(10,fl.val/130000)));
-    var margin = Math.max(0,Math.min(30,(gp-13)/13*30));
-    var channel = cm.channel==='GT'?26:19;        // SIIP strong in GT (83%)
-    var opp = Math.round(demand+margin+channel);
-    // probability of success (evidence-based)
-    var prob = Math.round(Math.max(40,Math.min(86, (fl?62:46) + (fl?fl.chg*0.6:0) + (gp-20))));
-    // gates
-    var gMkt = !!fl && fl.val>=250000;            // category big enough
-    var gEbt = ebt>=0;                            // sustainable at scale (break-even+)
-    var gEvid = !!fl;                             // comparable demand exists
-    var gCap = cm.channel==='GT' || NIELSEN.channels[1].pot>0; // capability in channel
-    var pass=[gMkt,gEbt,gEvid,gCap].filter(Boolean).length;
-    var decision = pass===4?'go' : (gEvid&&gMkt&&pass>=3)?'pilot' : (!gEbt&&gEvid)?'rework':'hold';
-    if(!fl && decision==='go') decision='pilot';
-    // risk & confidence
-    var risk = ebt>=2?'Low':ebt>=-2?'Medium':'High';
-    var conf = !fl?'Low':(fl.chg>=5?'High':'Medium');
-    return {c:c,fl:fl,cm:cm,ebt:ebt,gp:gp,opp:opp,prob:prob,demand:demand,margin:margin,channel:channel,
-      gates:{gMkt:gMkt,gEbt:gEbt,gEvid:gEvid,gCap:gCap}, decision:decision, risk:risk, conf:conf};
-  }
-
-  /* ========== NAV ========== */
+  /* ============ NAV ============ */
   function renderNav(){
     var n=document.getElementById('nav'), labels=['n1','n2','n3','n4','n5'];
-    var h=labels.map(function(l,i){ return '<button type="button" data-p="'+(i+1)+'" class="'+(st.page===i+1?'active':'')+'"><span class="sn">'+(i+1)+'</span>'+t(l)+'</button>'; }).join('');
-    h+='<button type="button" class="dataBtn '+(st.page===6?'active':'')+'" data-p="6" title="Data & Upload">⚙ '+t('nData')+'</button>';
-    n.innerHTML=h;
+    n.innerHTML=labels.map(function(l,i){ return '<button type="button" data-p="'+(i+1)+'" class="'+(st.page===i+1?'active':'')+'"><span class="sn">'+(i+1)+'</span>'+t(l)+'</button>'; }).join('');
     n.querySelectorAll('button').forEach(function(b){ b.addEventListener('click',function(){ st.page=+b.getAttribute('data-p'); render(); window.scrollTo(0,0); }); });
   }
   function pagehead(title,lead){ return '<div class="pagehead"><h1>'+title+'</h1><p class="lead">'+lead+'</p></div>'; }
-  function card(ico,title,sub,note,body,right){
-    return '<section class="card"><div class="card-head"><div class="ico">'+ico+'</div><div><h3>'+title+'</h3>'+(sub?'<div class="hsub">'+sub+'</div>':'')+'</div>'+(right?'<div class="right">'+right+'</div>':'')+'</div>'+(note?'<div class="note-strip">'+note+'</div>':'')+body+'</section>';
-  }
+  function card(ico,title,sub,note,body,right){ return '<section class="card"><div class="card-head"><div class="ico">'+ico+'</div><div><h3>'+title+'</h3>'+(sub?'<div class="hsub">'+sub+'</div>':'')+'</div>'+(right?'<div class="right">'+right+'</div>':'')+'</div>'+(note?'<div class="note-strip">'+note+'</div>':'')+body+'</section>'; }
   function tile(label,val,cls,sub){ return '<div class="tile '+(cls||'')+'"><div class="tl">'+label+'</div><div class="tv">'+val+'</div>'+(sub?'<div class="tsub">'+sub+'</div>':'')+'</div>'; }
-  function nplPicker(id){ return '<select id="'+(id||'nplSel')+'">'+DATA.npls.map(function(c){ return '<option value="'+c.k+'"'+(c.k===st.sel?' selected':'')+'>'+c.emoji+' '+c.name+'</option>'; }).join('')+'</select>'; }
+  function nplPicker(){ return '<select id="nplSel">'+DATA.npls.map(function(c){ return '<option value="'+c.k+'"'+(c.k===st.sel?' selected':'')+'>'+c.emoji+' '+c.name+'</option>'; }).join('')+'</select>'; }
 
-  /* ========== PAGE 1 — Concepts ========== */
+  /* ============ PAGE 1 ============ */
   function page1(){
-    var cards=DATA.npls.map(function(c){
-      var fl=flavor(c.nielsen), gpv=gpFull(c), cgm=cogmFull(c);
-      var demand = fl ? (fl.chg>=10?'<span class="chip good">▲ '+pctS(fl.chg)+'</span>':fl.chg<0?'<span class="chip bad">▼ '+pctS(fl.chg)+'</span>':'<span class="chip warn">'+pctS(fl.chg)+'</span>') : '<span class="chip">white space</span>';
+    var cards=DATA.npls.map(function(c){ var fl=flavor(c.nielsen), gpv=gpFull(c), cgm=cogmFull(c);
+      var demand=fl?(fl.chg>=10?'<span class="chip good">▲ '+pctS(fl.chg)+'</span>':fl.chg<0?'<span class="chip bad">▼ '+pctS(fl.chg)+'</span>':'<span class="chip warn">'+pctS(fl.chg)+'</span>'):'<span class="chip">white space</span>';
       var gpc=gpv>=22?'txt-green':gpv>=18?'txt-amber':'txt-red';
       return '<div class="npl'+(c.k===st.sel?' sel':'')+'" data-k="'+c.k+'">'+
         '<div class="nh"><span class="emoji">'+c.emoji+'</span><div><div class="nm">'+c.name+'</div><div class="sku">'+c.sku+'</div></div></div>'+
+        '<div class="chips"><span class="chip brand">'+c.brand+'</span><span class="chip gold">'+(fl?L(fl.n):'—')+'</span>'+demand+'</div>'+
         '<div class="statrow"><div><div class="sv">'+rpShort(cgm)+'</div><div class="sl">'+t('cogmF')+'</div></div><div><div class="sv '+gpc+'">'+pct(gpv)+'</div><div class="sl">'+t('gpF')+'</div></div></div>'+
-        '<div class="chips"><span class="chip gold">'+t('cat')+': '+(fl?L(fl.n):'—')+'</span>'+demand+'</div>'+
       '</div>';
     }).join('');
     var addCard = st.addOpen ?
-      '<div class="npl" style="cursor:default"><input id="aName" type="text" placeholder="'+t('newName')+'" style="width:100%">'+
-      '<input id="aRm" type="number" placeholder="RM" value="26000" style="width:100%;text-align:left">'+
-      '<select id="aCat" style="width:100%">'+NIELSEN.flavors.map(function(f){return '<option value="'+f.k+'">'+L(f.n)+'</option>';}).join('')+'<option value="">white space</option></select>'+
+      '<div class="npl" style="cursor:default;gap:7px"><input id="aName" type="text" placeholder="'+t('newName')+'">'+
+      '<select id="aBrand">'+BRANDS.map(function(b){return '<option>'+b+'</option>';}).join('')+'</select>'+
+      '<select id="aCat">'+NIELSEN.flavors.map(function(f){return '<option value="'+f.k+'">'+L(f.n)+'</option>';}).join('')+'<option value="">white space</option></select>'+
+      '<input id="aRm" type="number" value="26000" placeholder="RM">'+
       '<div style="display:flex;gap:6px"><button class="btn" id="aAdd">'+t('add')+'</button><button class="btn ghost" id="aCancel">'+t('cancel')+'</button></div></div>'
       : '<div class="npl empty" id="addSlot"><div style="font-size:24px">＋</div><div style="font-weight:700;margin-top:4px">'+t('addNpl')+'</div></div>';
     return pagehead(t('p1t'),t('p1l'))+card('🧪',t('n1'),DATA.npls.length+' SKU',null,'<div class="card-body"><div class="npl-grid">'+cards+addCard+'</div></div>',nplPicker());
   }
 
-  /* ========== PAGE 2 — COGM (editable) ========== */
+  /* ============ PAGE 2 — COGM per-SKU horizontal matrix ============ */
   function page2(){
-    var c=npl(st.sel), e=ENG();
-    var body='<div class="card-body">'+
-      '<div class="selbar">'+
-        '<div class="fld"><label>'+t('fullCapL')+'</label><input type="number" id="fcIn" value="'+Math.round(e.fullCap)+'" step="1000"></div>'+
-        '<div class="fld"><label>'+t('dbpL')+'</label><input type="number" id="dbpIn" value="'+Math.round(e.dbp)+'" step="100"></div>'+
-        '<div class="fld" style="flex:1;min-width:240px"><div class="slider-head"><span>'+t('volume')+'</span><b id="volLbl">'+grp(st.vol)+' '+t('ctn')+'</b></div>'+
-          '<input type="range" id="volR" min="20000" max="'+Math.round(e.fullCap)+'" step="1000" value="'+Math.min(st.vol,e.fullCap)+'">'+
-          '<div class="capmeter" id="capM" style="margin-top:7px">'+capFill(st.vol)+'</div></div>'+
-        '<button class="btn ghost" id="setFullBtn">'+t('setFull')+'</button>'+
-      '</div>'+
-      '<div class="tiles" id="cogmTiles" style="margin-top:14px">'+cogmTiles(c)+'</div>'+
-      '<div class="grid2" style="margin-top:16px"><div><div class="note" style="margin:0 0 8px">'+t('editHint')+'</div><div id="cogmTable">'+cogmTable(c)+'</div></div>'+
-        '<div><h4 style="font-size:12.5px;margin-bottom:8px">'+t('curveT')+' — '+c.name+'</h4><div id="cogmCurve">'+cogmCurve(c)+'</div></div></div>'+
-      srcbar('cogm')+'</div>';
-    return pagehead(t('p2t'),t('p2l'))+card('🏭',t('n2'),c.name,null,body,nplPicker());
-  }
-  function cogmTiles(c){
-    var cg=cogmAt(st.vol,c), gp=gpPctAt(st.vol,c), util=st.vol/ENG().fullCap*100, m=ENG().dbp-cg;
-    return tile(t('util'),pct(util,0),util>=80?'good':util<45?'bad':'warn',grp(st.vol)+' / '+grp(ENG().fullCap))+
-      tile(t('cogmCtn'),rpFull(cg),cg<=70000?'good':cg>=78000?'bad':'warn','')+
-      tile(t('gpPct'),pct(gp),gp>=22?'good':gp<16?'bad':'warn','')+
-      tile(t('marginCtn'),rpFull(m),'hi','');
-  }
-  function cogmTable(c){
-    var g=c.cogm, cg=cogmFull(c);
-    function r(key,field,fixed){ var v=g[field]; return '<tr><td class="lab">'+t(key)+(fixed?' <span class="chip warn" style="font-size:9px">'+(lang==='id'?'tetap/bln':'fixed/mo')+'</span>':'')+'</td>'+
-      '<td class="num"><input type="number" data-f="'+field+'" value="'+(Math.round(v*100)/100)+'" step="100"></td>'+
-      '<td class="num txt-muted">'+pct(v/cg*100)+'</td></tr>'; }
-    return '<div class="table-wrap"><table class="dt" id="cogmInputs" style="min-width:380px"><thead><tr><th>'+t('line')+'</th><th class="num">'+t('perCtn')+'</th><th class="num">'+t('pctCogm')+'</th></tr></thead><tbody>'+
-      r('lDepre','depreF',true)+r('lOmc','omcF',true)+r('lDl','dl')+r('lListrik','listrik')+r('lGas','gas')+r('lRm','rm')+r('lPm','pm')+
-      '<tr class="grp"><td>'+t('lTot')+'</td><td class="num">'+rpFull(cg)+'</td><td class="num">100%</td></tr></tbody></table></div>';
-  }
-  function capFill(vol){ var e=ENG(),u=vol/e.fullCap*100; return '<div class="fill" style="width:'+Math.min(100,u)+'%;background:'+(u>=80?'var(--green)':u>=45?'var(--amber)':'var(--red)')+'"></div><div class="mk" style="left:'+(Math.min(100,30000/e.fullCap*100))+'%"><span>1/3</span></div><div class="mk" style="left:100%"><span>'+t('atFull')+'</span></div>'; }
-  function cogmCurve(c){
-    var e=ENG(), W=560,H=220,pL=54,pR=14,pT=12,pB=32, vmin=Math.max(15000,e.fullCap*0.2),vmax=e.fullCap;
-    var cvals=[]; for(var v=vmin;v<=vmax;v+=(vmax-vmin)/40) cvals.push(cogmAt(v,c));
-    var cmin=Math.min.apply(null,cvals)*0.99, cmax=Math.max.apply(null,cvals)*1.01;
-    function X(v){ return pL+(v-vmin)/(vmax-vmin)*(W-pL-pR); }
-    function Y(cg){ return pT+(cmax-cg)/(cmax-cmin)*(H-pT-pB); }
-    var pts=[]; for(var v2=vmin;v2<=vmax;v2+=(vmax-vmin)/60) pts.push(X(v2)+','+Y(cogmAt(v2,c)));
-    var xt=[0.25,0.5,0.75,1].map(function(f){ var v=vmin+(vmax-vmin)*f; return '<text x="'+X(v)+'" y="'+(H-pB+15)+'" font-size="10" fill="var(--muted)" text-anchor="middle" font-family="JetBrains Mono">'+Math.round(v/1000)+'k</text>'; }).join('');
-    var yt=[cmin,(cmin+cmax)/2,cmax].map(function(cg){ return '<line x1="'+pL+'" y1="'+Y(cg)+'" x2="'+(W-pR)+'" y2="'+Y(cg)+'" stroke="var(--border)" opacity=".6"/><text x="'+(pL-7)+'" y="'+(Y(cg)+3)+'" font-size="10" fill="var(--muted)" text-anchor="end" font-family="JetBrains Mono">'+Math.round(cg/1000)+'k</text>'; }).join('');
-    var cur=st.vol>=vmin&&st.vol<=vmax?'<circle cx="'+X(st.vol)+'" cy="'+Y(cogmAt(st.vol,c))+'" r="5" fill="var(--accent)" stroke="var(--surface)" stroke-width="2"/>':'';
-    return '<div class="table-wrap"><svg viewBox="0 0 '+W+' '+H+'">'+yt+xt+'<polyline points="'+pts.join(' ')+'" fill="none" stroke="var(--accent)" stroke-width="2.5"/>'+cur+'</svg></div>';
+    var list=DATA.npls.slice();
+    if(st.sortBrand) list.sort(function(a,b){ return BRANDS.indexOf(a.brand)-BRANDS.indexOf(b.brand) || a.name.localeCompare(b.name); });
+    var lines=[['lDepre','depreF',1],['lOmc','omcF',1],['lDl','dl',0],['lListrik','listrik',0],['lGas','gas',0],['lRm','rm',0],['lPm','pm',0]];
+    function headRow(){ return '<tr><th style="text-align:left">'+t('brand')+' / SKU</th>'+list.map(function(c){return '<th>'+c.emoji+' '+c.name+'<div style="font-size:9px;opacity:.8;font-weight:400">'+c.brand+'</div></th>';}).join('')+'</tr>'; }
+    var rows=lines.map(function(ln){ return '<tr><td class="lab">'+t(ln[0])+(ln[2]?' <span class="chip warn" style="font-size:9px">'+t('fixedMo')+'</span>':'')+'</td>'+
+      list.map(function(c){ return '<td class="num"><input type="number" data-k="'+c.k+'" data-f="'+ln[1]+'" value="'+(Math.round(c.cogm[ln[1]]*100)/100)+'" step="100"></td>'; }).join('')+'</tr>'; }).join('');
+    var sumCogm='<tr class="sum"><td class="lab">'+t('lTot')+'</td>'+list.map(function(c){return '<td class="num">'+rpFull(cogmFull(c))+'</td>';}).join('')+'</tr>';
+    var dbpRow='<tr><td class="lab">'+t('lDbp')+'</td>'+list.map(function(c){return '<td class="num"><input type="number" data-k="'+c.k+'" data-f="dbp" value="'+Math.round(c.dbp)+'" step="100"></td>';}).join('')+'</tr>';
+    var fullRow='<tr><td class="lab">'+t('lFull')+'</td>'+list.map(function(c){return '<td class="num"><input type="number" data-k="'+c.k+'" data-f="fullCap" value="'+Math.round(c.fullCap)+'" step="1000"></td>';}).join('')+'</tr>';
+    var gpFullRow='<tr class="sum"><td class="lab">'+t('lGpFull')+'</td>'+list.map(function(c){var g=gpFull(c);return '<td class="num '+(g>=22?'txt-green':g<16?'txt-red':'txt-amber')+'">'+pct(g)+'</td>';}).join('')+'</tr>';
+    var volRow='<tr><td class="lab">'+t('lVol')+'</td>'+list.map(function(c){return '<td class="num"><input type="number" data-k="'+c.k+'" data-f="vol" value="'+Math.round(c.vol)+'" step="1000"></td>';}).join('')+'</tr>';
+    var cogmVolRow='<tr><td class="lab">'+t('lCogmVol')+'</td>'+list.map(function(c){return '<td class="num">'+rpFull(cogmAt(c.vol,c))+'</td>';}).join('')+'</tr>';
+    var gpVolRow='<tr class="sum"><td class="lab">'+t('lGpVol')+'</td>'+list.map(function(c){var g=gpPctAt(c.vol,c);return '<td class="num '+(g>=22?'txt-green':g<16?'txt-red':'txt-amber')+'">'+pct(g)+'</td>';}).join('')+'</tr>';
+    var table='<div class="table-wrap"><table class="matrix"><thead>'+headRow()+'</thead><tbody>'+rows+sumCogm+dbpRow+fullRow+gpFullRow+'<tr><td class="lab" colspan="'+(list.length+1)+'" style="background:var(--surface);border:none;height:8px"></td></tr>'+volRow+cogmVolRow+gpVolRow+'</tbody></table></div>';
+    var right='<label style="font-size:12px;display:inline-flex;gap:6px;align-items:center"><input type="checkbox" id="sortChk" '+(st.sortBrand?'checked':'')+'> '+t('sortBrand')+'</label>';
+    return pagehead(t('p2t'),t('p2l'))+card('🏭',t('n2'),null,null,'<div class="card-body">'+table+srcbar('cogm')+'</div>',right);
   }
 
-  /* ========== PAGE 3 — Reverse EBT ========== */
-  function reverse(b,rc,target){ var O=baseFixed(b), d=1-rc-target; if(d<=0) return {feasible:false}; var ns=O/d; return {feasible:true,O:O,ns:ns,cogm:rc*ns,ebt:target*ns,gp1:ns-rc*ns}; }
+  /* ============ PAGE 3 — Reverse EBT ============ */
   function page3(){
-    var c=npl(st.sel), b=BASE[st.base], rc=cogmFull(c)/ENG().dbp;
-    var target = st.target==='custom' ? st.customT/100 : st.target;
-    var asis=baseEbt(b), r=reverse(b,rc,target);
-    var baseSel='<select id="baseSel">'+Object.keys(BASE).map(function(k){var x=BASE[k];return '<option value="'+k+'"'+(k===st.base?' selected':'')+'>'+x.flag+' '+x.name+(x.real?'':' *')+'</option>';}).join('')+'</select>';
+    var c=npl(st.sel), b=DATA.base[st.base], co=null;
+    Object.keys(COUNTRY).forEach(function(k){ if(COUNTRY[k].key===st.base) co=COUNTRY[k]; });
+    var rc=cogmFull(c)/c.dbp, target= st.target==='custom'?st.customT/100:st.target;
+    var fixedBelow=b.sm1+b.sm2+b.sm3+b.sm4+b.ga1+b.ga2+b.ga3;
+    var mt=st.revChannel==='MT';
+    // MT extras as % of nsar (listing+trading), PPN pass-through shown only
+    var listPct=mt?2.0:0, tradePct=mt?3.0:0, ppnPct=11.0;
+    var denom=1-rc-target-(listPct+tradePct)/100;
+    var feasible=denom>0;
+    var asisGross=b.nsar/0.98, asisRet=asisGross-b.nsar; // approximate 2% return
+    var asisEbt=b.nsar-b.cogs-fixedBelow;
+    var ns = feasible? fixedBelow/denom : null;
+    var baseSel='<select id="baseSel">'+Object.keys(DATA.base).map(function(k){var x=DATA.base[k];return '<option value="'+k+'"'+(k===st.base?' selected':'')+'>'+x.flag+' '+x.name+(x.real?'':' *')+'</option>';}).join('')+'</select>';
+    var chSeg='<div class="seg" id="chSeg"><button data-c="GT" class="'+(!mt?'on':'')+'">GT</button><button data-c="MT" class="'+(mt?'on':'')+'">MT</button></div>';
     var seg='<div class="seg" id="tgtSeg"><button data-tv="0" class="'+(st.target===0?'on':'')+'">'+t('breakEven')+'</button>'+
       [0.05,0.085,0.10].map(function(x){return '<button data-tv="'+x+'" class="'+(st.target===x?'on':'')+'">'+pct(x*100,x===0.085?1:0)+'</button>';}).join('')+
-      '<button data-tv="custom" class="'+(st.target==='custom'?'on':'')+'">'+t('custom')+'</button></div>'+
-      (st.target==='custom'?'<input type="number" id="customIn" value="'+st.customT+'" step="0.5" style="margin-left:8px;width:80px"> %':'');
-    var rows='';
-    function rr(lab,av,ar,tv,tr,cls){ return '<tr class="'+(cls||'')+'"><td class="lab">'+lab+'</td><td class="num">'+rpShort(av)+'</td><td class="num txt-muted">'+(ar==null?'—':pct(ar))+'</td><td class="num col-tobe">'+(tv==null?'—':rpShort(tv))+'</td><td class="num col-tobe txt-muted">'+(tr==null?'—':pct(tr))+'</td></tr>'; }
-    var dec=null, gap=null;
-    if(r.feasible){
-      gap=(r.ns/b.nsar-1)*100;
-      rows=rr(t('iN'),b.nsar,100,r.ns,100,'move')+rr(t('iC'),b.cogs,b.cogs/b.nsar*100,r.cogm,rc*100,'move')+
-        rr(t('iG'),b.nsar-b.cogs,(b.nsar-b.cogs)/b.nsar*100,r.gp1,r.gp1/r.ns*100,'gp')+
-        rr(t('iS1'),b.sm1,b.sm1/b.nsar*100,b.sm1,b.sm1/r.ns*100)+rr(t('iS2'),b.sm2,b.sm2/b.nsar*100,b.sm2,b.sm2/r.ns*100)+
-        rr(t('iS3'),b.sm3,b.sm3/b.nsar*100,b.sm3,b.sm3/r.ns*100)+rr(t('iS4'),b.sm4,b.sm4/b.nsar*100,b.sm4,b.sm4/r.ns*100)+
-        rr(t('iE'),asis,asis/b.nsar*100,r.ebt,target*100,'ebt');
-      // decision: reachable sales climb?
-      dec = gap<=25?'go':gap<=80?'pilot':'rework';
-    } else dec='hold';
-    var decMap={go:'b-go',pilot:'b-pilot',rework:'b-rework',hold:'b-hold'};
+      '<button data-tv="custom" class="'+(st.target==='custom'?'on':'')+'">'+t('custom')+'</button>'+
+      (st.target==='custom'?'<input type="number" id="customIn" value="'+st.customT+'" step="0.5"> %':'')+'</div>';
+    function rr(lab,av,ar,tv,tr,cls){ return '<tr class="'+(cls||'')+'"><td class="lab'+(cls==='subl'?' sub':'')+'">'+lab+'</td><td class="num">'+(av==null?'—':rpShort(av))+'</td><td class="num txt-muted">'+(ar==null?'—':pct(ar))+'</td><td class="num col-tobe">'+(tv==null?'—':rpShort(tv))+'</td><td class="num col-tobe txt-muted">'+(tr==null?'—':pct(tr))+'</td></tr>'; }
+    var rows='', gp2As=b.nsar-b.cogs-b.sm1-b.sm2-b.sm3-b.sm4;
+    if(feasible){
+      var gp1t=ns-rc*ns, gp2t=gp1t-(b.sm1+b.sm2+b.sm3+b.sm4);
+      var listAmt=ns*listPct/100, tradeAmt=ns*tradePct/100, ebtT=target*ns;
+      rows=rr(t('iN'),b.nsar,100,ns,100,'move')+
+        rr(t('iC'),b.cogs,b.cogs/b.nsar*100,rc*ns,rc*100,'move')+
+        rr(t('iG'),b.nsar-b.cogs,(b.nsar-b.cogs)/b.nsar*100,gp1t,gp1t/ns*100,'gp')+
+        rr(t('iS1'),b.sm1,b.sm1/b.nsar*100,b.sm1,b.sm1/ns*100,'subl')+rr(t('iS2'),b.sm2,b.sm2/b.nsar*100,b.sm2,b.sm2/ns*100,'subl')+
+        rr(t('iS3'),b.sm3,b.sm3/b.nsar*100,b.sm3,b.sm3/ns*100,'subl')+rr(t('iS4'),b.sm4,b.sm4/b.nsar*100,b.sm4,b.sm4/ns*100,'subl')+
+        rr(t('iGP2'),gp2As,gp2As/b.nsar*100,gp2t,gp2t/ns*100,'gp')+
+        rr(t('iGA1'),b.ga1,b.ga1/b.nsar*100,b.ga1,b.ga1/ns*100,'subl')+rr(t('iGA2'),b.ga2,b.ga2/b.nsar*100,b.ga2,b.ga2/ns*100,'subl')+rr(t('iGA3'),b.ga3,b.ga3/b.nsar*100,b.ga3,b.ga3/ns*100,'subl')+
+        (mt?rr(t('iList'),null,null,listAmt,listPct,'subl')+rr(t('iTrade'),null,null,tradeAmt,tradePct,'subl'):'')+
+        rr(t('iPPN'),null,null,ns*ppnPct/100,ppnPct,'subl')+
+        rr(t('iE'),asisEbt,asisEbt/b.nsar*100,ebtT,target*100,'ebt');
+    }
+    var gap= feasible?(ns/b.nsar-1)*100:null;
+    var dec= !feasible?'nogo':gap<=25?'go':gap<=80?'pilot':'rework';
+    var decMap={go:'b-go',pilot:'b-pilot',rework:'b-rework',hold:'b-hold',nogo:'b-nogo'};
     var tiles='<div class="tiles" style="margin-top:14px">'+
-      (r.feasible?tile(t('salesGap'),pctS(gap),gap<=25?'good':gap<=80?'warn':'bad',rpShort(r.ns-b.nsar)):tile(t('salesGap'),'∞','bad',''))+
-      (r.feasible?tile(t('ebtTobe'),rpShort(r.ebt),'hi',pct(target*100,1)):'')+
+      (feasible?tile(t('salesGap'),pctS(gap),gap<=25?'good':gap<=80?'warn':'bad',rpShort(ns-b.nsar)):tile(t('salesGap'),'∞','bad',''))+
+      (feasible?tile(t('ebtTobe'),rpShort(target*ns),'hi',pct(target*100,1)):'')+
       tile(t('cogmR'),pct(rc*100),rc<=0.75?'good':rc>=0.82?'bad':'warn',c.name)+
-      tile(t('decision'),'<span class="badge '+decMap[dec]+'">'+t('dec'+dec.charAt(0).toUpperCase()+dec.slice(1))+'</span>',dec==='go'?'good':dec==='hold'?'bad':'warn','')+'</div>';
-    var read = r.feasible?'<p class="note">'+t('p3read',{name:c.name,ns:rpShort(r.ns),g:pctS(gap),t:pct(target*100,1)})+'</p>':'';
+      tile(t('decision'),'<span class="badge '+decMap[dec]+'">'+t('dec'+dec.charAt(0).toUpperCase()+dec.slice(1))+'</span>',dec==='go'?'good':dec==='nogo'?'bad':'warn',feasible?(gap<=25?t('feasEasy'):t('feasMed')):t('feasNo'))+'</div>';
+    var read= feasible?'<p class="note">'+t('p3read',{name:c.name,ns:rpShort(ns),g:pctS(gap),t:pct(target*100,1)})+'</p>':'';
     var body='<div class="card-body"><div class="selbar">'+
-        '<div class="fld"><label>'+t('baseline')+'</label>'+baseSel+'</div><div class="fld"><label>'+t('nplCogm')+'</label>'+nplPicker()+'</div>'+
-        '<div class="fld"><label>'+t('target')+'</label>'+seg+'</div></div>'+tiles+
-      '<div class="table-wrap" style="margin-top:14px"><table class="aistobe"><thead><tr><th>'+t('item')+'</th><th>'+t('asis')+'</th><th>'+t('ratio')+'</th><th class="col-tobe">'+t('tobe')+'</th><th class="col-tobe">'+t('ratio')+'</th></tr></thead><tbody>'+rows+'</tbody></table></div>'+read+srcbar('rev')+'</div>';
-    return pagehead(t('p3t'),t('p3l'))+card('🧮',t('n3'),b.name+' · '+c.name,null,body);
+      '<div class="fld"><label>'+t('baseline')+'</label>'+baseSel+'</div><div class="fld"><label>'+t('nplCogm')+'</label>'+nplPicker()+'</div>'+
+      '<div class="fld"><label>'+t('channel')+'</label>'+chSeg+'</div><div class="fld"><label>'+t('target')+'</label>'+seg+'</div></div>'+
+      tiles+'<div class="table-wrap" style="margin-top:14px"><table class="aistobe"><thead><tr><th>'+t('item')+'</th><th>'+t('asis')+'</th><th>'+t('ratio')+'</th><th class="col-tobe">'+t('tobe')+'</th><th class="col-tobe">'+t('ratio')+'</th></tr></thead><tbody>'+rows+'</tbody></table></div>'+read+
+      '<div class="srcbar"><span>💡</span><span>'+t('tobeHint')+'</span></div>'+srcbar('rev')+'</div>';
+    return pagehead(t('p3t'),t('p3l'))+card('🧮',t('n3'),b.name+' · '+c.name+' · '+st.revChannel,null,body);
   }
 
-  /* ========== PAGE 4 — Market Share + globe ========== */
+  /* ============ PAGE 4 — Market Share by category ============ */
   function page4(){
     var N=NIELSEN, fl=flavor('seaweed');
     var tiles='<div class="tiles">'+tile(t('mktSize'),rpShort(N.marketT*1e6),'hi',N.period)+tile(t('siipSh'),pct(5.2),'warn','Rp493'+t('bil'))+tile(t('siipTr'),pctS(-2.5),'bad','')+tile(t('fastest'),L(fl.n),'good',pctS(fl.chg))+'</div>';
-    // per-combination verdict (each NPL)
-    var combos=DATA.npls.map(function(c){ var f=flavor(c.nielsen); var v=!f?'avoid':(f.chg>=5?'ride':'watch');
-      var vc=v==='ride'?'good':v==='watch'?'warn':'bad';
-      return '<div class="cmb" data-k="'+c.k+'"><span class="ce">'+c.emoji+'</span><div><div class="cn">'+c.name+'</div><div class="cs">'+(f?L(f.n)+' · '+pctS(f.chg):'white space')+'</div></div>'+
-        '<div class="cv"><span class="badge '+(v==='ride'?'b-go':v==='watch'?'b-rework':'b-hold')+'">'+t('v'+v.charAt(0).toUpperCase()+v.slice(1))+'</span><div class="cs" style="margin-top:3px">'+t('v'+v.charAt(0).toUpperCase()+v.slice(1)+'D')+'</div></div></div>'; }).join('');
-    var left='<div style="min-width:0"><div id="globeBox"><div class="globe-cap">Indonesia · Malaysia · China</div></div><div style="margin-top:12px">'+combos+'</div></div>';
-    // flavor table
+    // category table limited to the NPL categories (+ context top flavours), with SIIP est share
+    var catKeys={}; DATA.npls.forEach(function(c){ if(c.nielsen) catKeys[c.nielsen]=true; });
     var frows=N.flavors.map(function(f){ var m=DATA.npls.filter(function(x){return x.nielsen===f.k;})[0]; var cc=f.chg>=10?'delta-up':f.chg<0?'delta-dn':'';
-      return '<tr'+(m?' class="hl"':'')+'><td>'+L(f.n)+'</td><td class="num">'+grp(f.val)+'</td><td class="num '+cc+'">'+pctS(f.chg)+'</td><td class="num txt-muted">'+pct(f.cont)+'</td><td>'+(m?m.emoji+' '+m.name:'—')+'</td></tr>'; }).join('');
-    var ftab='<div class="table-wrap"><table class="dt"><thead><tr><th>'+t('flavorH')+'</th><th class="num">'+t('valH')+'</th><th class="num">'+t('chgH')+'</th><th class="num">'+t('contH')+'</th><th>'+t('mapH')+'</th></tr></thead><tbody>'+frows+'</tbody></table></div>';
-    var brows=N.brands.map(function(bd){return '<tr'+(bd.me?' class="hl"':'')+'><td>'+(bd.me?'★ ':'')+bd.n+'</td><td class="num">'+grp(bd.val)+'</td><td class="num">'+pct(bd.sh)+'</td><td class="num '+(bd.chg<0?'delta-dn':'delta-up')+'">'+pctS(bd.chg)+'</td></tr>';}).join('');
-    var btab='<div class="table-wrap"><table class="dt"><thead><tr><th>'+t('brandH')+'</th><th class="num">'+t('valH')+'</th><th class="num">'+t('shareH')+'</th><th class="num">'+t('chgH')+'</th></tr></thead><tbody>'+brows+'</tbody></table></div>';
+      var estShare = m? dec(5.2*(f.cont/7),1)+'%' : '—';
+      return '<tr'+(m?' class="hl"':'')+'><td>'+L(f.n)+'</td><td class="num">'+grp(f.val)+'</td><td class="num '+cc+'">'+pctS(f.chg)+'</td><td class="num txt-muted">'+pct(f.cont)+'</td><td class="num">'+estShare+'</td><td>'+(m?m.emoji+' '+m.name:'—')+'</td></tr>'; }).join('');
+    var ftab='<div class="table-wrap"><table class="dt"><thead><tr><th>'+t('flavorH')+'</th><th class="num">'+t('valH')+'</th><th class="num">'+t('chgH')+'</th><th class="num">'+t('contH')+'</th><th class="num">'+t('shareH')+'</th><th>'+t('mapH')+'</th></tr></thead><tbody>'+frows+'</tbody></table></div>';
+    // verdict per NPL (logic: category growth + size + SIIP channel fit)
+    var verdicts=DATA.npls.map(function(c){ var f=flavor(c.nielsen);
+      var v, reason;
+      if(!f){ v='avoid'; reason=lang==='id'?'White space — demand belum terbukti, validasi dulu (pilot).':'White space — demand unproven, validate first (pilot).'; }
+      else if(f.chg>=5 && f.cont>=2){ v='ride'; reason=lang==='id'?'Kategori tumbuh '+pctS(f.chg)+' & cukup besar ('+pct(f.cont)+' pasar) — tunggangi.':'Category growing '+pctS(f.chg)+' & sizeable ('+pct(f.cont)+' of market) — ride it.'; }
+      else if(f.chg>=0){ v='watch'; reason=lang==='id'?'Tumbuh tipis — launch selektif, jangan over-invest.':'Flat growth — launch selectively, do not over-invest.'; }
+      else { v='avoid'; reason=lang==='id'?'Kategori menurun '+pctS(f.chg)+' — hindari kecuali ada diferensiasi kuat.':'Category declining '+pctS(f.chg)+' — avoid unless strongly differentiated.'; }
+      var vb=v==='ride'?'b-go':v==='watch'?'b-rework':'b-nogo';
+      return '<div class="npl" style="cursor:default"><div class="nh"><span class="emoji">'+c.emoji+'</span><div><div class="nm">'+c.name+'</div><div class="sku">'+(f?L(f.n)+' · '+pctS(f.chg):'white space')+'</div></div><div style="margin-left:auto"><span class="badge '+vb+'">'+t('v'+v.charAt(0).toUpperCase()+v.slice(1))+'</span></div></div><div class="why">'+reason+'</div></div>';
+    }).join('');
     var pmax=Math.max.apply(null,N.channels.map(function(x){return x.pot;}));
-    var chBars=N.channels.map(function(ch){ var w=ch.pot/pmax*100; return '<div class="barrow"><span class="bl">'+L(ch.n)+' · '+pct(ch.sh)+'</span><div class="bt"><i style="width:'+w+'%;background:var(--accent)"></i></div><span class="bv">'+ch.pot.toLocaleString()+t('bil')+'</span></div>'+
-      '<div style="font-size:10px;color:var(--muted);margin:-2px 0 2px 160px">'+t('chGrow')+': <span class="'+(ch.gNab>=0?'txt-green':'txt-red')+'">'+pctS(ch.gNab)+'</span> / '+pctS(ch.gCat)+'</div>'; }).join('');
-    var right='<div style="min-width:0">'+tiles+
-      '<h4 style="font-size:12.5px;margin:16px 0 8px">'+t('flavorH')+'</h4>'+ftab+
-      '<h4 style="font-size:12.5px;margin:16px 0 8px">'+t('brandH')+'</h4>'+btab+
-      '<h4 style="font-size:12.5px;margin:16px 0 8px">'+t('chFit')+'</h4><div class="bars">'+chBars+'</div>'+
-      '<p class="note">'+t('siipPos')+'</p></div>';
-    var body='<div class="card-body"><div class="mkt-wrap">'+left+right+'</div><div class="srcbar"><span>📊</span><span>'+t('nielsenSrc')+'</span></div></div>';
-    return pagehead(t('p4t'),t('p4l'))+card('🌐',t('n4'),N.period,null,body);
+    var chBars=N.channels.map(function(ch){ var w=ch.pot/pmax*100; return '<div class="barrow"><span class="bl">'+L(ch.n)+' · '+pct(ch.sh)+'</span><div class="bt"><i style="width:'+w+'%;background:var(--accent)"></i></div><span class="bv">'+ch.pot.toLocaleString()+t('bil')+'</span></div><div style="font-size:10px;color:var(--muted);margin:-2px 0 2px 170px">'+t('chGrow')+': <span class="'+(ch.gNab>=0?'txt-green':'txt-red')+'">'+pctS(ch.gNab)+'</span> / '+pctS(ch.gCat)+'</div>'; }).join('');
+    var body='<div class="card-body">'+tiles+
+      '<h4 style="font-size:12.5px;margin:16px 0 8px">'+t('nplVerdictT')+'</h4><div class="npl-grid">'+verdicts+'</div>'+
+      '<h4 style="font-size:12.5px;margin:18px 0 8px">'+t('catShareT')+'</h4>'+ftab+
+      '<h4 style="font-size:12.5px;margin:18px 0 8px">'+t('chFit')+'</h4><div class="bars">'+chBars+'</div>'+
+      '<p class="note">'+t('siipPos')+'</p><div class="srcbar"><span>📊</span><span>'+t('nielsenSrc')+'</span></div></div>';
+    return pagehead(t('p4t'),t('p4l'))+card('📈',t('n4'),N.period,null,body);
   }
 
-  /* ========== PAGE 5 — Launch Ranking ========== */
+  /* ============ PAGE 5 — Launch Ranking ============ */
   function page5(){
-    var evals=COMBOS.map(evalCombo).map(function(e,i){ e.idx=i; return e; }).sort(function(a,b){return b.opp-a.opp;});
-    var decMap={go:'b-go',pilot:'b-pilot',rework:'b-rework',hold:'b-hold'};
-    var trs=evals.map(function(e,i){ var c=e.c, fl=e.fl;
-      var dem=fl?(fl.chg>=10?'<span class="delta-up">▲'+pctS(fl.chg)+'</span>':fl.chg<0?'<span class="delta-dn">▼'+pctS(fl.chg)+'</span>':pctS(fl.chg)):'<span class="txt-muted">white space</span>';
-      return '<tr class="click'+(e.idx===st.selCombo?' sel':'')+'" data-i="'+e.idx+'"><td class="num">'+(i+1)+'</td><td>'+c.emoji+' '+c.name+'</td>'+
-        '<td>'+e.cm.country+' · '+e.cm.channel+' · '+e.cm.sub+'</td><td class="num '+(e.gp>=22?'txt-green':e.gp<16?'txt-red':'txt-amber')+'">'+pct(e.gp)+'</td>'+
-        '<td>'+dem+'</td><td class="num"><b>'+e.opp+'</b></td><td><span class="badge '+decMap[e.decision]+'">'+t('dec'+e.decision.charAt(0).toUpperCase()+e.decision.slice(1))+'</span></td></tr>'; }).join('');
-    var tableCard='<div class="table-wrap"><table class="dt" id="rankT"><thead><tr><th class="num">'+t('rkH')+'</th><th>'+t('skuH')+'</th><th>'+t('areaH')+'</th><th class="num">'+t('gpH')+'</th><th>'+t('demandH')+'</th><th class="num">'+t('oppH')+'</th><th>'+t('callH')+'</th></tr></thead><tbody>'+trs+'</tbody></table></div>';
-    var bundle='<div class="tile hi" style="display:flex;gap:13px;align-items:center;margin-bottom:12px"><div style="font-size:26px">🏆</div><div><div class="tl">'+t('bundleRec')+'</div><div style="font-weight:700;font-size:15px;font-family:Fraunces,serif;margin:2px 0">'+BUNDLE.label+' · '+BUNDLE.country+' '+BUNDLE.channel+'</div><div style="font-size:11.5px;color:var(--ink-2)">'+t('bundleWhy',{s:BUNDLE.field})+'</div></div></div>';
-    var detail=comboDetail(evalCombo(COMBOS[st.selCombo]));
-    var body1='<div class="card-body">'+bundle+tableCard+detail+srcbar('rank')+'</div>';
-    // slice n dice
-    var slice=AREAS.map(function(a){return '<tr><td>'+a.flag+' '+a.c+'</td><td style="white-space:normal">'+L(a.gt)+'</td><td style="white-space:normal">'+L(a.mt)+'</td><td style="white-space:normal">'+L(a.u)+'</td></tr>';}).join('');
-    var sliceTab='<div class="card-body"><div class="table-wrap"><table class="dt" style="min-width:640px"><thead><tr><th>'+t('cC')+'</th><th>'+t('cG')+'</th><th>'+t('cM')+'</th><th>'+t('cU')+'</th></tr></thead><tbody>'+slice+'</tbody></table></div></div>';
-    return pagehead(t('p5t'),t('p5l'))+card('🏁',t('n5'),null,null,body1)+card('🗂️',t('sliceT'),null,null,sliceTab);
+    var evals= st.rankOpt==='single'?candidatesSingle():candidatesCombo();
+    if(st.selRank>=evals.length) st.selRank=0;
+    var decMap={go:'b-go',pilot:'b-pilot',rework:'b-rework',hold:'b-hold',nogo:'b-nogo'};
+    var trs=evals.map(function(e,i){
+      var sku=e.members.map(function(m){return m.emoji+' '+m.name;}).join(' + ');
+      return '<tr class="click'+(i===st.selRank?' sel':'')+'" data-i="'+i+'"><td class="num">'+(i+1)+'</td><td>'+sku+'</td>'+
+        '<td>'+COUNTRY[e.country].flag+' '+e.country+' · '+e.channel+'</td>'+
+        '<td class="num"><b>'+e.oppFinal+'</b></td><td class="num">'+e.prob+'%</td>'+
+        '<td class="num '+(e.riskBand==='Low'?'txt-green':e.riskBand==='High'?'txt-red':'txt-amber')+'">'+t('risk'+e.riskBand)+'</td>'+
+        '<td class="num '+(e.conf==='High'?'txt-green':e.conf==='Low'?'txt-red':'txt-amber')+'">'+t('conf'+e.conf)+'</td>'+
+        '<td class="num '+(e.ebtPct>=0?'txt-green':'txt-red')+'">'+pct(e.ebtPct)+'</td>'+
+        '<td><span class="badge '+decMap[e.decision]+'">'+t('dec'+e.decision.charAt(0).toUpperCase()+e.decision.slice(1))+'</span></td></tr>';
+    }).join('');
+    var table='<div class="table-wrap"><table class="dt" id="rankT" style="min-width:720px"><thead><tr><th class="num">'+t('rkH')+'</th><th>'+t('skuH')+'</th><th>'+t('areaH')+'</th><th class="num">'+t('oppH')+'</th><th class="num">'+t('probH')+'</th><th class="num">'+t('riskH')+'</th><th class="num">'+t('confH')+'</th><th class="num">'+t('ebtH')+'</th><th>'+t('callH')+'</th></tr></thead><tbody>'+trs+'</tbody></table></div>';
+    var opt='<div class="seg" id="optSeg"><button data-o="single" class="'+(st.rankOpt==='single'?'on':'')+'">'+t('optSingle')+'</button><button data-o="combo" class="'+(st.rankOpt==='combo'?'on':'')+'">'+t('optCombo')+'</button></div>';
+    // recommendation
+    var best=evals[0], recHtml='';
+    if(best && (best.decision==='go'||best.decision==='pilot') && best.ebtPct>=0){
+      var sku=best.members.map(function(m){return m.name;}).join(' + ');
+      recHtml='<div class="tile hi" style="display:flex;gap:13px;align-items:center;margin-bottom:12px"><div style="font-size:26px">🏆</div><div><div class="tl">'+t('recFirst')+'</div><div style="font-weight:700;font-size:15px;font-family:Fraunces,serif;margin:2px 0">'+sku+' · '+best.country+' '+best.channel+'</div><div style="font-size:11.5px;color:var(--ink-2)">Opportunity '+best.oppFinal+'/100 · '+t('expEbt')+' '+pct(best.ebtPct)+' · '+t('conf'+best.conf)+' confidence</div></div></div>';
+    } else { recHtml='<div class="tile warn" style="margin-bottom:12px"><div class="tl">'+t('recFirst')+'</div><div style="font-size:12px;color:var(--ink-2);margin-top:4px">'+t('recNone')+'</div></div>'; }
+    var detail=comboDetail(evals[st.selRank]);
+    var map=mapBlock();
+    var slice=Object.keys(COUNTRY).map(function(k){var a=COUNTRY[k];return '<tr><td>'+a.flag+' '+k+'</td><td style="white-space:normal">'+L(a.gt)+'</td><td style="white-space:normal">'+L(a.mt)+'</td><td style="white-space:normal">'+L(a.uniq)+'</td></tr>';}).join('');
+    var sliceTab='<div class="table-wrap"><table class="dt" style="min-width:640px"><thead><tr><th>'+t('cC')+'</th><th>'+t('cG')+'</th><th>'+t('cM')+'</th><th>'+t('cU')+'</th></tr></thead><tbody>'+slice+'</tbody></table></div>';
+    var right='<div style="min-width:0">'+recHtml+table+detail+'</div>';
+    var body='<div class="card-body"><div class="rank-wrap"><div style="min-width:0">'+map+'</div>'+right+'</div>'+
+      '<h4 style="font-size:12.5px;margin:16px 0 8px">'+t('sliceT')+'</h4>'+sliceTab+srcbar('rank')+'</div>';
+    return pagehead(t('p5t'),t('p5l'))+card('🌐',t('n5'),null,null,body,opt);
+  }
+  function mapBlock(){
+    var bestBy=bestOppByCountry(), co=COUNTRY[st.mapCountry], score=bestBy[st.mapCountry]||0;
+    var best=candidatesSingle().filter(function(e){return e.country===st.mapCountry;}).sort(function(a,b){return b.oppFinal-a.oppFinal;})[0];
+    var legend='<div class="map-legend"><span><i style="background:#1C8560"></i>≥70</span><span><i style="background:#B6873B"></i>50–69</span><span><i style="background:#C13A49"></i>&lt;50</span></div>';
+    var why='<div class="whycard"><div class="wh"><span style="font-size:18px">'+co.flag+'</span><b>'+st.mapCountry+'</b><span class="ws" style="background:'+scoreColor(score)+'">'+score+'</span></div>'+
+      '<div class="wrow"><span class="wl">'+t('wMarket')+'</span><span class="wv">'+(best?best.oppFinal:'—')+'/100</span></div>'+
+      '<div class="wrow"><span class="wl">'+t('wEbt')+'</span><span class="wv '+(best&&best.ebtPct>=0?'txt-green':'txt-red')+'">'+(best?pct(best.ebtPct):'—')+'</span></div>'+
+      '<div class="wrow"><span class="wl">'+t('wConf')+'</span><span class="wv">'+(best?t('conf'+best.conf):'—')+'</span></div>'+
+      '<div class="drill"><b>'+t('dCountry')+'</b> '+st.mapCountry+' › <b>'+t('dChannel')+'</b> '+(best?best.channel:'GT')+' › <b>'+t('dSku')+'</b> '+(best?best.members[0].name:'—')+'</div></div>';
+    return '<div id="mapBox">'+legend+'</div>'+why;
   }
   function comboDetail(e){
-    var decMap={go:'b-go',pilot:'b-pilot',rework:'b-rework',hold:'b-hold'};
-    var risk=e.risk==='Low'?'txt-green':e.risk==='Medium'?'txt-amber':'txt-red';
+    if(!e) return '';
+    var decMap={go:'b-go',pilot:'b-pilot',rework:'b-rework',hold:'b-hold',nogo:'b-nogo'};
+    var sku=e.members.map(function(m){return m.emoji+' '+m.name;}).join(' + ');
+    function sb(lab,wt,score){ return '<div class="sb"><span class="sbl">'+lab+'</span><span class="sbw">'+Math.round(wt*100)+'%</span><div class="sbt"><i style="width:'+score+'%"></i></div><span class="sbv">'+Math.round(score)+'</span></div>'; }
+    function rb(lab,wt,rating){ return '<div class="sb"><span class="sbl">'+lab+'</span><span class="sbw">'+wt+'%</span><div class="sbt"><i style="width:'+(rating/5*100)+'%;background:'+(rating>=4?'var(--red)':rating>=3?'var(--gold)':'var(--green)')+'"></i></div><span class="sbv">'+rating+'/5</span></div>'; }
+    var oppBars=sb(t('dMarket'),OPP_W.market,e.dims.market)+sb(t('dProduct'),OPP_W.product,e.dims.product)+sb(t('dChannel'),OPP_W.channel,e.dims.channel)+sb(t('dFinancial'),OPP_W.financial,e.dims.financial)+sb(t('dExecution'),OPP_W.execution,e.dims.execution)+sb(t('dEvidence'),OPP_W.evidence,e.dims.evidence);
+    var riskBars=rb(t('rMarket'),RISK_W.market,e.risk.market)+rb(t('rRm'),RISK_W.rm,e.risk.rm)+rb(t('rChannel'),RISK_W.channel,e.risk.channel)+rb(t('rExecution'),RISK_W.execution,e.risk.execution)+rb(t('rSupply'),RISK_W.supply,e.risk.supply)+rb(t('rRegulatory'),RISK_W.regulatory,e.risk.regulatory)+rb(t('rCompetitive'),RISK_W.competitive,e.risk.competitive)+rb(t('rCannibal'),RISK_W.cannibal,e.risk.cannibal);
+    var gates=[['gCap',e.gates.capacity],['gEbt',e.gates.ebt],['gEvid',e.gates.evidence],['gCapability',e.gates.capability]];
+    var rationale=gates.map(function(g){return '<div class="ri"><span class="'+(g[1]?'ok':'no')+'">'+(g[1]?'✓':'✕')+'</span>'+t(g[0])+'</div>';}).join('');
+    // top risk driver
+    var drv=Object.keys(RISK_W).map(function(x){return [x,RISK_W[x]*e.risk[x]/5];}).sort(function(a,b){return b[1]-a[1];})[0];
+    var drvName=t('r'+drv[0].charAt(0).toUpperCase()+drv[0].slice(1));
+    var risk=e.riskBand==='Low'?'txt-green':e.riskBand==='Medium'?'txt-amber':'txt-red';
     var conf=e.conf==='High'?'txt-green':e.conf==='Medium'?'txt-amber':'txt-red';
-    function sb(lab,val,max){ return '<div class="sb"><span class="sbl">'+lab+'</span><div class="sbt"><i style="width:'+(val/max*100)+'%"></i></div><span class="sbv">'+Math.round(val)+'/'+max+'</span></div>'; }
-    var gates=[['gMkt',e.gates.gMkt],['gEbt',e.gates.gEbt],['gEvid',e.gates.gEvid],['gCap',e.gates.gCap]];
-    var rationale=gates.map(function(g){ return '<div class="ri"><span class="'+(g[1]?'ok':'no')+'">'+(g[1]?'✓':'✕')+'</span>'+t(g[0])+'</div>'; }).join('');
-    return '<div class="detail"><div class="detail-head"><span class="de">'+e.c.emoji+'</span><div><h4>'+e.c.name+' — '+e.cm.country+' '+e.cm.channel+' ('+e.cm.sub+')</h4><div class="dsub">'+(e.fl?L(e.fl.n)+' '+pctS(e.fl.chg):'white space')+'</div></div><div class="dcall"><span class="badge '+decMap[e.decision]+'" style="font-size:12px;padding:4px 12px">'+t('dec'+e.decision.charAt(0).toUpperCase()+e.decision.slice(1))+'</span></div></div>'+
+    return '<div class="detail"><div class="detail-head"><span class="de">'+e.members[0].emoji+'</span><div><h4>'+sku+' — '+e.country+' '+e.channel+'</h4><div class="dsub">'+(e.repFl?L(e.repFl.n)+' '+pctS(e.repFl.chg):'white space')+' · '+t('nsScale')+' '+rpShort(e.nsar)+'</div></div><div class="dcall"><span class="badge '+decMap[e.decision]+'" style="font-size:12px;padding:4px 12px">'+t('dec'+e.decision.charAt(0).toUpperCase()+e.decision.slice(1))+'</span></div></div>'+
       '<div class="detail-body"><div class="kpi4">'+
-        '<div class="kpi"><div class="kv">'+e.opp+'<span style="font-size:11px;color:var(--muted)">/100</span></div><div class="kl">'+t('oppScore')+'</div></div>'+
+        '<div class="kpi"><div class="kv">'+e.oppFinal+'<span style="font-size:11px;color:var(--muted)">/100</span></div><div class="kl">'+t('oppScore')+'</div></div>'+
         '<div class="kpi"><div class="kv">'+e.prob+'%</div><div class="kl">'+t('probSucc')+'</div></div>'+
-        '<div class="kpi"><div class="kv '+risk+'">'+t('risk'+e.risk)+'</div><div class="kl">'+t('riskL')+'</div></div>'+
+        '<div class="kpi"><div class="kv '+risk+'">'+t('risk'+e.riskBand)+'</div><div class="kl">'+t('riskL')+' '+e.riskTotal+'</div></div>'+
         '<div class="kpi"><div class="kv '+conf+'">'+t('conf'+e.conf)+'</div><div class="kl">'+t('confL')+'</div></div>'+
       '</div>'+
-      '<div class="grid2" style="margin-top:14px"><div><h4 style="font-size:12px;margin-bottom:8px">'+t('scoreBreak')+'</h4><div class="scorebars">'+
-        sb(t('sbDemand'),e.demand,40)+sb(t('sbMargin'),e.margin,30)+sb(t('sbChannel'),e.channel,30)+
-        '</div><div class="tile" style="margin-top:10px"><div class="tl">'+t('expEbt')+'</div><div class="tv '+(e.ebt>=0?'txt-green':'txt-red')+'">'+pct(e.ebt)+'</div><div class="tsub">GP '+pct(e.gp)+' − SM/A&P '+pct(smTotal(e.cm.channel))+'</div></div></div>'+
-        '<div><h4 style="font-size:12px;margin-bottom:8px">'+t('rationale')+'</h4><div class="reasons">'+rationale+'</div>'+
-        '<div class="tile warn" style="margin-top:10px"><div class="tl">'+t('caution')+'</div><div style="font-size:12px;color:var(--ink-2);margin-top:4px">'+t('cautionTxt')+'</div></div></div></div>'+
+      '<div class="grid2" style="margin-top:14px"><div><h4 style="font-size:12px;margin-bottom:8px">'+t('scoreBreak')+'</h4><div class="scorebars">'+oppBars+'</div>'+
+        '<p class="note">'+t('riskText',{t:e.riskTotal,b:t('risk'+e.riskBand),p:e.riskPenalty,d:drvName})+' '+t('probText',{r:e.readiness,c:dec(e.conf==='High'?0.9:e.conf==='Medium'?0.78:0.62,2),p:e.prob})+'</p></div>'+
+        '<div><h4 style="font-size:12px;margin-bottom:8px">'+t('riskBreak')+'</h4><div class="scorebars">'+riskBars+'</div></div></div>'+
+      '<div class="grid2" style="margin-top:14px"><div><h4 style="font-size:12px;margin-bottom:8px">'+t('rationale')+'</h4><div class="reasons">'+rationale+'</div></div>'+
+        '<div><h4 style="font-size:12px;margin-bottom:8px">'+t('expEbt')+'</h4><div class="tile '+(e.ebtPct>=0?'good':'bad')+'"><div class="tv '+(e.ebtPct>=0?'txt-green':'txt-red')+'">'+pct(e.ebtPct)+'</div><div class="tsub">'+t('nsScale')+' '+rpShort(e.nsar)+' · load '+pct(e.load)+'</div></div></div></div>'+
       '</div></div>';
   }
 
-  /* ========== PAGE 6 — Data & Upload ========== */
-  function page6(){
-    var e=ENG();
-    var cur='<div class="table-wrap"><table class="dt"><thead><tr><th>SKU</th><th class="num">RM</th><th class="num">PM</th><th class="num">COGM full</th><th class="num">GP full</th></tr></thead><tbody>'+
-      DATA.npls.map(function(c){return '<tr><td>'+c.emoji+' '+c.name+'</td><td class="num">'+rpFull(c.cogm.rm)+'</td><td class="num">'+rpFull(c.cogm.pm)+'</td><td class="num">'+rpFull(cogmFull(c))+'</td><td class="num">'+pct(gpFull(c))+'</td></tr>';}).join('')+
-      '<tr class="grp"><td>'+(lang==='id'?'Kapasitas / DBP':'Capacity / DBP')+'</td><td class="num" colspan="4" style="text-align:right">'+grp(e.fullCap)+' ctn · DBP '+rpFull(e.dbp)+'</td></tr></tbody></table></div>';
-    var body='<div class="card-body">'+
-      '<div class="drop" id="drop"><div style="font-size:26px">⬆</div><div style="font-weight:700;margin-top:6px;color:var(--ink)">'+t('upCogm')+'</div><div class="note" style="margin-top:4px">'+t('upHint')+'</div><input type="file" id="fileIn" accept=".xlsx,.xls" class="hidden"></div>'+
-      '<div id="upMsg" class="note"></div>'+
-      '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px"><button class="btn ghost" id="expBtn">⬇ '+t('expJson')+'</button><button class="btn ghost" id="impBtn">⬆ '+t('impJson')+'</button><input type="file" id="jsonIn" accept=".json" class="hidden"><button class="btn ghost" id="resetBtn">↺ '+t('resetD')+'</button></div>'+
-      '<h4 style="font-size:12.5px;margin:18px 0 8px">'+t('curData')+'</h4>'+cur+'</div>';
-    return pagehead(t('pDatat'),t('pDatal'))+card('⚙️',t('nData'),null,null,body);
-  }
-
-  /* ========== shared ========== */
   function srcbar(which){
-    var m={cogm:lang==='id'?'COGM dari workbook SIIP (Depre & OMC tetap/bulan → membengkak saat utilisasi turun). Edit angka langsung; tersimpan di browser. Upload workbook di tab Data.':'COGM from the SIIP workbook (Depre & OMC fixed/month → balloon as utilisation falls). Edit numbers directly; stored in this browser. Upload a workbook in the Data tab.',
-      rev:lang==='id'?'Indonesia = P&L existing (nyata). Malaysia & China (*) = asumsi 2025. Rasio COGM to-be dari tab COGM (kapasitas penuh).':'Indonesia = existing P&L (real). Malaysia & China (*) = 2025 assumptions. To-be COGM ratio from the COGM tab (full capacity).',
-      rank:lang==='id'?'Opportunity = demand Nielsen (40) + margin COGM (30) + fit channel (30). Keputusan ikut gate: kapasitas pasar, EBT di skala, bukti demand, kapabilitas eksekusi.':'Opportunity = Nielsen demand (40) + COGM margin (30) + channel fit (30). Decision follows gates: market capacity, EBT at scale, demand evidence, execution capability.'};
+    var m={cogm:lang==='id'?'COGM dari workbook SIIP. Depre & OMC tetap/bulan → membengkak saat volume operasi < kapasitas. Edit angka langsung; tersimpan di browser. Upload workbook di tombol Data (kanan atas).':'COGM from the SIIP workbook. Depre & OMC fixed/month → balloon when operating volume < capacity. Edit numbers directly; stored in this browser. Upload a workbook via the Data button (top right).',
+      rev:lang==='id'?'Indonesia = P&L existing (estimate). Malaysia & China (*) = asumsi. Rasio COGM to-be dari tab COGM (kapasitas penuh). GA1–3 + listing/trading/PPN disertakan (PPN pass-through, tidak mengurangi EBT).':'Indonesia = existing P&L (estimate). Malaysia & China (*) = assumptions. To-be COGM ratio from the COGM tab (full capacity). GA1–3 + listing/trading/VAT included (VAT is pass-through, not reducing EBT).',
+      rank:lang==='id'?'Opportunity, Probability, Risk, Confidence, dan Decision mengikuti metode concept book. Kelayakan = EBT positif di dalam pasar capturable (Required Sales ≤ Capturable). Klik baris untuk rincian penuh.':'Opportunity, Probability, Risk, Confidence and Decision follow the concept-book method. Feasibility = positive EBT within the capturable market (Required Sales ≤ Capturable). Click a row for the full breakdown.'};
     return '<div class="srcbar"><span>📎</span><span>'+m[which]+'</span></div>';
   }
 
-  /* ========== globe ========== */
-  function globeFallback(el){
-    // static SVG globe with the three launch markers, used when globe.gl can't load (offline)
-    var pts={id:[205,150],my:[180,120],cn:[210,70]};
-    el.innerHTML='<svg viewBox="0 0 380 300" style="width:100%;height:100%">'+
-      '<defs><radialGradient id="gg" cx="38%" cy="32%" r="75%"><stop offset="0%" stop-color="#2b5e9e"/><stop offset="60%" stop-color="#143a66"/><stop offset="100%" stop-color="#0a1f38"/></radialGradient></defs>'+
-      '<circle cx="190" cy="150" r="120" fill="url(#gg)" stroke="#6aa0e0" stroke-opacity=".4"/>'+
-      [40,80,120,160,200].map(function(y){return '<ellipse cx="190" cy="150" rx="120" ry="'+Math.max(8,120-Math.abs(150-(30+y)))+'" fill="none" stroke="#6aa0e0" stroke-opacity=".12"/>';}).join('')+
-      [95,135,190,245,285].map(function(x){return '<line x1="'+x+'" y1="40" x2="'+x+'" y2="260" stroke="#6aa0e0" stroke-opacity=".1"/>';}).join('')+
-      COUNTRIES.map(function(c){var p=pts[c.k]; return '<circle cx="'+p[0]+'" cy="'+p[1]+'" r="5" fill="#E0A94A"/><text x="'+(p[0]+9)+'" y="'+(p[1]+4)+'" font-size="11" fill="#cfe0f5">'+c.flag+' '+c.name+'</text>';}).join('')+
-      '</svg>';
-  }
+  /* ============ globe ============ */
   function initGlobe(){
-    var el=document.getElementById('globeBox'); if(!el) return;
-    if(typeof window.Globe==='undefined'){ globeFallback(el); return; }
+    var el=document.getElementById('mapBox'); if(!el) return;
+    var bestBy=bestOppByCountry();
+    var markers=Object.keys(COUNTRY).map(function(k){ var c=COUNTRY[k]; return {name:k,flag:c.flag,lat:c.lat,lng:c.lng,score:bestBy[k]||0}; });
+    if(typeof window.Globe==='undefined'){ mapFallback(el,markers); return; }
     try{
-      var g=window.Globe()(el)
-        .globeImageUrl('https://cdn.jsdelivr.net/npm/three-globe/example/img/earth-blue-marble.jpg')
+      var g=window.Globe()(el).globeImageUrl('https://cdn.jsdelivr.net/npm/three-globe/example/img/earth-blue-marble.jpg')
         .bumpImageUrl('https://cdn.jsdelivr.net/npm/three-globe/example/img/earth-topology.png')
-        .backgroundColor('rgba(0,0,0,0)').showAtmosphere(true).atmosphereColor('#6aa0e0').atmosphereAltitude(0.2)
+        .backgroundColor('rgba(0,0,0,0)').showAtmosphere(true).atmosphereColor('#6aa0e0').atmosphereAltitude(0.18)
         .width(el.clientWidth).height(el.clientHeight)
-        .htmlElementsData(COUNTRIES).htmlLat(function(d){return d.lat;}).htmlLng(function(d){return d.lng;})
-        .htmlElement(function(d){ var s=document.createElement('div'); s.innerHTML='<div style="font-size:18px;text-align:center;transform:translate(-50%,-100%)"><div>📍</div><div style="font-size:10px;color:#fff;background:rgba(10,22,40,.8);border-radius:6px;padding:1px 6px;white-space:nowrap">'+d.flag+' '+d.name+'</div></div>'; s.style.pointerEvents='none'; return s; });
-      g.pointOfView({lat:6,lng:112,altitude:2.2},0);
-      try{ var ctr=g.controls(); ctr.autoRotate=true; ctr.autoRotateSpeed=0.18; ctr.enableZoom=false; }catch(e){}
+        .htmlElementsData(markers).htmlLat(function(d){return d.lat;}).htmlLng(function(d){return d.lng;})
+        .htmlElement(function(d){ var col=scoreColor(d.score); var s=document.createElement('div'); s.style.cursor='pointer';
+          s.innerHTML='<div style="transform:translate(-50%,-100%);text-align:center"><div style="background:rgba(10,22,40,.85);border:1px solid '+col+';border-radius:999px;padding:3px 9px;white-space:nowrap;color:#fff;font-size:11px;font-weight:700">'+d.flag+' '+d.name+' <span style="color:'+col+'">'+d.score+'</span></div><div style="width:2px;height:12px;background:'+col+';margin:0 auto"></div></div>';
+          s.addEventListener('click',function(){ st.mapCountry=d.name; render(); });
+          return s; });
+      g.pointOfView({lat:12,lng:110,altitude:1.7},0);
+      try{ var ctr=g.controls(); ctr.autoRotate=false; ctr.enableZoom=false; }catch(e){}
       globe=g;
-    }catch(e){ globeFallback(el); }
+    }catch(e){ mapFallback(el,markers); }
+  }
+  function mapFallback(el,markers){
+    var pts={Indonesia:[210,175],Malaysia:[183,140],China:[220,80]};
+    el.innerHTML=(el.innerHTML.indexOf('map-legend')>=0?el.querySelector('.map-legend').outerHTML:'')+
+      '<svg viewBox="0 0 400 300" style="width:100%;height:100%"><defs><radialGradient id="mg" cx="36%" cy="30%" r="75%"><stop offset="0%" stop-color="#2b5e9e"/><stop offset="60%" stop-color="#143a66"/><stop offset="100%" stop-color="#0a1f38"/></radialGradient></defs>'+
+      '<circle cx="200" cy="150" r="125" fill="url(#mg)" stroke="#6aa0e0" stroke-opacity=".35"/>'+
+      markers.map(function(m){var p=pts[m.name];var col=scoreColor(m.score);return '<g style="cursor:pointer" class="mk" data-c="'+m.name+'"><circle cx="'+p[0]+'" cy="'+p[1]+'" r="6" fill="'+col+'"/><text x="'+(p[0]+10)+'" y="'+(p[1]+4)+'" font-size="11" fill="#dce8f8">'+m.flag+' '+m.name+' '+m.score+'</text></g>';}).join('')+'</svg>';
+    el.querySelectorAll('.mk').forEach(function(g){ g.addEventListener('click',function(){ st.mapCountry=g.getAttribute('data-c'); render(); }); });
   }
 
-  /* ========== render + wire ========== */
-  function render(){
-    document.querySelectorAll('[data-i18n]').forEach(function(el){ el.textContent=t(el.getAttribute('data-i18n')); });
-    document.documentElement.setAttribute('lang',lang);
-    renderNav();
-    globe=null;
-    document.getElementById('view').innerHTML=[page1,page2,page3,page4,page5,page6][st.page-1]();
-    wire();
-    if(st.page===4) setTimeout(initGlobe,30);
+  /* ============ DATA SIDEBAR ============ */
+  function openSidebar(){
+    var sb=document.getElementById('sidebar'), sc=document.getElementById('scrim');
+    sb.innerHTML='<div class="sb-head"><div class="ico" style="width:28px;height:28px;border-radius:7px;background:var(--gold-soft);color:var(--gold);display:flex;align-items:center;justify-content:center">⬆</div><h3>'+t('dataT')+'</h3><button class="sb-close" id="sbClose">×</button></div>'+
+      '<div class="sb-body"><p class="note" style="margin:0 0 14px">'+t('dataL')+'</p>'+
+      '<div class="sb-sec"><h4>'+t('upCogmT')+'</h4><div class="drop" id="dropCogm">'+t('upCogmH')+'<input type="file" id="fileCogm" accept=".xlsx,.xls" class="hidden"></div><div id="msgCogm" class="note"></div></div>'+
+      '<div class="sb-sec"><h4>'+t('upPnlT')+'</h4><p class="note" style="margin:0 0 8px">'+t('upPnlH')+'</p><div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn ghost" id="dlTpl">'+t('dlTemplate')+'</button><button class="btn ghost" id="impPnlBtn">'+t('impPnl')+'</button><input type="file" id="filePnl" accept=".json" class="hidden"></div><div id="msgPnl" class="note"></div></div>'+
+      '<div class="sb-sec"><h4>JSON</h4><div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn ghost" id="expAll">'+t('expAll')+'</button><button class="btn ghost" id="impAllBtn">'+t('impAll')+'</button><input type="file" id="fileAll" accept=".json" class="hidden"><button class="btn ghost" id="resetAll">'+t('resetAll')+'</button></div></div>'+
+      '</div>';
+    sb.classList.add('open'); sb.setAttribute('aria-hidden','false'); sc.classList.add('open');
+    document.getElementById('sbClose').addEventListener('click',closeSidebar);
+    wireSidebar();
   }
-  function wire(){
-    document.querySelectorAll('.npl[data-k]').forEach(function(el){ el.addEventListener('click',function(){ st.sel=el.getAttribute('data-k'); if(st.page===2)st.vol=ENG().fullCap; render(); }); });
-    var add=document.getElementById('addSlot'); if(add) add.addEventListener('click',function(){ st.addOpen=true; render(); });
-    var aAdd=document.getElementById('aAdd'); if(aAdd) aAdd.addEventListener('click',function(){
-      var name=(document.getElementById('aName').value||'New NPL').trim(), rm=+document.getElementById('aRm').value||26000, cat=document.getElementById('aCat').value;
-      var base=npl('nori').cogm; DATA.npls.push({k:'npl'+Date.now(), name:name, sku:'3.5g', emoji:'🆕', nielsen:cat, cogm:{depreF:base.depreF,omcF:base.omcF,dl:base.dl,listrik:base.listrik,gas:base.gas,rm:rm,pm:base.pm}});
-      st.addOpen=false; saveData(); render(); });
-    var aCancel=document.getElementById('aCancel'); if(aCancel) aCancel.addEventListener('click',function(){ st.addOpen=false; render(); });
-    var sel=document.getElementById('nplSel'); if(sel) sel.addEventListener('change',function(){ st.sel=sel.value; if(st.page===2)st.vol=ENG().fullCap; render(); });
-    // COGM
-    var vr=document.getElementById('volR'); if(vr) vr.addEventListener('input',function(){ st.vol=+vr.value; var c=npl(st.sel);
-      var a=document.getElementById('volLbl'); if(a)a.textContent=grp(st.vol)+' '+t('ctn');
-      var m=document.getElementById('capM'); if(m)m.innerHTML=capFill(st.vol);
-      var ti=document.getElementById('cogmTiles'); if(ti)ti.innerHTML=cogmTiles(c);
-      var cv=document.getElementById('cogmCurve'); if(cv)cv.innerHTML=cogmCurve(c); });
-    var fc=document.getElementById('fcIn'); if(fc) fc.addEventListener('change',function(){ var v=+fc.value||ENG().fullCap; ENG().fullCap=v; st.vol=Math.min(st.vol,v); saveData(); render(); });
-    var dbp=document.getElementById('dbpIn'); if(dbp) dbp.addEventListener('change',function(){ ENG().dbp=+dbp.value||ENG().dbp; saveData(); render(); });
-    var setFull=document.getElementById('setFullBtn'); if(setFull) setFull.addEventListener('click',function(){ st.vol=ENG().fullCap; render(); });
-    document.querySelectorAll('#cogmInputs input[data-f]').forEach(function(inp){ inp.addEventListener('change',function(){ var c=npl(st.sel); c.cogm[inp.getAttribute('data-f')]=+inp.value||0; saveData(); render(); }); });
-    // reverse
-    var bs=document.getElementById('baseSel'); if(bs) bs.addEventListener('change',function(){ st.base=bs.value; render(); });
-    var tg=document.getElementById('tgtSeg'); if(tg) tg.querySelectorAll('button').forEach(function(b){ b.addEventListener('click',function(){ var v=b.getAttribute('data-tv'); st.target=v==='custom'?'custom':parseFloat(v); render(); }); });
-    var ci=document.getElementById('customIn'); if(ci) ci.addEventListener('change',function(){ st.customT=+ci.value||10; render(); });
-    // market combos
-    document.querySelectorAll('.cmb[data-k]').forEach(function(el){ el.addEventListener('click',function(){ st.sel=el.getAttribute('data-k'); st.page=1; render(); }); });
-    // ranking
-    var rt=document.getElementById('rankT'); if(rt) rt.querySelectorAll('tbody tr').forEach(function(tr){ tr.addEventListener('click',function(){ st.selCombo=+tr.getAttribute('data-i'); render(); }); });
-    // data tab
-    wireData();
+  function closeSidebar(){ document.getElementById('sidebar').classList.remove('open'); document.getElementById('scrim').classList.remove('open'); }
+  function wireSidebar(){
+    var dc=document.getElementById('dropCogm'), fc=document.getElementById('fileCogm');
+    if(dc&&fc){ dc.addEventListener('click',function(){fc.click();});
+      ['dragover','dragenter'].forEach(function(ev){dc.addEventListener(ev,function(e){e.preventDefault();dc.classList.add('hot');});});
+      ['dragleave','drop'].forEach(function(ev){dc.addEventListener(ev,function(e){e.preventDefault();dc.classList.remove('hot');});});
+      dc.addEventListener('drop',function(e){if(e.dataTransfer.files[0])readCogm(e.dataTransfer.files[0]);});
+      fc.addEventListener('change',function(){if(fc.files[0])readCogm(fc.files[0]);}); }
+    var dlTpl=document.getElementById('dlTpl'); if(dlTpl) dlTpl.addEventListener('click',function(){ var tpl={countries:Object.keys(DATA.base).map(function(k){var b=DATA.base[k];return {code:k,name:b.name,nsar:b.nsar,cogs:b.cogs,sm1:b.sm1,sm2:b.sm2,sm3:b.sm3,sm4:b.sm4,ga1:b.ga1,ga2:b.ga2,ga3:b.ga3};})}; dl('npl-pnl-template.json',tpl); });
+    var impPnl=document.getElementById('impPnlBtn'), fp=document.getElementById('filePnl');
+    if(impPnl&&fp){ impPnl.addEventListener('click',function(){fp.click();}); fp.addEventListener('change',function(){ var f=fp.files[0]; if(!f)return; var rd=new FileReader(); rd.onload=function(){ try{ var o=JSON.parse(rd.result), n=0; (o.countries||[]).forEach(function(c){ if(DATA.base[c.code]){ ['nsar','cogs','sm1','sm2','sm3','sm4','ga1','ga2','ga3'].forEach(function(f){ if(c[f]!=null)DATA.base[c.code][f]=+c[f]; }); n++; } }); saveData(); var m=document.getElementById('msgPnl'); if(m){m.textContent=t('pnlOk',{n:n});m.className='note txt-green';} render(); }catch(e){ var m2=document.getElementById('msgPnl'); if(m2){m2.textContent=t('upErr');m2.className='note txt-red';} } }; rd.readAsText(f); }); }
+    var expAll=document.getElementById('expAll'); if(expAll) expAll.addEventListener('click',function(){ dl('npl-atomic-data.json',DATA); });
+    var impAll=document.getElementById('impAllBtn'), fa=document.getElementById('fileAll');
+    if(impAll&&fa){ impAll.addEventListener('click',function(){fa.click();}); fa.addEventListener('change',function(){ var f=fa.files[0]; if(!f)return; var rd=new FileReader(); rd.onload=function(){ try{ DATA=JSON.parse(rd.result); saveData(); render(); }catch(e){} }; rd.readAsText(f); }); }
+    var rs=document.getElementById('resetAll'); if(rs) rs.addEventListener('click',function(){ resetData(); render(); });
   }
-  function wireData(){
-    var drop=document.getElementById('drop'), fileIn=document.getElementById('fileIn');
-    if(drop&&fileIn){ drop.addEventListener('click',function(){ fileIn.click(); });
-      ['dragover','dragenter'].forEach(function(ev){ drop.addEventListener(ev,function(e){ e.preventDefault(); drop.classList.add('hot'); }); });
-      ['dragleave','drop'].forEach(function(ev){ drop.addEventListener(ev,function(e){ e.preventDefault(); drop.classList.remove('hot'); }); });
-      drop.addEventListener('drop',function(e){ if(e.dataTransfer.files[0]) readXlsx(e.dataTransfer.files[0]); });
-      fileIn.addEventListener('change',function(){ if(fileIn.files[0]) readXlsx(fileIn.files[0]); }); }
-    var exp=document.getElementById('expBtn'); if(exp) exp.addEventListener('click',function(){ var a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([JSON.stringify(DATA,null,2)],{type:'application/json'})); a.download='npl-atomic-data.json'; a.click(); });
-    var imp=document.getElementById('impBtn'), jsonIn=document.getElementById('jsonIn');
-    if(imp&&jsonIn){ imp.addEventListener('click',function(){ jsonIn.click(); }); jsonIn.addEventListener('change',function(){ var f=jsonIn.files[0]; if(!f)return; var rd=new FileReader(); rd.onload=function(){ try{ DATA=JSON.parse(rd.result); saveData(); render(); }catch(e){} }; rd.readAsText(f); }); }
-    var rs=document.getElementById('resetBtn'); if(rs) rs.addEventListener('click',function(){ resetData(); st.vol=ENG().fullCap; render(); });
-  }
-  function readXlsx(file){
-    var msg=document.getElementById('upMsg');
-    if(typeof XLSX==='undefined'){ if(msg){msg.textContent=t('upErr'); msg.className='note txt-red';} return; }
-    var rd=new FileReader();
-    rd.onload=function(){ try{
-      var wb=XLSX.read(new Uint8Array(rd.result),{type:'array'}); var ws=wb.Sheets['Sheet1']||wb.Sheets[wb.SheetNames[0]];
-      function cell(a){ var c=ws[a]; return c?+c.v:null; }
-      var fullCap=cell('O4')||ENG().fullCap, dbp=cell('L4')||ENG().dbp;
-      ENG().fullCap=fullCap; ENG().dbp=dbp;
-      var rowMap={13:'nori',14:'karaage',15:'kari'}, n=0;
-      Object.keys(rowMap).forEach(function(r){ var c=npl(rowMap[r]); if(!c) return;
-        var depre=cell('D'+r), omc=cell('E'+r), dl=cell('F'+r), li=cell('G'+r), ga=cell('H'+r), rm=cell('I'+r), pm=cell('J'+r);
-        if(rm!=null){ c.cogm={depreF:depre,omcF:omc,dl:dl,listrik:li,gas:ga,rm:rm,pm:pm}; n++; } });
-      saveData(); st.vol=ENG().fullCap;
-      if(msg){ msg.textContent=t('upOk',{n:n}); msg.className='note txt-green'; }
-      render();
-    }catch(e){ if(msg){msg.textContent=t('upErr'); msg.className='note txt-red';} } };
+  function dl(name,obj){ var a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([JSON.stringify(obj,null,2)],{type:'application/json'})); a.download=name; a.click(); }
+  function readCogm(file){
+    var msg=document.getElementById('msgCogm');
+    if(typeof XLSX==='undefined'){ if(msg){msg.textContent=t('upErr');msg.className='note txt-red';} return; }
+    var rd=new FileReader(); rd.onload=function(){ try{
+      var wb=XLSX.read(new Uint8Array(rd.result),{type:'array'}), ws=wb.Sheets['Sheet1']||wb.Sheets[wb.SheetNames[0]];
+      function cell(a){var c=ws[a];return c?+c.v:null;}
+      var fullCap=cell('O4'), dbp=cell('L4'); var rowMap={13:'nori',14:'karaage',15:'kari'}, n=0;
+      Object.keys(rowMap).forEach(function(r){ var c=npl(rowMap[r]); if(!c)return; var rm=cell('I'+r);
+        if(rm!=null){ c.cogm={depreF:cell('D'+r),omcF:cell('E'+r),dl:cell('F'+r),listrik:cell('G'+r),gas:cell('H'+r),rm:rm,pm:cell('J'+r)}; if(fullCap)c.fullCap=fullCap; if(dbp)c.dbp=dbp; c.vol=c.fullCap; n++; } });
+      saveData(); if(msg){msg.textContent=t('upOk',{n:n});msg.className='note txt-green';} render();
+    }catch(e){ if(msg){msg.textContent=t('upErr');msg.className='note txt-red';} } };
     rd.readAsArrayBuffer(file);
   }
 
-  /* ========== theme + lang ========== */
+  /* ============ render + wire ============ */
+  function render(){
+    document.querySelectorAll('[data-i18n]').forEach(function(el){ el.textContent=t(el.getAttribute('data-i18n')); });
+    document.documentElement.setAttribute('lang',lang);
+    renderNav(); globe=null;
+    document.getElementById('view').innerHTML=[page1,page2,page3,page4,page5][st.page-1]();
+    wire();
+    if(st.page===5) setTimeout(initGlobe,30);
+  }
+  function wire(){
+    document.querySelectorAll('.npl[data-k]').forEach(function(el){ el.addEventListener('click',function(){ st.sel=el.getAttribute('data-k'); render(); }); });
+    var add=document.getElementById('addSlot'); if(add) add.addEventListener('click',function(){ st.addOpen=true; render(); });
+    var aAdd=document.getElementById('aAdd'); if(aAdd) aAdd.addEventListener('click',function(){ var base=npl('nori').cogm;
+      DATA.npls.push({k:'npl'+Date.now(), name:(document.getElementById('aName').value||'New NPL').trim(), sku:'3.5g', emoji:'🆕', brand:document.getElementById('aBrand').value, nielsen:document.getElementById('aCat').value, fullCap:95256, dbp:94734.973, vol:95256, cogm:{depreF:base.depreF,omcF:base.omcF,dl:base.dl,listrik:base.listrik,gas:base.gas,rm:+document.getElementById('aRm').value||26000,pm:base.pm}});
+      st.addOpen=false; saveData(); render(); });
+    var aC=document.getElementById('aCancel'); if(aC) aC.addEventListener('click',function(){ st.addOpen=false; render(); });
+    var sel=document.getElementById('nplSel'); if(sel) sel.addEventListener('change',function(){ st.sel=sel.value; render(); });
+    // cogm matrix
+    document.querySelectorAll('.matrix input[data-k]').forEach(function(inp){ inp.addEventListener('change',function(){ var c=npl(inp.getAttribute('data-k')), f=inp.getAttribute('data-f'), v=+inp.value||0;
+      if(f==='dbp')c.dbp=v; else if(f==='fullCap'){c.fullCap=v; if(c.vol>v)c.vol=v;} else if(f==='vol')c.vol=v; else c.cogm[f]=v; saveData(); render(); }); });
+    var sc=document.getElementById('sortChk'); if(sc) sc.addEventListener('change',function(){ st.sortBrand=sc.checked; render(); });
+    // reverse
+    var bs=document.getElementById('baseSel'); if(bs) bs.addEventListener('change',function(){ st.base=bs.value; render(); });
+    var chS=document.getElementById('chSeg'); if(chS) chS.querySelectorAll('button').forEach(function(b){ b.addEventListener('click',function(){ st.revChannel=b.getAttribute('data-c'); render(); }); });
+    var tg=document.getElementById('tgtSeg'); if(tg) tg.querySelectorAll('button').forEach(function(b){ b.addEventListener('click',function(){ var v=b.getAttribute('data-tv'); st.target=v==='custom'?'custom':parseFloat(v); render(); }); });
+    var ci=document.getElementById('customIn'); if(ci) ci.addEventListener('change',function(){ st.customT=+ci.value||10; render(); });
+    // rank
+    var opt=document.getElementById('optSeg'); if(opt) opt.querySelectorAll('button').forEach(function(b){ b.addEventListener('click',function(){ st.rankOpt=b.getAttribute('data-o'); st.selRank=0; render(); }); });
+    var rt=document.getElementById('rankT'); if(rt) rt.querySelectorAll('tbody tr').forEach(function(tr){ tr.addEventListener('click',function(){ st.selRank=+tr.getAttribute('data-i'); render(); }); });
+  }
+
+  /* ============ theme + lang + data btn ============ */
   function applyTheme(mode){ var r=document.documentElement; if(mode==='light')r.setAttribute('data-theme','light'); else if(mode==='dark')r.setAttribute('data-theme','dark'); else r.removeAttribute('data-theme');
-    var lbl=document.getElementById('themeLabel'); if(lbl)lbl.textContent=mode==='light'?(lang==='id'?'Terang':'Light'):mode==='dark'?(lang==='id'?'Gelap':'Dark'):(lang==='id'?'Sistem':'System'); try{localStorage.setItem('npla-theme',mode);}catch(e){} }
-  (function(){ var s='system'; try{s=localStorage.getItem('npla-theme')||'system';}catch(e){} applyTheme(s);
-    document.getElementById('themeBtn').addEventListener('click',function(){ var c='system'; try{c=localStorage.getItem('npla-theme')||'system';}catch(e){} applyTheme(c==='system'?'light':c==='light'?'dark':'system'); if(globe)render(); }); })();
-  document.getElementById('langBtn').addEventListener('click',function(){ lang=lang==='en'?'id':'en'; lset('npla-lang',lang); document.getElementById('langLabel').textContent=lang==='id'?'ID':'EN'; render(); });
+    var lbl=document.getElementById('themeLabel'); if(lbl)lbl.textContent=mode==='light'?(lang==='id'?'Terang':'Light'):mode==='dark'?(lang==='id'?'Gelap':'Dark'):(lang==='id'?'Sistem':'System'); try{localStorage.setItem('nple-theme',mode);}catch(e){} }
+  (function(){ var s='system'; try{s=localStorage.getItem('nple-theme')||'system';}catch(e){} applyTheme(s);
+    document.getElementById('themeBtn').addEventListener('click',function(){ var c='system'; try{c=localStorage.getItem('nple-theme')||'system';}catch(e){} applyTheme(c==='system'?'light':c==='light'?'dark':'system'); }); })();
+  document.getElementById('langBtn').addEventListener('click',function(){ lang=lang==='en'?'id':'en'; lset('nple-lang',lang); document.getElementById('langLabel').textContent=lang==='id'?'ID':'EN'; render(); });
   document.getElementById('langLabel').textContent=lang==='id'?'ID':'EN';
+  document.getElementById('dataBtn').addEventListener('click',openSidebar);
+  document.getElementById('scrim').addEventListener('click',closeSidebar);
 
   render();
 })();
