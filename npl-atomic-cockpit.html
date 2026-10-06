@@ -215,14 +215,17 @@
 
   /* tab5 map (full width) + why overlay */
   #mapBox{height:380px; border-radius:12px; overflow:hidden; position:relative; background:radial-gradient(130% 130% at 30% 18%, #1a3a63 0%, #0e2544 50%, #081a30 100%); border:1px solid var(--border);}
-  .map-legend{position:absolute; top:10px; left:12px; display:flex; gap:10px; z-index:4; flex-wrap:wrap;}
+  .map-legend{position:absolute; top:10px; right:12px; display:flex; gap:10px; z-index:4; flex-wrap:wrap; justify-content:flex-end;}
   .map-legend span{display:inline-flex; align-items:center; gap:5px; font-size:10px; color:#d6e3f5; background:rgba(8,20,36,.6); padding:3px 7px; border-radius:999px;}
   .map-legend i{width:8px;height:8px;border-radius:50%;}
-  .whyover{position:absolute; top:12px; right:12px; width:270px; max-width:calc(100% - 24px); z-index:4; background:var(--surface); border:1px solid var(--border); border-radius:11px; box-shadow:0 10px 30px rgba(5,11,24,.4); overflow:hidden;}
+  .map-hint{position:absolute; bottom:12px; left:12px; z-index:4; font-size:11px; color:#d6e3f5; background:rgba(8,20,36,.6); padding:5px 11px; border-radius:999px;}
+  .whyover{position:absolute; top:12px; left:12px; width:278px; max-width:calc(100% - 24px); z-index:5; background:var(--surface); border:1px solid var(--border); border-radius:11px; box-shadow:0 14px 38px rgba(5,11,24,.5); overflow:hidden; animation:popIn .16s ease-out;}
+  @keyframes popIn{from{opacity:0; transform:translateY(6px) scale(.98);} to{opacity:1; transform:none;}}
   @media (max-width:560px){ .whyover{position:static; width:auto; margin:10px; } }
   .whyover .wh{display:flex; align-items:center; gap:9px; padding:10px 13px; border-bottom:1px solid var(--border);}
   .whyover .wh b{font-family:"Fraunces",serif; font-size:14px;}
-  .whyover .wh .ws{margin-left:auto; font-family:"JetBrains Mono",monospace; font-weight:800; font-size:15px; color:#fff; border-radius:7px; padding:2px 9px;}
+  .whyover .wh .ws{font-family:"JetBrains Mono",monospace; font-weight:800; font-size:15px; color:#fff; border-radius:7px; padding:2px 9px;}
+  .whyover .wh .wclose{margin-left:4px; width:24px;height:24px;border-radius:50%; border:1px solid var(--border); background:var(--surface-2); color:var(--muted); font-size:16px; line-height:1; display:flex;align-items:center;justify-content:center; flex:none;}
   .whyover .wrow{display:flex; justify-content:space-between; padding:5px 13px; font-size:12px; border-bottom:1px solid var(--border);}
   .whyover .wrow .wl{color:var(--muted);} .whyover .wrow .wv{font-family:"JetBrains Mono",monospace; font-weight:700;}
   .drill{display:flex; flex-wrap:wrap; gap:5px; padding:9px 13px; font-size:10.5px; color:var(--muted); line-height:1.6;}
@@ -325,7 +328,12 @@
     // Listing fee / trading term / VAT (% of NSAR) per MT account — editable in Reverse EBT.
     acctFees:{}
   };}
-  function acctFee(accKey){ if(!DATA.acctFees) DATA.acctFees={}; if(!DATA.acctFees[accKey]) DATA.acctFees[accKey]={list:2.0, trade:3.0, ppn:11.0}; return DATA.acctFees[accKey]; }
+  // Listing fee & PPN are absolute Rp amounts (per MT account, per period). Trading term stays a %.
+  function acctFee(accKey){ if(!DATA.acctFees) DATA.acctFees={}; var f=DATA.acctFees[accKey];
+    if(!f){ f=DATA.acctFees[accKey]={list:180000000, trade:3.0, ppn:990000000}; }
+    // migrate old percentage-style values (list/ppn were < 10000 when stored as %) to absolute Rp
+    if(f.list<100000) f.list=180000000; if(f.ppn<100000) f.ppn=990000000;
+    return f; }
   var DATA=lget('nple-data', defaultData());
   function saveData(){ lset('nple-data',DATA); }
   function resetData(){ DATA=defaultData(); saveData(); }
@@ -588,13 +596,12 @@
   var T={en:{
     brandSub:'SIIP · what, where, how big & when to launch', data:'Data',
     footBrand:'Atomic P&L — EBT = 0 is only break-even, not success. A launch must have a realistic path to positive EBT inside its capturable market.',
-    n1:'Concepts', n2:'COGM', n3:'EBT P&L', n4:'Market Share', n5:'Launch Ranking', n6:'Regional',
-    p6t:'Regional Rolls — Indonesia · Malaysia · China', p6l:'Three markets, three roles. Indonesia = Roll battlefield; Malaysia = booming wafer where Nabati under-grows; China = large Nabati stronghold in category contraction. Malaysia & China are read as an adjacent-category benchmark for flavour, pack and distribution — not summed with Indonesia Roll.',
+    n1:'Concepts', n2:'COGM', n3:'Small but Confounding', n4:'Market Share', n5:'Launch Ranking',
     p1t:'NPL Concepts', p1l:'Stage-1 concepts that passed the taste gate. Pick one to carry through every tab; add as many as you need.',
     cogmF:'COGM/ctn', gpF:'GP full', cat:'Category', brand:'Brand', addNpl:'Add NPL', newName:'NPL name', newRm:'RM / carton', newBrand:'Brand', newCat:'Nielsen category', fRm:'RM/ctn', fPrice:'Selling price', fPhoto:'Prototype photo', add:'Add', save:'Save', cancel:'Cancel',
     p2t:'COGM — per SKU', p2l:'Columns are SKUs, rows are the cost components. Full capacity is per SKU. Depreciation & OMC are fixed per month, so per-carton cost rises when the operating volume is below capacity.',
     sortBrand:'Sort by brand', lDepre:'Depreciation', lOmc:'OMC', lDl:'Direct Labour', lListrik:'Electricity', lGas:'Gas', lRm:'RM (seasoning)', lPm:'PM (packaging)', lTot:'COGM / carton (full)', lDbp:'DBP (base price)', lFull:'Full capacity (ctn/mo)', lGpFull:'GP % at full', lVol:'Operating volume', lCogmVol:'COGM at volume', lGpVol:'GP % at volume', fixedMo:'fixed/mo',
-    p3t:'EBT — per SKU P&L', p3l:'Full P&L per SKU (columns) down to EBT, for a country / channel / MT account. Listing fee, trading term and VAT (PPN) are entered per MT account. Operating volume comes from the COGM tab.',
+    p3t:'Small but Confounding — per-SKU P&L', p3l:'Full P&L per SKU (columns) down to EBT, for a country / channel / MT account. Listing fee and VAT (PPN) are entered as absolute Rp amounts per MT account; trading term stays a %. Operating volume comes from the COGM tab.',
     baseline:'Baseline', nplCogm:'NPL COGM', target:'Target EBT', custom:'Custom', breakEven:'Break-even', channel:'Channel', accountL:'MT account', ebtPctRow:'EBT % of NSAR',
     asis:'As-is', tobe:'To-be', ratio:'Ratio', item:'Item',
     iGross:'Gross Sales', iRet:'(−) Return', iN:'Net Sales (NSAR)', iC:'(−) COGM / COGS', iG:'GP1 — Gross Margin', iS1:'SM1 Sales Force', iS2:'SM2 Distribution', iS3:'SM3 Trade Spending', iS4:'SM4 Overhead', iGP2:'GP2 / Operating Profit', iGA1:'GA1 General & Admin', iGA2:'GA2 Finance', iGA3:'GA3 Other', iList:'Listing fee (MT)', iTrade:'Trading term (MT)', iPPN:'VAT / PPN (pass-through)', iE:'EBT',
@@ -603,7 +610,7 @@
     feasEasy:'Reachable (≤25% uplift)', feasMed:'Needs a big jump', feasNo:'Infeasible at this target',
     p3read:'{name}: Net Sales must reach {ns} ({g}) to hold a {t} EBT. The COGM ratio is the lever — the lower the COGM, the smaller the sales climb.',
     tobeHint:'This tab is for exploration. The Launch Ranking (tab 5) decides feasibility automatically per combination — it does not ask for a manual EBT.',
-    p4t:'Market Share — by Category', p4l:'Snack-extruded audit (Indonesia). Market share read per flavour category, mapped to each NPL with a clear verdict.',
+    p4t:'Market Share — Indonesia · Malaysia · China', p4l:'Indonesia = Roll battlefield; Malaysia = booming wafer where Nabati under-grows; China = large Nabati stronghold in category contraction. Indonesia keeps its full category audit; Malaysia & China are an adjacent-category benchmark for flavour, pack & distribution — not summed with Indonesia Roll.',
     mktSize:'Market', siipSh:'SIIP share', siipTr:'SIIP MAT', fastest:'Fastest flavour', verdict:'Verdict',
     vRide:'RIDE', vWatch:'WATCH', vAvoid:'AVOID',
     catShareT:'Category market share (your NPL categories)', nplVerdictT:'NPL verdict', flavorH:'Flavour category', valH:'Value MAT (Rp Mill)', chgH:'Chg MAT', contH:'% market', shareH:'Est. SIIP share', mapH:'NPL', brandH:'Brand', shareH2:'Share', topFlavorT:'Top Flavour', topBrandT:'Top Brand', topSkuT:'Top SKU', segPerfT:'Segment Performance', ndwdSegT:'Value / ND / WD by Segment', salesCompT:'Sales Comparison', skuNameH:'SKU', priceH:'Price', regionH:'Region', segmentH:'Channel segment', potH:'Potential (Rp B)', nabGrowH:'Nabati growth', byRegion:'by region', byChannel:'by channel', valAbsH:'Value Abs',
@@ -613,7 +620,7 @@
     p5t:'Launch Ranking — SKU × Country', p5l:'Where each SIIP SKU should launch, scored by the concept-book method. Click a row for the full Opportunity, Probability, Risk and Confidence breakdown.',
     optSingle:'Single SKU', optCombo:'Combination (Core + Halo)',
     rkH:'#', skuH:'SKU', areaH:'Launch area', oppH:'Opportunity', probH:'Probability', riskH:'Risk', confH:'Confidence', ebtH:'EBT @ scale', callH:'Decision',
-    whyT:'Why this market', whyC:'Why {c}?', wMktSize:'Market size', wCap:'Capturable market', wMarket:'Best opportunity', wEbt:'Expected EBT', wConf:'Confidence', wDrill:'Drill-down', dCountry:'Country', dChannel:'Channel', dAccount:'Account', dRegion:'Region', dSku:'SKU', clickRow:'Click any row to open its full scenario breakdown in a popup.',
+    whyT:'Why this market', whyC:'Why {c}?', wMktSize:'Market size', wCap:'Capturable market', wMarket:'Best opportunity', wEbt:'Expected EBT', wConf:'Confidence', wDrill:'Drill-down', dCountry:'Country', dChannel:'Channel', dAccount:'Account', dRegion:'Region', dSku:'SKU', clickRow:'Click any row to open its full scenario breakdown in a popup.', mapHint:'Tap a country on the map for its why-panel',
     sliceT:'Launch area by country', cC:'Country', cG:'GT channel', cM:'MT channel', cU:'Country-unique',
     expEbt:'Expected EBT at realistic scale', nsScale:'Net Sales at scale',
     methodT:'How the score is built', oppScore:'Opportunity Score', probSucc:'Probability', riskL:'Risk', confL:'Confidence',
@@ -634,13 +641,12 @@
   }, id:{
     brandSub:'SIIP · apa, di mana, seberapa besar & kapan launch', data:'Data',
     footBrand:'Atomic P&L — EBT = 0 hanya break-even, bukan sukses. Launch harus punya jalur realistis ke EBT positif di dalam pasar yang dapat diraih.',
-    n1:'Konsep', n2:'COGM', n3:'EBT P&L', n4:'Market Share', n5:'Ranking Launch', n6:'Regional',
-    p6t:'Regional Rolls — Indonesia · Malaysia · China', p6l:'Tiga pasar, tiga peran. Indonesia = arena Roll; Malaysia = wafer booming tapi Nabati under-grow; China = benteng besar Nabati di kategori yang menyusut. Malaysia & China dibaca sebagai benchmark kategori-berdekatan untuk flavour, pack & distribusi — tidak dijumlahkan dengan Roll Indonesia.',
+    n1:'Konsep', n2:'COGM', n3:'Small but Confounding', n4:'Market Share', n5:'Ranking Launch',
     p1t:'Konsep NPL', p1l:'Konsep Stage-1 yang lolos gate rasa. Pilih satu untuk dibawa ke semua tab; tambah sebanyak yang perlu.',
     cogmF:'COGM/ktn', gpF:'GP penuh', cat:'Kategori', brand:'Brand', addNpl:'Tambah NPL', newName:'Nama NPL', newRm:'RM / karton', newBrand:'Brand', newCat:'Kategori Nielsen', fRm:'RM/ktn', fPrice:'Harga jual', fPhoto:'Foto prototype', add:'Tambah', save:'Simpan', cancel:'Batal',
     p2t:'COGM — per SKU', p2l:'Kolom = SKU, baris = komponen biaya. Kapasitas penuh per SKU. Depresiasi & OMC tetap per bulan, jadi biaya per karton naik saat volume operasi di bawah kapasitas.',
     sortBrand:'Urutkan per brand', lDepre:'Depresiasi', lOmc:'OMC', lDl:'Tenaga Kerja', lListrik:'Listrik', lGas:'Gas', lRm:'RM (bumbu)', lPm:'PM (kemasan)', lTot:'COGM / karton (penuh)', lDbp:'DBP (harga dasar)', lFull:'Kapasitas penuh (ktn/bln)', lGpFull:'GP % di penuh', lVol:'Volume operasi', lCogmVol:'COGM di volume', lGpVol:'GP % di volume', fixedMo:'tetap/bln',
-    p3t:'EBT — P&L per SKU', p3l:'P&L lengkap per SKU (kolom) sampai EBT, untuk negara / channel / akun MT. Listing fee, trading term & PPN diisi per akun MT. Volume operasi diambil dari tab COGM.',
+    p3t:'Small but Confounding — P&L per SKU', p3l:'P&L lengkap per SKU (kolom) sampai EBT, untuk negara / channel / akun MT. Listing fee & PPN diisi sebagai angka Rp absolut per akun MT; trading term tetap %. Volume operasi diambil dari tab COGM.',
     baseline:'Baseline', nplCogm:'COGM NPL', target:'Target EBT', custom:'Custom', breakEven:'Break-even', channel:'Channel', accountL:'Akun MT', ebtPctRow:'EBT % dari NSAR',
     asis:'As-is', tobe:'To-be', ratio:'Rasio', item:'Item',
     iGross:'Penjualan Kotor', iRet:'(−) Retur', iN:'Net Sales (NSAR)', iC:'(−) COGM / COGS', iG:'GP1 — Margin Kotor', iS1:'SM1 Tenaga Penjual', iS2:'SM2 Distribusi', iS3:'SM3 Trade Spending', iS4:'SM4 Overhead', iGP2:'GP2 / Laba Operasi', iGA1:'GA1 Umum & Admin', iGA2:'GA2 Keuangan', iGA3:'GA3 Lainnya', iList:'Listing fee (MT)', iTrade:'Trading term (MT)', iPPN:'PPN (pass-through)', iE:'EBT',
@@ -649,7 +655,7 @@
     feasEasy:'Terjangkau (≤25%)', feasMed:'Perlu lonjakan besar', feasNo:'Tak layak di target ini',
     p3read:'{name}: Net Sales harus capai {ns} ({g}) untuk menahan EBT {t}. Rasio COGM adalah tuasnya — makin rendah COGM, makin kecil kenaikan sales.',
     tobeHint:'Tab ini untuk eksplorasi. Ranking Launch (tab 5) menentukan kelayakan otomatis per kombinasi — tak minta EBT manual.',
-    p4t:'Market Share — per Kategori', p4l:'Audit snack-extruded (Indonesia). Market share dibaca per kategori rasa, dipetakan ke tiap NPL dengan verdict jelas.',
+    p4t:'Market Share — Indonesia · Malaysia · China', p4l:'Indonesia = arena Roll; Malaysia = wafer booming tapi Nabati under-grow; China = benteng besar Nabati di kategori yang menyusut. Indonesia tetap dengan audit kategori lengkapnya; Malaysia & China sebagai benchmark kategori-berdekatan untuk flavour, pack & distribusi — tidak dijumlah dengan Roll Indonesia.',
     mktSize:'Pasar', siipSh:'Share SIIP', siipTr:'SIIP MAT', fastest:'Rasa tercepat', verdict:'Verdict',
     vRide:'RIDE', vWatch:'WATCH', vAvoid:'AVOID',
     catShareT:'Market share kategori (kategori NPL-mu)', nplVerdictT:'Verdict NPL', flavorH:'Kategori rasa', valH:'Nilai MAT (Rp Juta)', chgH:'Chg MAT', contH:'% pasar', shareH:'Est. share SIIP', mapH:'NPL', brandH:'Brand', shareH2:'Share', topFlavorT:'Top Flavor', topBrandT:'Top Brand', topSkuT:'Top SKU', segPerfT:'Performa Segmen', ndwdSegT:'Value / ND / WD per Segmen', salesCompT:'Perbandingan Sales', skuNameH:'SKU', priceH:'Harga', regionH:'Region', segmentH:'Segmen channel', potH:'Potensi (Rp M)', nabGrowH:'Growth Nabati', byRegion:'per region', byChannel:'per channel', valAbsH:'Value Abs',
@@ -659,7 +665,7 @@
     p5t:'Ranking Launch — SKU × Negara', p5l:'Di mana tiap SKU SIIP sebaiknya launch, dinilai dengan metode concept-book. Klik baris untuk rincian penuh Opportunity, Probability, Risk & Confidence.',
     optSingle:'SKU Satuan', optCombo:'Kombinasi (Core + Halo)',
     rkH:'#', skuH:'SKU', areaH:'Area launch', oppH:'Opportunity', probH:'Probabilitas', riskH:'Risk', confH:'Confidence', ebtH:'EBT @ skala', callH:'Keputusan',
-    whyT:'Kenapa pasar ini', whyC:'Kenapa {c}?', wMktSize:'Ukuran pasar', wCap:'Pasar dapat diraih', wMarket:'Opportunity terbaik', wEbt:'Ekspektasi EBT', wConf:'Confidence', wDrill:'Drill-down', dCountry:'Negara', dChannel:'Channel', dAccount:'Akun', dRegion:'Region', dSku:'SKU', clickRow:'Klik baris mana pun untuk membuka rincian skenario lengkap di popup.',
+    whyT:'Kenapa pasar ini', whyC:'Kenapa {c}?', wMktSize:'Ukuran pasar', wCap:'Pasar dapat diraih', wMarket:'Opportunity terbaik', wEbt:'Ekspektasi EBT', wConf:'Confidence', wDrill:'Drill-down', dCountry:'Negara', dChannel:'Channel', dAccount:'Akun', dRegion:'Region', dSku:'SKU', clickRow:'Klik baris mana pun untuk membuka rincian skenario lengkap di popup.', mapHint:'Tekan negara di peta untuk panel why-nya',
     sliceT:'Area launch per negara', cC:'Negara', cG:'Channel GT', cM:'Channel MT', cU:'Khusus-negara',
     expEbt:'Ekspektasi EBT di skala realistis', nsScale:'Net Sales di skala',
     methodT:'Cara skor dibangun', oppScore:'Opportunity Score', probSucc:'Probabilitas', riskL:'Risk', confL:'Confidence',
@@ -688,12 +694,12 @@
   function pctS(n){ return (n<0?'−':'+')+dec(Math.abs(n))+'%'; }
   function scoreColor(s){ return s>=70?'var(--green)':s>=50?'var(--gold)':'var(--red)'; }
 
-  var st={ page:1, sel:'nori', base:'id', revChannel:'MT', revAcc:null, rankOpt:'single', selRank:-1, mapCountry:'Indonesia', mktSel:'Indonesia', addOpen:false, editKey:null, modal:null };
+  var st={ page:1, sel:'nori', base:'id', revChannel:'MT', revAcc:null, rankOpt:'single', selRank:-1, mapCountry:'Indonesia', whyOpen:false, mktSel:'Indonesia', addOpen:false, editKey:null, modal:null };
   var globe=null;
 
   /* ============ NAV ============ */
   function renderNav(){
-    var n=document.getElementById('nav'), labels=['n1','n2','n3','n4','n5','n6'];
+    var n=document.getElementById('nav'), labels=['n1','n2','n3','n4','n5'];
     n.innerHTML=labels.map(function(l,i){ return '<button type="button" data-p="'+(i+1)+'" class="'+(st.page===i+1?'active':'')+'"><span class="sn">'+(i+1)+'</span>'+t(l)+'</button>'; }).join('');
     n.querySelectorAll('button').forEach(function(b){ b.addEventListener('click',function(){ st.page=+b.getAttribute('data-p'); render(); window.scrollTo(0,0); }); });
   }
@@ -763,7 +769,7 @@
     var sm1=r('sm1')*nsar, sm2=r('sm2')*nsar, sm3=r('sm3')*nsar, sm4=r('sm4')*nsar;
     var gp2=gp1-sm1-sm2-sm3-sm4;
     var ga1=r('ga1')*nsar, ga2=r('ga2')*nsar, ga3=r('ga3')*nsar;
-    var list=mt?fees.list/100*nsar:0, trade=mt?fees.trade/100*nsar:0, ppn=fees.ppn/100*nsar;
+    var list=mt?fees.list:0, trade=mt?fees.trade/100*nsar:0, ppn=fees.ppn;
     var ebt=gp2-ga1-ga2-ga3-list-trade;
     return {nsar:nsar,cogm:cogm,gp1:gp1,sm1:sm1,sm2:sm2,sm3:sm3,sm4:sm4,gp2:gp2,ga1:ga1,ga2:ga2,ga3:ga3,list:list,trade:trade,ppn:ppn,ebt:ebt,ebtPct:ebt/nsar*100};
   }
@@ -796,15 +802,15 @@
       row(t('iGA1'),function(p){return amtp(-p.ga1,p.ga1/p.nsar*100);},'subl')+
       row(t('iGA2'),function(p){return amtp(-p.ga2,p.ga2/p.nsar*100);},'subl')+
       row(t('iGA3'),function(p){return amtp(-p.ga3,p.ga3/p.nsar*100);},'subl')+
-      (mt?row(t('iList'),function(p){return amtp(-p.list,fees.list);},'subl')+row(t('iTrade'),function(p){return amtp(-p.trade,fees.trade);},'subl'):'')+
-      row(t('iPPN'),function(p){return amtp(p.ppn,fees.ppn);},'subl')+
+      (mt?row(t('iList'),function(p){return amt(-p.list);},'subl')+row(t('iTrade'),function(p){return amtp(-p.trade,fees.trade);},'subl'):'')+
+      row(t('iPPN'),function(p){return amt(p.ppn);},'subl')+
       row(t('iE'),function(p){return '<td class="num" style="font-weight:800">'+rpShort(p.ebt)+'</td>';},'ebt')+
       row(t('ebtPctRow'),function(p){return '<td class="num '+(p.ebtPct>=0?'txt-green':'txt-red')+'" style="font-weight:800">'+pct(p.ebtPct)+'</td>';},'ebt');
     var feeRow = mt ? '<div class="selbar" style="margin-top:12px">'+
-      '<div class="fld"><label>'+t('iList')+' % ('+acc.name+')</label><input type="number" id="feeList" value="'+fees.list+'" step="0.5" style="width:90px"></div>'+
+      '<div class="fld"><label>'+t('iList')+' Rp ('+acc.name+')</label><input type="number" id="feeList" value="'+Math.round(fees.list)+'" step="1000000" style="width:130px"></div>'+
       '<div class="fld"><label>'+t('iTrade')+' %</label><input type="number" id="feeTrade" value="'+fees.trade+'" step="0.5" style="width:90px"></div>'+
-      '<div class="fld"><label>'+t('iPPN')+' %</label><input type="number" id="feePpn" value="'+fees.ppn+'" step="0.5" style="width:90px"></div>'+
-      '<span class="note" style="margin:0;align-self:center">'+(lang==='id'?'Diisi per akun MT.':'Set per MT account.')+'</span></div>' : '';
+      '<div class="fld"><label>'+t('iPPN')+' Rp</label><input type="number" id="feePpn" value="'+Math.round(fees.ppn)+'" step="1000000" style="width:130px"></div>'+
+      '<span class="note" style="margin:0;align-self:center">'+(lang==='id'?'Listing & PPN angka Rp; trading term %. Diisi per akun MT.':'Listing & VAT in Rp; trading term in %. Set per MT account.')+'</span></div>' : '';
     var table='<div class="table-wrap" style="margin-top:14px"><table class="matrix"><thead>'+hrow()+'</thead><tbody>'+rows+'</tbody></table></div>';
     var body='<div class="card-body"><div class="selbar">'+
       '<div class="fld"><label>'+t('baseline')+'</label>'+baseSel+'</div>'+
@@ -859,8 +865,9 @@
     var salesChart=dualLine(N.trend.siipVal,N.trend.momoVal,'SIIP','MOMOGI',function(v){return dec(v)+'B';});
     var wdChart=dualLine(N.trend.siipWd,N.trend.momoWd,'SIIP WD','MOMOGI WD',function(v){return v+'';});
 
-    var cards=
-      card('📈', t('p4t'), N.period, null, '<div class="card-body">'+tiles+'<h4 style="font-size:12px;margin:14px 0 8px">'+t('nplVerdictT')+'</h4><div class="npl-grid">'+verdicts+'</div><p class="note">'+t('siipPos')+'</p></div>')+
+    // Indonesia full category audit (shown only when Indonesia is the selected market)
+    var idAudit=
+      card('📈', L({en:'Indonesia category snapshot',id:'Snapshot kategori Indonesia'}), N.period, null, '<div class="card-body">'+tiles+'<h4 style="font-size:12px;margin:14px 0 8px">'+t('nplVerdictT')+'</h4><div class="npl-grid">'+verdicts+'</div><p class="note">'+t('siipPos')+'</p></div>')+
       card('🏅', t('topFlavorT'), null, null, '<div class="card-body">'+flavTab+'</div>')+
       card('🏷️', t('topBrandT'), null, null, '<div class="card-body">'+brandTab+'</div>')+
       card('📦', t('topSkuT'), null, null, '<div class="card-body">'+skuTab+'</div>')+
@@ -868,7 +875,85 @@
       card('🧮', t('ndwdSegT'), 'SIIP · '+t('byChannel'), null, '<div class="card-body">'+chanTab+'</div>')+
       card('📊', t('salesCompT'), 'SIIP vs MOMOGI · Indonesia GT · Apr-23→Apr-25', null, '<div class="card-body"><div class="grid2"><div><h4 style="font-size:12px;margin-bottom:6px">'+t('valAbsH')+' (Rp B)</h4>'+salesChart+'</div><div><h4 style="font-size:12px;margin-bottom:6px">WD %</h4>'+wdChart+'</div></div></div>')+
       '<div class="srcbar"><span>📎</span><span>'+t('nielsenSrc')+'</span></div>';
-    return pagehead(t('p4t'),t('p4l'))+cards;
+    return pagehead(t('p4t'),t('p4l'))+regionalBlocks(idAudit);
+  }
+  // Combined regional market-share blocks (Indonesia Roll vs Malaysia/China Flat benchmark) + Indonesia audit
+  function regionalBlocks(idAudit){
+    var sel=st.mktSel, M=MARKETS[sel], order=['Indonesia','Malaysia','China'];
+    var caveat=card('⚠️', L({en:'Read this first — different categories',id:'Baca dulu — kategori berbeda'}), null, null,
+      '<div class="note-strip" style="border-bottom:none"><div>'+L({en:'<b>Indonesia file = Wafer ROLL</b> (to Aug-26). <b>Malaysia & China files = Wafer FLAT</b> (to Jun-26). Market size & share for MY–CN must <b>not be summed or compared directly</b> with Indonesia Roll. They are an <b>adjacent-category benchmark</b> for flavour, pack, distribution and consumer preference.',id:'<b>File Indonesia = Wafer ROLL</b> (sampai Aug-26). <b>File Malaysia & China = Wafer FLAT</b> (sampai Jun-26). Ukuran pasar & share MY–CN <b>tidak boleh dijumlah atau dibandingkan langsung</b> dengan Roll Indonesia. Mereka adalah <b>benchmark kategori-berdekatan</b> untuk flavour, pack, distribusi & preferensi konsumen.'})+'</div></div>','');
+    var exHead='<tr><th>'+L({en:'Market',id:'Pasar'})+'</th><th>'+L({en:'Source category',id:'Kategori sumber'})+'</th><th>'+L({en:'Market condition',id:'Kondisi pasar'})+'</th><th>'+L({en:'Nabati position',id:'Posisi Nabati'})+'</th><th>'+L({en:'Main issue',id:'Isu utama'})+'</th></tr>';
+    var exRows=order.map(function(k){ var m=MARKETS[k]; var cg=k==='Malaysia'?'delta-up':k==='China'?'delta-dn':'txt-muted';
+      return '<tr'+(k===sel?' class="hl"':'')+'><td><b>'+m.flag+' '+k+'</b></td><td>'+L(m.cat)+'</td><td class="'+cg+'">'+L(m.cond)+'</td><td>'+L(m.pos)+'</td><td>'+L(m.issue)+'</td></tr>'; }).join('');
+    var exTab='<div class="table-wrap"><table class="dt" style="min-width:720px"><thead>'+exHead+'</thead><tbody>'+exRows+'</tbody></table></div>';
+    var probTiles='<div class="tiles" style="margin-top:14px">'+
+      tile('🇮🇩 Indonesia',L(MARKETS.Indonesia.problem),'hi',L({en:'opportunity to expand',id:'peluang ekspansi'}))+
+      tile('🇲🇾 Malaysia',L(MARKETS.Malaysia.problem),'good',L({en:'market is booming',id:'pasar booming'}))+
+      tile('🇨🇳 China',L(MARKETS.China.problem),'bad',L({en:'category contracting',id:'kategori menyusut'}))+'</div>';
+    var execCard=card('🧭', L({en:'Executive picture',id:'Gambaran eksekutif'}), L({en:'Three markets, three different business problems',id:'Tiga pasar, tiga masalah bisnis berbeda'}), null,'<div class="card-body">'+exTab+probTiles+'</div>');
+    var switcher='<div class="seg" id="mktSeg">'+order.map(function(k){ return '<button data-m="'+k+'" class="'+(k===sel?'on':'')+'">'+MARKETS[k].flag+' '+k+'</button>'; }).join('')+'</div>';
+    var detail;
+    if(sel==='Indonesia'){
+      var rollTiles='<div class="tiles">'+tile(L({en:'Category',id:'Kategori'}),L(M.cat),'hi',M.period)+tile(L({en:'Condition',id:'Kondisi'}),'−0.9%','warn',L({en:'flat YoY',id:'flat YoY'}))+tile(L({en:'Nabati Rolls+Big Rolls',id:'Nabati Rolls+Big Rolls'}),'6.53%','good','+7.3% · Rp154.7B')+tile(L({en:'Role',id:'Peran'}),L(M.role),'','')+'</div>';
+      var chRows=M.chan.map(function(c){ return '<tr><td><b>'+L(c.seg)+'</b></td><td class="num">'+pct(c.sh)+'</td><td class="num">'+dChip(c.g)+'</td><td>'+L(c.role)+'</td><td>'+L(c.hero)+'</td><td>'+L(c.flav)+'</td></tr>'; }).join('');
+      var chTab='<div class="table-wrap"><table class="dt" style="min-width:640px"><thead><tr><th>'+L({en:'Channel',id:'Channel'})+'</th><th class="num">'+L({en:'Roll share',id:'Share Roll'})+'</th><th class="num">'+L({en:'Growth',id:'Growth'})+'</th><th>'+L({en:'Role',id:'Peran'})+'</th><th>'+L({en:'Hero pack',id:'Pack hero'})+'</th><th>'+L({en:'Winning flavour',id:'Flavour menang'})+'</th></tr></thead><tbody>'+chRows+'</tbody></table></div>';
+      detail='<div class="card-body">'+rollTiles+'<p class="note" style="margin:12px 0 10px">'+L(M.nab)+'</p>'+chTab+'<div class="note-strip" style="margin-top:12px;border:1px solid var(--border);border-radius:9px"><div>'+L(M.note)+'</div></div></div>';
+    } else {
+      var dtiles='<div class="tiles">'+tile(L({en:'Category',id:'Kategori'}),L(M.cat),'hi',M.period)+
+        tile(L({en:'Market (MAT)',id:'Pasar (MAT)'}),usdM(M.mktVal),M.mktG>=0?'good':'bad',pctS(M.mktG))+
+        tile(L({en:'Nabati position',id:'Posisi Nabati'}),L(M.pos),sel==='China'?'bad':'warn','<span class="'+(M.nabShChg<0?'delta-dn':'delta-up')+'">'+pctS(M.nabShChg).replace('%','ppt')+'</span> '+L({en:'share Δ',id:'Δ share'}))+
+        tile(L({en:'Nabati ND / WD',id:'ND / WD Nabati'}),dec(M.nd)+' / '+dec(M.wd),'',L({en:'national',id:'nasional'}))+'</div>';
+      var bHead=sel==='Malaysia'
+        ? '<tr><th>#</th><th>'+L({en:'Brand',id:'Brand'})+'</th><th class="num">'+L({en:'MAT value',id:'Nilai MAT'})+'</th><th class="num">'+L({en:'Share',id:'Share'})+'</th><th class="num">'+L({en:'Growth',id:'Growth'})+'</th><th class="num">'+L({en:'Share Δ',id:'Share Δ'})+'</th></tr>'
+        : '<tr><th>#</th><th>'+L({en:'Brand',id:'Brand'})+'</th><th class="num">'+L({en:'MAT value',id:'Nilai MAT'})+'</th><th class="num">'+L({en:'Share',id:'Share'})+'</th><th class="num">'+L({en:'Growth',id:'Growth'})+'</th></tr>';
+      var bRows=M.brands.map(function(b,i){ var row='<tr'+(b.me?' class="hl"':'')+'><td class="num">'+(i+1)+'</td><td>'+(b.me?'★ ':'')+b.n+'</td><td class="num">'+usdM(b.val)+'</td><td class="num">'+pct(b.sh)+'</td><td class="num">'+dChip(b.chg)+'</td>';
+        if(sel==='Malaysia') row+='<td class="num">'+(b.dsh!=null?dChip(b.dsh).replace('%','ppt'):'—')+'</td>'; return row+'</tr>'; }).join('');
+      var bTab='<div class="table-wrap"><table class="dt"><thead>'+bHead+'</thead><tbody>'+bRows+'</tbody></table></div>';
+      var fRows=M.flavors.map(function(f){ return '<tr><td>'+L(f.n)+'</td><td class="num">'+usdM(f.val)+'</td><td class="num">'+pct(f.mix)+'</td><td class="num">'+dChip(f.chg)+'</td></tr>'; }).join('');
+      var fTab='<div class="table-wrap"><table class="dt"><thead><tr><th>'+L({en:'Flavour (proxy)',id:'Flavour (proxy)'})+'</th><th class="num">'+L({en:'MAT value',id:'Nilai MAT'})+'</th><th class="num">'+L({en:'Mix',id:'Mix'})+'</th><th class="num">'+L({en:'Growth',id:'Growth'})+'</th></tr></thead><tbody>'+fRows+'</tbody></table></div>';
+      var sRows=M.skus.map(function(s){ var row='<tr><td style="white-space:normal;min-width:180px">'+s.n+'</td><td class="num">'+usdM(s.val)+'</td><td class="num">'+pct(s.csh)+'</td><td class="num">'+dChip(s.chg)+'</td>';
+        if(sel==='Malaysia') row+='<td class="num">'+ndBadge(s.nd)+'</td><td class="num">'+ndBadge(s.wd)+'</td>'; return row+'</tr>'; }).join('');
+      var sHead=sel==='Malaysia'
+        ? '<tr><th>'+L({en:'Top Nabati SKU',id:'Top SKU Nabati'})+'</th><th class="num">'+L({en:'MAT value',id:'Nilai MAT'})+'</th><th class="num">'+L({en:'Cat. share',id:'Share kat.'})+'</th><th class="num">'+L({en:'Growth',id:'Growth'})+'</th><th class="num">ND</th><th class="num">WD</th></tr>'
+        : '<tr><th>'+L({en:'Top category SKU',id:'Top SKU kategori'})+'</th><th class="num">'+L({en:'MAT value',id:'Nilai MAT'})+'</th><th class="num">'+L({en:'Cat. share',id:'Share kat.'})+'</th><th class="num">'+L({en:'Growth',id:'Growth'})+'</th></tr>';
+      var sTab='<div class="table-wrap"><table class="dt"><thead>'+sHead+'</thead><tbody>'+sRows+'</tbody></table></div>';
+      var cRows, cHead;
+      if(sel==='Malaysia'){
+        cHead='<tr><th>'+L({en:'Channel',id:'Channel'})+'</th><th class="num">'+L({en:'Market',id:'Pasar'})+'</th><th class="num">'+L({en:'Mkt growth',id:'Growth pasar'})+'</th><th class="num">'+L({en:'Nabati value',id:'Nilai Nabati'})+'</th><th class="num">'+L({en:'Nab share',id:'Share Nab'})+'</th><th class="num">'+L({en:'Nab growth',id:'Growth Nab'})+'</th></tr>';
+        cRows=M.chan.map(function(c){ return '<tr><td><b>'+L(c.seg)+'</b></td><td class="num">'+usdM(c.mkt)+'</td><td class="num">'+dChip(c.mg)+'</td><td class="num">'+usdM(c.nv)+'</td><td class="num">'+pct(c.nsh)+'</td><td class="num">'+dChip(c.ng)+'</td></tr>'; }).join('');
+      } else {
+        cHead='<tr><th>'+L({en:'Channel',id:'Channel'})+'</th><th class="num">'+L({en:'Nab share',id:'Share Nab'})+'</th><th class="num">'+L({en:'Nab growth',id:'Growth Nab'})+'</th><th class="num">ND</th><th class="num">WD</th><th></th></tr>';
+        cRows=M.chan.map(function(c){ var tag=c.flag==='smoking'?'<span class="chip bad">'+L({en:'smoking gun',id:'smoking gun'})+'</span>':c.flag==='resilient'?'<span class="chip good">'+L({en:'resilient',id:'resilient'})+'</span>':'';
+          return '<tr><td><b>'+L(c.seg)+'</b></td><td class="num">'+pct(c.nsh)+'</td><td class="num">'+dChip(c.ng)+'</td><td class="num">'+ndBadge(c.nd)+'</td><td class="num">'+ndBadge(c.wd)+'</td><td>'+tag+'</td></tr>'; }).join('');
+      }
+      var cTab='<div class="table-wrap"><table class="dt" style="min-width:620px"><thead>'+cHead+'</thead><tbody>'+cRows+'</tbody></table></div>';
+      detail='<div class="card-body">'+dtiles+'<p class="note" style="margin:12px 0 10px">'+L(M.nab)+'</p>'+
+        '<h4 style="font-size:12px;margin:14px 0 6px">'+L({en:'Brand ranking',id:'Ranking brand'})+'</h4>'+bTab+
+        '<h4 style="font-size:12px;margin:16px 0 6px">'+L({en:'Flavour structure (SKU proxy)',id:'Struktur flavour (proxy SKU)'})+'</h4>'+fTab+
+        '<h4 style="font-size:12px;margin:16px 0 6px">'+(sel==='Malaysia'?L({en:'Top Nabati SKUs',id:'Top SKU Nabati'}):L({en:'Top category SKUs (Nabati-led)',id:'Top SKU kategori (dipimpin Nabati)'}))+'</h4>'+sTab+
+        '<h4 style="font-size:12px;margin:16px 0 6px">'+L({en:'Channel — distribution vs demand',id:'Channel — distribusi vs demand'})+'</h4>'+cTab+
+        '<div class="note-strip" style="margin-top:12px;border:1px solid var(--border);border-radius:9px"><div>'+L(M.note)+'</div></div></div>';
+    }
+    var detailCard=card(M.flag, sel+' — '+L(M.cat), M.period+' · '+L(M.role), null, detail, switcher);
+    var idBlock = sel==='Indonesia' ? idAudit : '';
+    var faRows=FLAVARCH.map(function(x){ return '<tr><td><b>'+L(x.f)+'</b></td><td>'+L(x.id_)+'</td><td>'+L(x.my)+'</td><td>'+L(x.cn)+'</td><td><span class="chip '+x.tone+'">'+L(x.say)+'</span></td></tr>'; }).join('');
+    var faTab='<div class="table-wrap"><table class="dt" style="min-width:780px"><thead><tr><th>'+L({en:'Flavour',id:'Flavour'})+'</th><th>🇮🇩 '+L({en:'Indonesia Roll',id:'Roll Indonesia'})+'</th><th>🇲🇾 Malaysia</th><th>🇨🇳 China</th><th>'+L({en:'Strategic interpretation',id:'Interpretasi strategis'})+'</th></tr></thead><tbody>'+faRows+'</tbody></table></div>';
+    var faCard=card('🎨', L({en:'Flavour architecture — three markets combined',id:'Arsitektur flavour — tiga pasar digabung'}), L({en:'What to read beyond “what is trending”',id:'Yang dibaca di luar “rasa apa yang tren”'}), null,'<div class="card-body">'+faTab+'</div>');
+    var omRows=OPPMATRIX.map(function(x){ return '<tr><td><b>'+L(x.f)+'</b></td><td class="mcell">'+actChip(x.id_)+'</td><td class="mcell">'+actChip(x.my)+'</td><td class="mcell">'+actChip(x.cn)+'</td></tr>'; }).join('');
+    var omTab='<div class="table-wrap"><table class="dt" style="min-width:560px"><thead><tr><th>'+L({en:'Flavour platform',id:'Platform flavour'})+'</th><th class="mcell">🇮🇩 Indonesia</th><th class="mcell">🇲🇾 Malaysia</th><th class="mcell">🇨🇳 China</th></tr></thead><tbody>'+omRows+'</tbody></table></div>';
+    var omLegend='<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">'+actChip('K')+actChip('D')+actChip('T')+actChip('S')+'</div>';
+    var omCard=card('🎯', L({en:'Regional Rolls Opportunity Matrix',id:'Matriks Opportunity Rolls Regional'}), L({en:'Keep / Develop / Test / Stop — per flavour, per country',id:'Pertahankan / Kembangkan / Tes / Hentikan — per flavour, per negara'}), null,'<div class="card-body">'+omTab+omLegend+'</div>');
+    var csRows=CSTRAT.map(function(x){ var bc=x.bad?' class="txt-red"':''; return '<tr><td><b>'+L(x.r)+'</b></td><td'+bc+'>'+L(x.id_)+'</td><td'+bc+'>'+L(x.my)+'</td><td'+bc+'>'+L(x.cn)+'</td></tr>'; }).join('');
+    var csTab='<div class="table-wrap"><table class="dt" style="min-width:720px"><thead><tr><th></th><th>🇮🇩 Indonesia</th><th>🇲🇾 Malaysia</th><th>🇨🇳 China</th></tr></thead><tbody>'+csRows+'</tbody></table></div>';
+    var csCard=card('♟️', L({en:'Country strategy for Rolls',id:'Strategi negara untuk Rolls'}), null, null,'<div class="card-body">'+csTab+'</div>');
+    var concl=card('📌', L({en:'Management conclusion',id:'Kesimpulan manajemen'}), null, null,
+      '<div class="card-body"><div class="callout"><span class="big">'+L({en:'Nabati should not run Rolls as one regional product strategy.',id:'Nabati tidak boleh menjalankan Rolls sebagai satu strategi produk regional.'})+'</span>'+
+      '<p style="margin:0 0 8px"><b>🇮🇩 Indonesia</b> — '+L({en:'Rolls has momentum and can gain category share, especially Rp500 GT singles and Strawberry Cheese / larger packs in MT.',id:'Rolls punya momentum dan bisa rebut share kategori, terutama single GT Rp500 dan Strawberry Cheese / pack besar di MT.'})+'</p>'+
+      '<p style="margin:0 0 8px"><b>🇲🇾 Malaysia</b> — '+L({en:'Strong distribution and brand scale, but growth is moving to Chocolate, Hazelnut and richer wafer experiences. The issue is portfolio competitiveness & velocity, not shelf access.',id:'Distribusi & skala brand kuat, tapi growth bergerak ke Coklat, Hazelnut & pengalaman wafer lebih kaya. Masalahnya daya saing portfolio & velocity, bukan akses rak.'})+'</p>'+
+      '<p style="margin:0 0 10px"><b>🇨🇳 China</b> — '+L({en:'Enormous equity (almost half of wafer flat) but category consumption is collapsing. Full hypermarket distribution is not saving sales — China needs demand rejuvenation, pack/channel redesign and stronger occasions, not more listings.',id:'Equity besar (hampir separuh wafer flat) tapi konsumsi kategori ambruk. Distribusi hypermarket penuh tak menyelamatkan sales — China butuh rejuvenasi demand, desain ulang pack/channel & okasi lebih kuat, bukan tambah listing.'})+'</p>'+
+      '<p style="margin:0"><b>'+L({en:'Three signals are consistent across all markets:',id:'Tiga sinyal konsisten di semua pasar:'})+'</b> '+L({en:'Chocolate is the safest scalable platform · Strawberry Cheese looks increasingly repeatable · novelty alone (Goguma) does not guarantee sustainable sales.',id:'Coklat adalah platform paling aman untuk di-scale · Strawberry Cheese makin terlihat repeatable · novelty saja (Goguma) tak menjamin sales berkelanjutan.'})+'</p></div>'+
+      '<div class="srcbar" style="margin-top:14px"><span>📎</span><span>'+L({en:'Nielsen/NIQ snack audits — Indonesia Wafer Roll (to Aug-26); Malaysia & China Wafer Flat (to Jun-26). Flavour figures for MY/CN are SKU-description proxies (≈92–96% of value classified), not official Nielsen FLAVOR. Directional context: Euromonitor (Snacks in Malaysia / China), NIQ (APAC snacking, two-consumers), and marketplace/social signals (Shopee MY, Reddit, SMZDM, JD, Nabati Food CN).',id:'Audit snack Nielsen/NIQ — Indonesia Wafer Roll (sampai Aug-26); Malaysia & China Wafer Flat (sampai Jun-26). Angka flavour MY/CN adalah proxy deskripsi SKU (≈92–96% nilai terklasifikasi), bukan dimensi FLAVOR Nielsen resmi. Konteks arah: Euromonitor (Snacks in Malaysia / China), NIQ (APAC snacking, two-consumers), & sinyal marketplace/sosial (Shopee MY, Reddit, SMZDM, JD, Nabati Food CN).'})+'</span></div></div>');
+    return caveat+execCard+detailCard+idBlock+faCard+omCard+csCard+concl;
   }
 
   /* ============ PAGE 5 — Launch Ranking ============ */
@@ -907,95 +992,6 @@
   function dChip(v){ var c=v<0?'delta-dn':'delta-up'; return '<span class="'+c+'">'+pctS(v)+'</span>'; }
   function actChip(code){ var m={K:['good',{en:'Keep',id:'Pertahankan'}],D:['blue',{en:'Develop',id:'Kembangkan'}],T:['warn',{en:'Test',id:'Tes'}],S:['bad',{en:'Stop',id:'Hentikan'}]};
     if(!m[code]) return '<span class="txt-muted">—</span>'; return '<span class="chip '+m[code][0]+'">'+L(m[code][1])+'</span>'; }
-  function page6(){
-    var sel=st.mktSel, M=MARKETS[sel];
-    var order=['Indonesia','Malaysia','China'];
-    // caveat
-    var caveat=card('⚠️', L({en:'Read this first — different categories',id:'Baca dulu — kategori berbeda'}), null, null,
-      '<div class="note-strip" style="border-bottom:none"><div>'+L({en:'<b>Indonesia file = Wafer ROLL</b> (to Aug-26). <b>Malaysia & China files = Wafer FLAT</b> (to Jun-26). Market size & share for MY–CN must <b>not be summed or compared directly</b> with Indonesia Roll. They are an <b>adjacent-category benchmark</b> for flavour, pack, distribution and consumer preference.',id:'<b>File Indonesia = Wafer ROLL</b> (sampai Aug-26). <b>File Malaysia & China = Wafer FLAT</b> (sampai Jun-26). Ukuran pasar & share MY–CN <b>tidak boleh dijumlah atau dibandingkan langsung</b> dengan Roll Indonesia. Mereka adalah <b>benchmark kategori-berdekatan</b> untuk flavour, pack, distribusi & preferensi konsumen.'})+'</div></div>','');
-    // 1. Executive picture
-    var exHead='<tr><th>'+L({en:'Market',id:'Pasar'})+'</th><th>'+L({en:'Source category',id:'Kategori sumber'})+'</th><th>'+L({en:'Market condition',id:'Kondisi pasar'})+'</th><th>'+L({en:'Nabati position',id:'Posisi Nabati'})+'</th><th>'+L({en:'Main issue',id:'Isu utama'})+'</th></tr>';
-    var exRows=order.map(function(k){ var m=MARKETS[k]; var cg=k==='Malaysia'?'delta-up':k==='China'?'delta-dn':'txt-muted';
-      return '<tr'+(k===sel?' class="hl"':'')+'><td><b>'+m.flag+' '+k+'</b></td><td>'+L(m.cat)+'</td><td class="'+cg+'">'+L(m.cond)+'</td><td>'+L(m.pos)+'</td><td>'+L(m.issue)+'</td></tr>'; }).join('');
-    var exTab='<div class="table-wrap"><table class="dt" style="min-width:720px"><thead>'+exHead+'</thead><tbody>'+exRows+'</tbody></table></div>';
-    var probTiles='<div class="tiles" style="margin-top:14px">'+
-      tile('🇮🇩 '+L({en:'Indonesia',id:'Indonesia'}),L(MARKETS.Indonesia.problem),'hi',L({en:'opportunity to expand',id:'peluang ekspansi'}))+
-      tile('🇲🇾 '+L({en:'Malaysia',id:'Malaysia'}),L(MARKETS.Malaysia.problem),'good',L({en:'market is booming',id:'pasar booming'}))+
-      tile('🇨🇳 '+L({en:'China',id:'China'}),L(MARKETS.China.problem),'bad',L({en:'category contracting',id:'kategori menyusut'}))+'</div>';
-    var execCard=card('🧭', L({en:'Executive picture',id:'Gambaran eksekutif'}), L({en:'Three markets, three different business problems',id:'Tiga pasar, tiga masalah bisnis berbeda'}), null,'<div class="card-body">'+exTab+probTiles+'</div>');
-    // 2. Country switcher + detail
-    var switcher='<div class="seg" id="mktSeg">'+order.map(function(k){ return '<button data-m="'+k+'" class="'+(k===sel?'on':'')+'">'+MARKETS[k].flag+' '+k+'</button>'; }).join('')+'</div>';
-    var detail;
-    if(sel==='Indonesia'){
-      var rollTiles='<div class="tiles">'+tile(L({en:'Category',id:'Kategori'}),L(M.cat),'hi',M.period)+tile(L({en:'Condition',id:'Kondisi'}),'−0.9%','warn',L({en:'flat YoY',id:'flat YoY'}))+tile(L({en:'Nabati Rolls+Big Rolls',id:'Nabati Rolls+Big Rolls'}),'6.53%','good','+7.3% · Rp154.7B')+tile(L({en:'Role',id:'Peran'}),L(M.role),'','')+'</div>';
-      var chRows=M.chan.map(function(c){ return '<tr><td><b>'+L(c.seg)+'</b></td><td class="num">'+pct(c.sh)+'</td><td class="num">'+dChip(c.g)+'</td><td>'+L(c.role)+'</td><td>'+L(c.hero)+'</td><td>'+L(c.flav)+'</td></tr>'; }).join('');
-      var chTab='<div class="table-wrap"><table class="dt" style="min-width:640px"><thead><tr><th>'+L({en:'Channel',id:'Channel'})+'</th><th class="num">'+L({en:'Roll share',id:'Share Roll'})+'</th><th class="num">'+L({en:'Growth',id:'Growth'})+'</th><th>'+L({en:'Role',id:'Peran'})+'</th><th>'+L({en:'Hero pack',id:'Pack hero'})+'</th><th>'+L({en:'Winning flavour',id:'Flavour menang'})+'</th></tr></thead><tbody>'+chRows+'</tbody></table></div>';
-      detail='<div class="card-body">'+rollTiles+'<p class="note" style="margin:12px 0 10px">'+L(M.nab)+'</p>'+chTab+'<div class="note-strip" style="margin-top:12px;border:1px solid var(--border);border-radius:9px"><div>'+L(M.note)+'</div></div></div>';
-    } else {
-      var ar=sel==='Malaysia'?-M.nabShChg:-M.nabShChg; // share lost
-      var dtiles='<div class="tiles">'+tile(L({en:'Category',id:'Kategori'}),L(M.cat),'hi',M.period)+
-        tile(L({en:'Market (MAT)',id:'Pasar (MAT)'}),usdM(M.mktVal),M.mktG>=0?'good':'bad',pctS(M.mktG))+
-        tile(L({en:'Nabati position',id:'Posisi Nabati'}),L(M.pos),sel==='China'?'bad':'warn','<span class="'+(M.nabShChg<0?'delta-dn':'delta-up')+'">'+pctS(M.nabShChg).replace('%','ppt')+'</span> '+L({en:'share Δ',id:'Δ share'}))+
-        tile(L({en:'Nabati ND / WD',id:'ND / WD Nabati'}),dec(M.nd)+' / '+dec(M.wd),'',L({en:'national',id:'nasional'}))+'</div>';
-      // brands
-      var bHead=sel==='Malaysia'
-        ? '<tr><th>#</th><th>'+L({en:'Brand',id:'Brand'})+'</th><th class="num">'+L({en:'MAT value',id:'Nilai MAT'})+'</th><th class="num">'+L({en:'Share',id:'Share'})+'</th><th class="num">'+L({en:'Growth',id:'Growth'})+'</th><th class="num">'+L({en:'Share Δ',id:'Share Δ'})+'</th></tr>'
-        : '<tr><th>#</th><th>'+L({en:'Brand',id:'Brand'})+'</th><th class="num">'+L({en:'MAT value',id:'Nilai MAT'})+'</th><th class="num">'+L({en:'Share',id:'Share'})+'</th><th class="num">'+L({en:'Growth',id:'Growth'})+'</th></tr>';
-      var bRows=M.brands.map(function(b,i){ var row='<tr'+(b.me?' class="hl"':'')+'><td class="num">'+(i+1)+'</td><td>'+(b.me?'★ ':'')+b.n+'</td><td class="num">'+usdM(b.val)+'</td><td class="num">'+pct(b.sh)+'</td><td class="num">'+dChip(b.chg)+'</td>';
-        if(sel==='Malaysia') row+='<td class="num">'+(b.dsh!=null?dChip(b.dsh).replace('%','ppt'):'—')+'</td>'; return row+'</tr>'; }).join('');
-      var bTab='<div class="table-wrap"><table class="dt"><thead>'+bHead+'</thead><tbody>'+bRows+'</tbody></table></div>';
-      // flavours
-      var fRows=M.flavors.map(function(f){ return '<tr><td>'+L(f.n)+'</td><td class="num">'+usdM(f.val)+'</td><td class="num">'+pct(f.mix)+'</td><td class="num">'+dChip(f.chg)+'</td></tr>'; }).join('');
-      var fTab='<div class="table-wrap"><table class="dt"><thead><tr><th>'+L({en:'Flavour (proxy)',id:'Flavour (proxy)'})+'</th><th class="num">'+L({en:'MAT value',id:'Nilai MAT'})+'</th><th class="num">'+L({en:'Mix',id:'Mix'})+'</th><th class="num">'+L({en:'Growth',id:'Growth'})+'</th></tr></thead><tbody>'+fRows+'</tbody></table></div>';
-      // skus
-      var sRows=M.skus.map(function(s){ var row='<tr><td style="white-space:normal;min-width:180px">'+s.n+'</td><td class="num">'+usdM(s.val)+'</td><td class="num">'+pct(s.csh)+'</td><td class="num">'+dChip(s.chg)+'</td>';
-        if(sel==='Malaysia') row+='<td class="num">'+ndBadge(s.nd)+'</td><td class="num">'+ndBadge(s.wd)+'</td>'; return row+'</tr>'; }).join('');
-      var sHead=sel==='Malaysia'
-        ? '<tr><th>'+L({en:'Top Nabati SKU',id:'Top SKU Nabati'})+'</th><th class="num">'+L({en:'MAT value',id:'Nilai MAT'})+'</th><th class="num">'+L({en:'Cat. share',id:'Share kat.'})+'</th><th class="num">'+L({en:'Growth',id:'Growth'})+'</th><th class="num">ND</th><th class="num">WD</th></tr>'
-        : '<tr><th>'+L({en:'Top category SKU',id:'Top SKU kategori'})+'</th><th class="num">'+L({en:'MAT value',id:'Nilai MAT'})+'</th><th class="num">'+L({en:'Cat. share',id:'Share kat.'})+'</th><th class="num">'+L({en:'Growth',id:'Growth'})+'</th></tr>';
-      var sTab='<div class="table-wrap"><table class="dt"><thead>'+sHead+'</thead><tbody>'+sRows+'</tbody></table></div>';
-      // channels
-      var cRows, cHead;
-      if(sel==='Malaysia'){
-        cHead='<tr><th>'+L({en:'Channel',id:'Channel'})+'</th><th class="num">'+L({en:'Market',id:'Pasar'})+'</th><th class="num">'+L({en:'Mkt growth',id:'Growth pasar'})+'</th><th class="num">'+L({en:'Nabati value',id:'Nilai Nabati'})+'</th><th class="num">'+L({en:'Nab share',id:'Share Nab'})+'</th><th class="num">'+L({en:'Nab growth',id:'Growth Nab'})+'</th></tr>';
-        cRows=M.chan.map(function(c){ return '<tr><td><b>'+L(c.seg)+'</b></td><td class="num">'+usdM(c.mkt)+'</td><td class="num">'+dChip(c.mg)+'</td><td class="num">'+usdM(c.nv)+'</td><td class="num">'+pct(c.nsh)+'</td><td class="num">'+dChip(c.ng)+'</td></tr>'; }).join('');
-      } else {
-        cHead='<tr><th>'+L({en:'Channel',id:'Channel'})+'</th><th class="num">'+L({en:'Nab share',id:'Share Nab'})+'</th><th class="num">'+L({en:'Nab growth',id:'Growth Nab'})+'</th><th class="num">ND</th><th class="num">WD</th><th></th></tr>';
-        cRows=M.chan.map(function(c){ var tag=c.flag==='smoking'?'<span class="chip bad">'+L({en:'smoking gun',id:'smoking gun'})+'</span>':c.flag==='resilient'?'<span class="chip good">'+L({en:'resilient',id:'resilient'})+'</span>':'';
-          return '<tr><td><b>'+L(c.seg)+'</b></td><td class="num">'+pct(c.nsh)+'</td><td class="num">'+dChip(c.ng)+'</td><td class="num">'+ndBadge(c.nd)+'</td><td class="num">'+ndBadge(c.wd)+'</td><td>'+tag+'</td></tr>'; }).join('');
-      }
-      var cTab='<div class="table-wrap"><table class="dt" style="min-width:620px"><thead>'+cHead+'</thead><tbody>'+cRows+'</tbody></table></div>';
-      detail='<div class="card-body">'+dtiles+'<p class="note" style="margin:12px 0 10px">'+L(M.nab)+'</p>'+
-        '<h4 style="font-size:12px;margin:14px 0 6px">'+L({en:'Brand ranking',id:'Ranking brand'})+'</h4>'+bTab+
-        '<h4 style="font-size:12px;margin:16px 0 6px">'+L({en:'Flavour structure (SKU proxy)',id:'Struktur flavour (proxy SKU)'})+'</h4>'+fTab+
-        '<h4 style="font-size:12px;margin:16px 0 6px">'+(sel==='Malaysia'?L({en:'Top Nabati SKUs',id:'Top SKU Nabati'}):L({en:'Top category SKUs (Nabati-led)',id:'Top SKU kategori (dipimpin Nabati)'}))+'</h4>'+sTab+
-        '<h4 style="font-size:12px;margin:16px 0 6px">'+L({en:'Channel — distribution vs demand',id:'Channel — distribusi vs demand'})+'</h4>'+cTab+
-        '<div class="note-strip" style="margin-top:12px;border:1px solid var(--border);border-radius:9px"><div>'+L(M.note)+'</div></div></div>';
-    }
-    var detailCard=card(M.flag, sel+' — '+L(M.cat), M.period+' · '+L(M.role), null, detail, switcher);
-    // 3. Flavour architecture (cross-market)
-    var faRows=FLAVARCH.map(function(x){ return '<tr><td><b>'+L(x.f)+'</b></td><td>'+L(x.id_)+'</td><td>'+L(x.my)+'</td><td>'+L(x.cn)+'</td><td><span class="chip '+x.tone+'">'+L(x.say)+'</span></td></tr>'; }).join('');
-    var faTab='<div class="table-wrap"><table class="dt" style="min-width:780px"><thead><tr><th>'+L({en:'Flavour',id:'Flavour'})+'</th><th>🇮🇩 '+L({en:'Indonesia Roll',id:'Roll Indonesia'})+'</th><th>🇲🇾 '+L({en:'Malaysia',id:'Malaysia'})+'</th><th>🇨🇳 '+L({en:'China',id:'China'})+'</th><th>'+L({en:'Strategic interpretation',id:'Interpretasi strategis'})+'</th></tr></thead><tbody>'+faRows+'</tbody></table></div>';
-    var faCard=card('🎨', L({en:'Flavour architecture — three markets combined',id:'Arsitektur flavour — tiga pasar digabung'}), L({en:'What to read beyond “what is trending”',id:'Yang dibaca di luar “rasa apa yang tren”'}), null,'<div class="card-body">'+faTab+'</div>');
-    // 4. Opportunity matrix (Keep/Develop/Test/Stop)
-    var omRows=OPPMATRIX.map(function(x){ return '<tr><td><b>'+L(x.f)+'</b></td><td class="mcell">'+actChip(x.id_)+'</td><td class="mcell">'+actChip(x.my)+'</td><td class="mcell">'+actChip(x.cn)+'</td></tr>'; }).join('');
-    var omTab='<div class="table-wrap"><table class="dt" style="min-width:560px"><thead><tr><th>'+L({en:'Flavour platform',id:'Platform flavour'})+'</th><th class="mcell">🇮🇩 Indonesia</th><th class="mcell">🇲🇾 Malaysia</th><th class="mcell">🇨🇳 China</th></tr></thead><tbody>'+omRows+'</tbody></table></div>';
-    var omLegend='<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">'+actChip('K')+actChip('D')+actChip('T')+actChip('S')+'</div>';
-    var omCard=card('🎯', L({en:'Regional Rolls Opportunity Matrix',id:'Matriks Opportunity Rolls Regional'}), L({en:'Keep / Develop / Test / Stop — per flavour, per country',id:'Pertahankan / Kembangkan / Tes / Hentikan — per flavour, per negara'}), null,'<div class="card-body">'+omTab+omLegend+'</div>');
-    // 5. Country strategy grid
-    var csRows=CSTRAT.map(function(x){ var bc=x.bad?' class="txt-red"':''; return '<tr><td><b>'+L(x.r)+'</b></td><td'+bc+'>'+L(x.id_)+'</td><td'+bc+'>'+L(x.my)+'</td><td'+bc+'>'+L(x.cn)+'</td></tr>'; }).join('');
-    var csTab='<div class="table-wrap"><table class="dt" style="min-width:720px"><thead><tr><th></th><th>🇮🇩 Indonesia</th><th>🇲🇾 Malaysia</th><th>🇨🇳 China</th></tr></thead><tbody>'+csRows+'</tbody></table></div>';
-    var csCard=card('♟️', L({en:'Country strategy for Rolls',id:'Strategi negara untuk Rolls'}), null, null,'<div class="card-body">'+csTab+'</div>');
-    // 6. Management conclusion
-    var concl=card('📌', L({en:'Management conclusion',id:'Kesimpulan manajemen'}), null, null,
-      '<div class="card-body"><div class="callout"><span class="big">'+L({en:'Nabati should not run Rolls as one regional product strategy.',id:'Nabati tidak boleh menjalankan Rolls sebagai satu strategi produk regional.'})+'</span>'+
-      '<p style="margin:0 0 8px"><b>🇮🇩 Indonesia</b> — '+L({en:'Rolls has momentum and can gain category share, especially Rp500 GT singles and Strawberry Cheese / larger packs in MT.',id:'Rolls punya momentum dan bisa rebut share kategori, terutama single GT Rp500 dan Strawberry Cheese / pack besar di MT.'})+'</p>'+
-      '<p style="margin:0 0 8px"><b>🇲🇾 Malaysia</b> — '+L({en:'Strong distribution and brand scale, but growth is moving to Chocolate, Hazelnut and richer wafer experiences. The issue is portfolio competitiveness & velocity, not shelf access.',id:'Distribusi & skala brand kuat, tapi growth bergerak ke Coklat, Hazelnut & pengalaman wafer lebih kaya. Masalahnya daya saing portfolio & velocity, bukan akses rak.'})+'</p>'+
-      '<p style="margin:0 0 10px"><b>🇨🇳 China</b> — '+L({en:'Enormous equity (almost half of wafer flat) but category consumption is collapsing. Full hypermarket distribution is not saving sales — China needs demand rejuvenation, pack/channel redesign and stronger occasions, not more listings.',id:'Equity besar (hampir separuh wafer flat) tapi konsumsi kategori ambruk. Distribusi hypermarket penuh tak menyelamatkan sales — China butuh rejuvenasi demand, desain ulang pack/channel & okasi lebih kuat, bukan tambah listing.'})+'</p>'+
-      '<p style="margin:0"><b>'+L({en:'Three signals are consistent across all markets:',id:'Tiga sinyal konsisten di semua pasar:'})+'</b> '+L({en:'Chocolate is the safest scalable platform · Strawberry Cheese looks increasingly repeatable · novelty alone (Goguma) does not guarantee sustainable sales.',id:'Coklat adalah platform paling aman untuk di-scale · Strawberry Cheese makin terlihat repeatable · novelty saja (Goguma) tak menjamin sales berkelanjutan.'})+'</p></div>'+
-      '<div class="srcbar" style="margin-top:14px"><span>📎</span><span>'+L({en:'Nielsen/NIQ snack audits — Indonesia Wafer Roll (to Aug-26); Malaysia & China Wafer Flat (to Jun-26). Flavour figures for MY/CN are SKU-description proxies (≈92–96% of value classified), not official Nielsen FLAVOR. Directional context: Euromonitor (Snacks in Malaysia / China), NIQ (APAC snacking, two-consumers), and marketplace/social signals (Shopee MY, Reddit, SMZDM, JD, Nabati Food CN).',id:'Audit snack Nielsen/NIQ — Indonesia Wafer Roll (sampai Aug-26); Malaysia & China Wafer Flat (sampai Jun-26). Angka flavour MY/CN adalah proxy deskripsi SKU (≈92–96% nilai terklasifikasi), bukan dimensi FLAVOR Nielsen resmi. Konteks arah: Euromonitor (Snacks in Malaysia / China), NIQ (APAC snacking, two-consumers), & sinyal marketplace/sosial (Shopee MY, Reddit, SMZDM, JD, Nabati Food CN).'})+'</span></div></div>');
-    return pagehead(t('p6t'),t('p6l'))+caveat+execCard+detailCard+faCard+omCard+csCard+concl;
-  }
   function mapBlock(){
     var co=COUNTRY[st.mapCountry];
     var best=candidatesSingle().filter(function(e){return e.country===st.mapCountry;}).sort(function(a,b){return b.oppFinal-a.oppFinal;})[0];
@@ -1005,15 +1001,16 @@
     var capturable = (fl&&best)? fl.val*1e6/12*CAPRATE[best.channel]*co.capF*(best.account.capF||1)*12 : null;
     var legend='<div class="map-legend"><span><i style="background:#1C8560"></i>≥70</span><span><i style="background:#B6873B"></i>50–69</span><span><i style="background:#C13A49"></i>&lt;50</span></div>';
     function wrow(l,v,cls){ return '<div class="wrow"><span class="wl">'+l+'</span><span class="wv '+(cls||'')+'">'+v+'</span></div>'; }
-    var why='<div class="whyover"><div class="wh"><span style="font-size:18px">'+co.flag+'</span><b>'+t('whyC',{c:st.mapCountry})+'</b><span class="ws" style="background:'+scoreColor(score)+'">'+score+'</span></div>'+
+    var why = st.whyOpen ? '<div class="whyover" id="whyOver"><div class="wh"><span style="font-size:18px">'+co.flag+'</span><b style="flex:1">'+t('whyC',{c:st.mapCountry})+'</b><span class="ws" style="background:'+scoreColor(score)+'">'+score+'</span><button type="button" class="wclose" id="whyClose" aria-label="close">×</button></div>'+
       wrow(t('wMktSize'), mktSize?rpShort(mktSize):'—')+
       wrow(t('wCap'), capturable?rpShort(capturable):'—')+
       wrow(t('wEbt'), best?pct(best.ebtPct):'—', best&&best.ebtPct>=0?'txt-green':'txt-red')+
       wrow(t('probSucc'), best?best.prob+'%':'—')+
       wrow(t('riskL'), best?t('risk'+best.riskBand):'—', best?(best.riskBand==='Low'?'txt-green':best.riskBand==='High'?'txt-red':'txt-amber'):'')+
       wrow(t('confL'), best?t('conf'+best.conf):'—')+
-      '<div class="drill"><b>'+t('dCountry')+'</b> '+st.mapCountry+' › <b>'+t('dChannel')+'</b> '+(best?best.channel:'GT')+' › <b>'+t('dAccount')+'</b> '+(best?best.account.name:'—')+' › <b>'+t('dSku')+'</b> '+(best?best.members[0].name:'—')+'</div></div>';
-    return '<div id="mapBox">'+legend+why+'</div>';
+      '<div class="drill"><b>'+t('dCountry')+'</b> '+st.mapCountry+' › <b>'+t('dChannel')+'</b> '+(best?best.channel:'GT')+' › <b>'+t('dAccount')+'</b> '+(best?best.account.name:'—')+' › <b>'+t('dSku')+'</b> '+(best?best.members[0].name:'—')+'</div></div>' : '';
+    var hint = st.whyOpen ? '' : '<div class="map-hint">'+t('mapHint')+'</div>';
+    return '<div id="mapBox">'+legend+why+hint+'</div>';
   }
   function comboDetail(e,full){
     if(!e) return '';
@@ -1062,7 +1059,7 @@
 
   function srcbar(which){
     var m={cogm:lang==='id'?'COGM dari workbook SIIP. Depre & OMC tetap/bulan → membengkak saat volume operasi < kapasitas. Edit angka langsung; tersimpan di browser. Upload workbook di tombol Data (kanan atas).':'COGM from the SIIP workbook. Depre & OMC fixed/month → balloon when operating volume < capacity. Edit numbers directly; stored in this browser. Upload a workbook via the Data button (top right).',
-      rev:lang==='id'?'SM/GA sebagai % dari baseline negara. COGM & volume dari tab COGM. Listing/trading/PPN diisi per akun MT. PPN pass-through (tidak mengurangi EBT).':'SM/GA as % of the country baseline. COGM & volume from the COGM tab. Listing/trading/VAT set per MT account. VAT is pass-through (not reducing EBT).',
+      rev:lang==='id'?'SM/GA sebagai % dari baseline negara. COGM & volume dari tab COGM. Listing fee & PPN angka Rp absolut per akun MT; trading term %. PPN pass-through (tidak mengurangi EBT).':'SM/GA as % of the country baseline. COGM & volume from the COGM tab. Listing fee & VAT are absolute Rp per MT account; trading term is a %. VAT is pass-through (not reducing EBT).',
       rank:lang==='id'?'Opportunity, Probability, Risk, Confidence, dan Decision mengikuti metode concept book. Kelayakan = EBT positif di dalam pasar capturable (Required Sales ≤ Capturable). Klik baris untuk rincian penuh.':'Opportunity, Probability, Risk, Confidence and Decision follow the concept-book method. Feasibility = positive EBT within the capturable market (Required Sales ≤ Capturable). Click a row for the full breakdown.'};
     return '<div class="srcbar"><span>📎</span><span>'+m[which]+'</span></div>';
   }
@@ -1081,7 +1078,7 @@
         .htmlElementsData(markers).htmlLat(function(d){return d.lat;}).htmlLng(function(d){return d.lng;})
         .htmlElement(function(d){ var col=scoreColor(d.score); var s=document.createElement('div'); s.style.cursor='pointer';
           s.innerHTML='<div style="transform:translate(-50%,-100%);text-align:center"><div style="background:rgba(10,22,40,.85);border:1px solid '+col+';border-radius:999px;padding:3px 9px;white-space:nowrap;color:#fff;font-size:11px;font-weight:700">'+d.flag+' '+d.name+' <span style="color:'+col+'">'+d.score+'</span></div><div style="width:2px;height:12px;background:'+col+';margin:0 auto"></div></div>';
-          s.addEventListener('click',function(){ st.mapCountry=d.name; render(); });
+          s.addEventListener('click',function(){ st.mapCountry=d.name; st.whyOpen=true; render(); });
           return s; });
       g.pointOfView({lat:12,lng:110,altitude:1.7},0);
       try{ var ctr=g.controls(); ctr.autoRotate=false; ctr.enableZoom=false; }catch(e){}
@@ -1095,7 +1092,7 @@
       markers.map(function(m){var p=pts[m.name];var col=scoreColor(m.score);return '<g style="cursor:pointer" class="mk" data-c="'+m.name+'"><circle cx="'+p[0]+'" cy="'+p[1]+'" r="20" fill="'+col+'" opacity=".2"/><circle cx="'+p[0]+'" cy="'+p[1]+'" r="7" fill="'+col+'"/><text x="'+p[0]+'" y="'+(p[1]-14)+'" font-size="13" fill="#fff" text-anchor="middle" font-weight="700">'+m.flag+' '+m.name+' '+m.score+'</text></g>';}).join('')+'</svg>';
     var old=el.querySelector('svg.mapfb'); if(old) old.remove();
     el.insertAdjacentHTML('afterbegin', svg.replace('<svg ','<svg class="mapfb" '));
-    el.querySelectorAll('.mk').forEach(function(g){ g.addEventListener('click',function(){ st.mapCountry=g.getAttribute('data-c'); render(); }); });
+    el.querySelectorAll('.mk').forEach(function(g){ g.addEventListener('click',function(){ st.mapCountry=g.getAttribute('data-c'); st.whyOpen=true; render(); }); });
   }
 
   /* ============ DATA SIDEBAR ============ */
@@ -1148,7 +1145,7 @@
     document.documentElement.setAttribute('lang',lang);
     renderNav(); globe=null;
     if(st.page!==5) st.modal=null;
-    document.getElementById('view').innerHTML=[page1,page2,page3,page4,page5,page6][st.page-1]();
+    document.getElementById('view').innerHTML=[page1,page2,page3,page4,page5][st.page-1]();
     wire();
     renderModal();
     if(st.page===5) setTimeout(initGlobe,30);
@@ -1183,7 +1180,8 @@
     // rank
     var opt=document.getElementById('optSeg'); if(opt) opt.querySelectorAll('button').forEach(function(b){ b.addEventListener('click',function(){ st.rankOpt=b.getAttribute('data-o'); st.selRank=-1; render(); }); });
     var rt=document.getElementById('rankT'); if(rt) rt.querySelectorAll('tbody tr.click').forEach(function(tr){ tr.addEventListener('click',function(){ openModal(+tr.getAttribute('data-i')); }); });
-    // regional (tab 6)
+    var wc=document.getElementById('whyClose'); if(wc) wc.addEventListener('click',function(){ st.whyOpen=false; render(); });
+    // market switcher (tab 4)
     var mkt=document.getElementById('mktSeg'); if(mkt) mkt.querySelectorAll('button').forEach(function(b){ b.addEventListener('click',function(){ st.mktSel=b.getAttribute('data-m'); render(); window.scrollTo(0,0); }); });
     wireModal();
   }
