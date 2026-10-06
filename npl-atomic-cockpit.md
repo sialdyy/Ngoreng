@@ -89,8 +89,43 @@ Combines the Indonesia category audit with a Malaysia/China adjacent-category be
   Cheese = strong equity but not a universal growth engine; Strawberry Cheese = strong
   cross-market candidate; Hazelnut = Malaysia white-space; Goguma = hype ≠ repeat).
 - **Regional Rolls Opportunity Matrix** — **Keep / Develop / Test / Stop** per flavour,
-  per country.
+  per country, **computed by the Market-Share engine** (see below) — not hand-set.
 - **Country strategy** grid and a **management conclusion** callout.
+
+#### Market-Share opportunity engine (the "logic" of Tab 4)
+
+Each flavour × market cell carries raw **signals**: `g` (flavour/category growth %),
+`size` (% of category value), `nab` (Nabati equity 0–5) and an optional `kind:'inno'`
+(innovation bet). Each market has a **stance** that changes how a flavour is weighed:
+- **opportunity** (Indonesia, flat market) → gain share.
+- **capture** (Malaysia, booming) → capture growth.
+- **defend** (China, contracting) → defend equity.
+
+**Category Opportunity Score (0–100)** — `catOpp()`:
+```
+gN    = clamp((g + 30) / 70, 0, 1)        # growth −30%…+40% → 0…1
+sizeN = clamp(size / 45, 0, 1)            # category share 0…45% → 0…1
+nabN  = clamp(nab / 5, 0, 1)              # Nabati equity 0…5 → 0…1
+mf    = capture ? 1.15 : defend ? 0.75 : 1.0   # stance weights the growth pull
+A     = clamp((0.6*gN + 0.4*sizeN) * mf, 0, 1) # Attractiveness (market pull)
+E     = nabN                                   # Equity (right-to-win)
+score = round((0.55*A + 0.45*E) * 100)
+```
+
+**Action classifier** — `catAction()` (first match wins):
+1. **Stop** — `g ≤ −20` and `nab ≤ 1` (declining with no equity).
+2. **Keep** — stance-aware ownership: defend → `nab ≥ 4`; opportunity → `nab ≥ 4 &
+   size ≥ 20`; capture → `nab ≥ 4 & size ≥ 30 & g ≥ 10`.
+3. **Develop** — an innovation bet with real size (`kind='inno' & g > −20 & size ≥ 2`),
+   or growing with room to gain (`(g ≥ 10 or [capture & size ≥ 20 & g ≥ 0]) & size ≥ 1 &
+   nab ≤ 3`).
+4. **Test** — everything else (small / unproven / stuck).
+
+The matrix shows the computed badge with the score beneath it. **Per-NPL verdict**
+(`verdictCard`) uses the same engine: it builds a signal from the NPL's mapped Indonesia
+category (`g = chg`, `size = min(cont·2, 45)`, `nab = 4` since it is SIIP's own product)
+and derives **RIDE / WATCH / AVOID** from the score (≥60 / ≥45 / else), with a declining
+or white-space category overriding to AVOID.
 
 ### 5 · Launch Ranking
 Where each SKU should launch, scored by the concept-book method.

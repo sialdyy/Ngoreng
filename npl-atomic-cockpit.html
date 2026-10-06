@@ -459,15 +459,48 @@
   ];
   // Regional Rolls Opportunity Matrix — Keep / Develop / Test / Stop per country
   // K=keep(good) · D=develop(blue) · T=test(warn) · S=stop(bad) · -=n/a
+  // ---- Market Share opportunity engine --------------------------------------
+  // Each market has a strategic STANCE that changes how a flavour is scored & actioned:
+  //   opportunity (ID, flat market)  → gain share: keep strong ones, develop growers
+  //   capture     (MY, booming)      → capture growth: develop attractive growers, don't over-defend slow flavours
+  //   defend      (CN, contracting)  → defend equity: keep what Nabati owns, develop rejuvenation bets
+  var MKTSTANCE={Indonesia:'opportunity', Malaysia:'capture', China:'defend'};
+  // OPPMATRIX now carries raw SIGNALS per flavour × market (not pre-set actions):
+  //   g=flavour/category growth %, size=% of category value, nab=Nabati equity 0–5, kind:'inno' for innovation bets.
+  // The action (Keep/Develop/Test/Stop) and the 0–100 score are COMPUTED by catOpp()/catAction().
   var OPPMATRIX=[
-    {f:{en:'Chocolate',id:'Coklat'}, id_:'K', my:'D', cn:'K'},
-    {f:{en:'Dark / Intense Chocolate',id:'Dark / Intense Coklat'}, id_:'D', my:'D', cn:'D'},
-    {f:{en:'Cheese',id:'Keju'}, id_:'K', my:'T', cn:'K'},
-    {f:{en:'Strawberry Cheese',id:'Strawberry Cheese'}, id_:'D', my:'D', cn:'K'},
-    {f:{en:'Hazelnut',id:'Hazelnut'}, id_:'T', my:'D', cn:'T'},
-    {f:{en:'Matcha',id:'Matcha'}, id_:'T', my:'T', cn:'-'},
-    {f:{en:'Goguma',id:'Goguma'}, id_:'S', my:'S', cn:'-'}
+    {f:{en:'Chocolate',id:'Coklat'}, sig:{id:{g:12,size:30,nab:4}, my:{g:15.5,size:44.2,nab:3}, cn:{g:-15.7,size:32.1,nab:4}}},
+    {f:{en:'Dark / Intense Chocolate',id:'Dark / Intense Coklat'}, sig:{id:{g:77,size:6,nab:2,kind:'inno'}, my:{g:18,size:8,nab:1,kind:'inno'}, cn:{g:-12,size:6,nab:2,kind:'inno'}}},
+    {f:{en:'Cheese',id:'Keju'}, sig:{id:{g:6,size:28,nab:5}, my:{g:2.7,size:14.3,nab:4}, cn:{g:-26.5,size:37.5,nab:5}}},
+    {f:{en:'Strawberry Cheese',id:'Strawberry Cheese'}, sig:{id:{g:20,size:10,nab:3}, my:{g:10.1,size:1.2,nab:2}, cn:{g:-24.8,size:6.8,nab:4}}},
+    {f:{en:'Hazelnut',id:'Hazelnut'}, sig:{id:{g:5,size:3,nab:1}, my:{g:20.9,size:26.1,nab:0}, cn:{g:-18,size:4,nab:1}}},
+    {f:{en:'Matcha',id:'Matcha'}, sig:{id:{g:40,size:0.5,nab:1,kind:'inno'}, my:{g:342,size:0.3,nab:0,kind:'inno'}, cn:null}},
+    {f:{en:'Goguma',id:'Goguma'}, sig:{id:{g:-77,size:1,nab:1}, my:{g:-27.6,size:0.6,nab:0}, cn:null}}
   ];
+  // Core engine: normalise signals → Attractiveness (market pull) + Equity (right-to-win) → score.
+  function catOpp(sig, stance){
+    if(!sig) return null;
+    var gN=clamp((sig.g+30)/70, 0, 1);        // growth −30%…+40% → 0…1
+    var sizeN=clamp(sig.size/45, 0, 1);        // category share 0…45% → 0…1
+    var nabN=clamp(sig.nab/5, 0, 1);           // Nabati equity 0…5 → 0…1
+    var mf=stance==='capture'?1.15 : stance==='defend'?0.75 : 1.0; // stance weights the growth pull
+    var A=clamp((0.6*gN + 0.4*sizeN)*mf, 0, 1);// Attractiveness
+    var E=nabN;                                 // Equity / right-to-win
+    return {A:A, E:E, score:Math.round((0.55*A + 0.45*E)*100)};
+  }
+  // Classifier: turns the signals + stance into Keep / Develop / Test / Stop.
+  function catAction(sig, stance){
+    if(!sig) return '-';
+    if(sig.g<=-20 && sig.nab<=1) return 'S';                                   // declining + no equity → Stop
+    if(stance==='defend'      && sig.nab>=4) return 'K';                        // defend equity in a shrinking market
+    if(stance==='opportunity' && sig.nab>=4 && sig.size>=20) return 'K';        // own a big, established flavour
+    if(stance==='capture'     && sig.nab>=4 && sig.size>=30 && sig.g>=10) return 'K'; // only defend if dominant & growing
+    if(sig.kind==='inno' && sig.g>-20 && sig.size>=2) return 'D';              // innovation bet with real size
+    var attractive=sig.g>=10 || (stance==='capture' && sig.size>=20 && sig.g>=0);
+    if(attractive && sig.size>=1 && sig.nab<=3) return 'D';                     // growing, room to gain → Develop
+    return 'T';                                                                 // small / unproven / stuck → Test
+  }
+  function mktKey(country){ return country==='Indonesia'?'id':country==='Malaysia'?'my':'cn'; }
   // Country strategy grid (rows × ID/MY/CN)
   var CSTRAT=[
     {r:{en:'Business objective',id:'Objektif bisnis'}, id_:{en:'Gain share',id:'Rebut share'}, my:{en:'Recover share',id:'Rebut kembali share'}, cn:{en:'Defend + rejuvenate',id:'Pertahankan + rejuvenasi'}},
@@ -821,13 +854,21 @@
   }
 
   /* ============ PAGE 4 — Market Share grouped by brand category ============ */
-  function verdictCard(c){ var f=flavor(c.nielsen), v, reason;
+  // Category Opportunity Score for an NPL, from its mapped Indonesia category (opportunity stance).
+  // The NPL is SIIP's own product in that category → assume solid equity (nab 4) and scale the
+  // fragmented ID category contribution onto the same 0–45 size axis the engine uses.
+  function nplCatScore(f){ if(!f) return 18; var o=catOpp({g:f.chg,size:Math.min(f.cont*2,45),nab:4},'opportunity'); return o.score; }
+  function verdictCard(c){ var f=flavor(c.nielsen), v, reason, sc=nplCatScore(f);
+    // verdict band is driven by the computed score, with declining / white-space overrides
     if(!f){ v='avoid'; reason=lang==='id'?'White space — demand belum terbukti, validasi dulu (pilot).':'White space — demand unproven, validate first (pilot).'; }
-    else if(f.chg>=5 && f.cont>=2){ v='ride'; reason=lang==='id'?'Kategori tumbuh '+pctS(f.chg)+' & cukup besar ('+pct(f.cont)+' pasar) — tunggangi.':'Category growing '+pctS(f.chg)+' & sizeable ('+pct(f.cont)+' of market) — ride it.'; }
-    else if(f.chg>=0){ v='watch'; reason=lang==='id'?'Tumbuh tipis — launch selektif.':'Flat growth — launch selectively.'; }
-    else { v='avoid'; reason=lang==='id'?'Kategori menurun '+pctS(f.chg)+' — hindari kecuali ada diferensiasi kuat.':'Category declining '+pctS(f.chg)+' — avoid unless strongly differentiated.'; }
+    else if(f.chg<0){ v='avoid'; reason=lang==='id'?'Kategori menurun '+pctS(f.chg)+' — hindari kecuali ada diferensiasi kuat.':'Category declining '+pctS(f.chg)+' — avoid unless strongly differentiated.'; }
+    else if(sc>=60){ v='ride'; reason=lang==='id'?'Skor opportunity '+sc+'/100 — kategori tumbuh '+pctS(f.chg)+' & cukup besar ('+pct(f.cont)+' pasar). Tunggangi.':'Opportunity score '+sc+'/100 — category growing '+pctS(f.chg)+' & sizeable ('+pct(f.cont)+' of market). Ride it.'; }
+    else if(sc>=45){ v='watch'; reason=lang==='id'?'Skor opportunity '+sc+'/100 — momentum sedang, launch selektif.':'Opportunity score '+sc+'/100 — moderate momentum, launch selectively.'; }
+    else { v='avoid'; reason=lang==='id'?'Skor opportunity '+sc+'/100 — terlalu tipis, hindari kecuali diferensiasi kuat.':'Opportunity score '+sc+'/100 — too thin, avoid unless strongly differentiated.'; }
     var vb=v==='ride'?'b-go':v==='watch'?'b-rework':'b-nogo';
-    return '<div class="npl" style="cursor:default"><div class="nh"><span class="emoji">'+c.emoji+'</span><div><div class="nm">'+c.name+'</div><div class="sku">'+(f?L(f.n)+' · '+pctS(f.chg):'white space')+'</div></div><div style="margin-left:auto"><span class="badge '+vb+'">'+t('v'+v.charAt(0).toUpperCase()+v.slice(1))+'</span></div></div><div class="why">'+reason+'</div></div>';
+    var scCol=v==='ride'?'var(--green)':v==='watch'?'var(--gold)':'var(--red)';
+    var scPill='<span style="font-family:\'JetBrains Mono\',monospace;font-weight:800;font-size:12px;color:#fff;background:'+scCol+';border-radius:6px;padding:1px 7px">'+sc+'</span>';
+    return '<div class="npl" style="cursor:default"><div class="nh"><span class="emoji">'+c.emoji+'</span><div><div class="nm">'+c.name+'</div><div class="sku">'+(f?L(f.n)+' · '+pctS(f.chg):'white space')+'</div></div><div style="margin-left:auto;display:flex;gap:6px;align-items:center">'+scPill+'<span class="badge '+vb+'">'+t('v'+v.charAt(0).toUpperCase()+v.slice(1))+'</span></div></div><div class="why">'+reason+'</div></div>';
   }
   function ndBadge(v){ var c=v>=60?'txt-green':v>=30?'txt-amber':'txt-red'; return '<span class="'+c+'">'+v+'</span>'; }
   function dualLine(a,bArr,labelA,labelB,fmt){
@@ -939,10 +980,12 @@
     var faRows=FLAVARCH.map(function(x){ return '<tr><td><b>'+L(x.f)+'</b></td><td>'+L(x.id_)+'</td><td>'+L(x.my)+'</td><td>'+L(x.cn)+'</td><td><span class="chip '+x.tone+'">'+L(x.say)+'</span></td></tr>'; }).join('');
     var faTab='<div class="table-wrap"><table class="dt" style="min-width:780px"><thead><tr><th>'+L({en:'Flavour',id:'Flavour'})+'</th><th>🇮🇩 '+L({en:'Indonesia Roll',id:'Roll Indonesia'})+'</th><th>🇲🇾 Malaysia</th><th>🇨🇳 China</th><th>'+L({en:'Strategic interpretation',id:'Interpretasi strategis'})+'</th></tr></thead><tbody>'+faRows+'</tbody></table></div>';
     var faCard=card('🎨', L({en:'Flavour architecture — three markets combined',id:'Arsitektur flavour — tiga pasar digabung'}), L({en:'What to read beyond “what is trending”',id:'Yang dibaca di luar “rasa apa yang tren”'}), null,'<div class="card-body">'+faTab+'</div>');
-    var omRows=OPPMATRIX.map(function(x){ return '<tr><td><b>'+L(x.f)+'</b></td><td class="mcell">'+actChip(x.id_)+'</td><td class="mcell">'+actChip(x.my)+'</td><td class="mcell">'+actChip(x.cn)+'</td></tr>'; }).join('');
+    function actCell(sig,stance){ var o=catOpp(sig,stance); return '<td class="mcell">'+actChip(catAction(sig,stance))+(o?'<div style="font-size:9px;color:var(--muted);font-family:\'JetBrains Mono\',monospace;margin-top:3px">'+o.score+'</div>':'')+'</td>'; }
+    var omRows=OPPMATRIX.map(function(x){ return '<tr><td><b>'+L(x.f)+'</b></td>'+actCell(x.sig.id,'opportunity')+actCell(x.sig.my,'capture')+actCell(x.sig.cn,'defend')+'</tr>'; }).join('');
     var omTab='<div class="table-wrap"><table class="dt" style="min-width:560px"><thead><tr><th>'+L({en:'Flavour platform',id:'Platform flavour'})+'</th><th class="mcell">🇮🇩 Indonesia</th><th class="mcell">🇲🇾 Malaysia</th><th class="mcell">🇨🇳 China</th></tr></thead><tbody>'+omRows+'</tbody></table></div>';
-    var omLegend='<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">'+actChip('K')+actChip('D')+actChip('T')+actChip('S')+'</div>';
-    var omCard=card('🎯', L({en:'Regional Rolls Opportunity Matrix',id:'Matriks Opportunity Rolls Regional'}), L({en:'Keep / Develop / Test / Stop — per flavour, per country',id:'Pertahankan / Kembangkan / Tes / Hentikan — per flavour, per negara'}), null,'<div class="card-body">'+omTab+omLegend+'</div>');
+    var omLegend='<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px">'+actChip('K')+actChip('D')+actChip('T')+actChip('S')+'<span class="note" style="margin:0">'+L({en:'Badge = computed action · number = Category Opportunity Score (0–100).',id:'Badge = aksi terhitung · angka = Category Opportunity Score (0–100).'})+'</span></div>';
+    var omNote=L({en:'<b>Computed, not hand-set.</b> Score = 55% Attractiveness (growth & category size, weighted by each market’s stance: ID gain-share · MY capture · CN defend) + 45% Equity (Nabati strength). Action: <b>Stop</b> if declining with no equity · <b>Keep</b> if Nabati already owns the flavour (stance-aware) · <b>Develop</b> if growing with room to gain, or an innovation bet with real size · otherwise <b>Test</b>.',id:'<b>Dihitung, bukan hardcoded.</b> Skor = 55% Attractiveness (growth & ukuran kategori, dibobot stance tiap pasar: ID rebut-share · MY capture · CN defend) + 45% Equity (kekuatan Nabati). Aksi: <b>Stop</b> bila menurun tanpa equity · <b>Keep</b> bila Nabati sudah menguasai flavour (sesuai stance) · <b>Develop</b> bila tumbuh dengan ruang gain, atau innovation bet berukuran nyata · selain itu <b>Test</b>.'});
+    var omCard=card('🎯', L({en:'Regional Rolls Opportunity Matrix',id:'Matriks Opportunity Rolls Regional'}), L({en:'Keep / Develop / Test / Stop — computed per flavour, per country',id:'Pertahankan / Kembangkan / Tes / Hentikan — dihitung per flavour, per negara'}), omNote,'<div class="card-body">'+omTab+omLegend+'</div>');
     var csRows=CSTRAT.map(function(x){ var bc=x.bad?' class="txt-red"':''; return '<tr><td><b>'+L(x.r)+'</b></td><td'+bc+'>'+L(x.id_)+'</td><td'+bc+'>'+L(x.my)+'</td><td'+bc+'>'+L(x.cn)+'</td></tr>'; }).join('');
     var csTab='<div class="table-wrap"><table class="dt" style="min-width:720px"><thead><tr><th></th><th>🇮🇩 Indonesia</th><th>🇲🇾 Malaysia</th><th>🇨🇳 China</th></tr></thead><tbody>'+csRows+'</tbody></table></div>';
     var csCard=card('♟️', L({en:'Country strategy for Rolls',id:'Strategi negara untuk Rolls'}), null, null,'<div class="card-body">'+csTab+'</div>');
