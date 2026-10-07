@@ -1,0 +1,1394 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>NPL Launch Decision Engine</title>
+<meta name="description" content="End-to-end NPL launch decision engine for SIIP: concept register, per-SKU COGM, as-is/to-be reverse EBT, category market share, and a scored SKU-by-country launch ranking with full Opportunity, Probability, Risk and Confidence breakdowns. Data is uploadable and persists in the browser.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/globe.gl@2.34.4/dist/globe.gl.min.js"></script>
+<style>
+  /* executive navy + warm paper. Fraunces headings, Inter body (formal, readable), JetBrains data. minimal motion. */
+  :root{
+    --navy:#122B46; --navy-2:#1C3D5E; --accent:#2F6BD8; --accent-soft:#EAF1FC; --accent-line:#C6DAF6;
+    --gold:#B6873B; --gold-soft:#FAF3E6; --gold-line:#ECDBB8;
+    --green:#1C8560; --green-soft:#E7F5EF; --green-line:#C2E6D5;
+    --amber:#B0781C; --amber-soft:#FBF2E0; --amber-line:#EFDCB2;
+    --red:#C13A49; --red-soft:#FBEAEC; --red-line:#F1C6CB;
+    --bg:#F4F5F3; --surface:#FFFFFF; --surface-2:#EFF0ED; --paper:#FBFAF7;
+    --ink:#182030; --ink-2:#434F67; --muted:#697183; --border:#E1E3DE; --border-2:#D2D5CE;
+    --shadow:0 1px 2px rgba(18,43,70,.05), 0 2px 10px rgba(18,43,70,.06);
+    --maxw:1220px; --radius:12px;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+    --navy:#0C1826; --navy-2:#14293E; --accent:#5F92EC; --accent-soft:#15233A; --accent-line:#2B4066;
+    --gold:#D6A354; --gold-soft:#2A2113; --gold-line:#574023;
+    --green:#3FBB8D; --green-soft:#11271F; --green-line:#235541;
+    --amber:#DCA54C; --amber-soft:#2A2012; --amber-line:#574123;
+    --red:#E26C79; --red-soft:#2B1418; --red-line:#5A2930;
+    --bg:#0A0E15; --surface:#111826; --surface-2:#19212F; --paper:#141B28;
+    --ink:#EAEFF8; --ink-2:#C0CADC; --muted:#8992A6; --border:#262F40; --border-2:#313B4F;
+    --shadow:0 1px 2px rgba(0,0,0,.3), 0 2px 12px rgba(0,0,0,.35);
+    color-scheme: dark;
+  }}
+  :root[data-theme="dark"]{
+    --navy:#0C1826; --navy-2:#14293E; --accent:#5F92EC; --accent-soft:#15233A; --accent-line:#2B4066;
+    --gold:#D6A354; --gold-soft:#2A2113; --gold-line:#574023;
+    --green:#3FBB8D; --green-soft:#11271F; --green-line:#235541;
+    --amber:#DCA54C; --amber-soft:#2A2012; --amber-line:#574123;
+    --red:#E26C79; --red-soft:#2B1418; --red-line:#5A2930;
+    --bg:#0A0E15; --surface:#111826; --surface-2:#19212F; --paper:#141B28;
+    --ink:#EAEFF8; --ink-2:#C0CADC; --muted:#8992A6; --border:#262F40; --border-2:#313B4F;
+    --shadow:0 1px 2px rgba(0,0,0,.3), 0 2px 12px rgba(0,0,0,.35);
+    color-scheme: dark;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{background:var(--bg); color:var(--ink); font-family:"Inter",-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; font-size:14px; line-height:1.6; -webkit-font-smoothing:antialiased;}
+  h1,h2,h3,h4{margin:0; color:var(--ink); letter-spacing:-.01em;}
+  h1,h2{font-family:"Fraunces","Georgia",serif; font-weight:600;}
+  h3,h4{font-family:"Inter",sans-serif; font-weight:700;}
+  .mono{font-family:"JetBrains Mono",monospace; font-variant-numeric:tabular-nums;}
+  p{margin:0;} ul,ol{margin:0;padding:0;list-style:none;} button{font-family:inherit;cursor:pointer;}
+  :focus-visible{outline:2px solid var(--accent); outline-offset:2px; border-radius:4px;}
+  .shell{max-width:var(--maxw); margin:0 auto; padding-left:24px; padding-right:24px;}
+  @media (max-width:640px){ .shell{padding-left:14px; padding-right:14px;} }
+
+  .topbar{background:var(--navy); color:#fff;}
+  .topbar-inner{max-width:var(--maxw); margin:0 auto; padding:14px 24px; display:flex; align-items:center; gap:16px; flex-wrap:wrap;}
+  .brand-mark{display:flex; align-items:center; gap:11px;}
+  .brand-logo{width:34px;height:34px;border-radius:8px; background:var(--gold); display:flex;align-items:center;justify-content:center; font-family:"Fraunces",serif; font-weight:700; font-size:18px; color:#fff; flex:none;}
+  .brand-title{font-family:"Fraunces",serif; font-weight:600; font-size:18px; color:#fff; display:block; line-height:1.15;}
+  .brand-sub{font-size:11px; color:#AFC0DA; display:block;}
+  .top-right{margin-left:auto; display:flex; align-items:center; gap:8px; flex-wrap:wrap;}
+  .icon-btn{display:inline-flex; align-items:center; gap:6px; background:rgba(255,255,255,.1); color:#fff; border:1px solid rgba(255,255,255,.2); border-radius:8px; padding:7px 11px; font-size:12px; font-weight:600;}
+  .icon-btn:hover{background:rgba(255,255,255,.18);}
+  .icon-btn.data{background:var(--gold); border-color:var(--gold);}
+
+  .rail{background:var(--surface); border-bottom:1px solid var(--border); position:sticky; top:env(safe-area-inset-top,0px); z-index:30;}
+  .rail-inner{max-width:var(--maxw); margin:0 auto; padding:7px 24px; display:flex; align-items:center; gap:3px; flex-wrap:wrap;}
+  .nav button{display:inline-flex; align-items:center; gap:8px; padding:8px 13px; border-radius:8px; color:var(--muted); font-weight:600; font-size:13px; background:transparent; border:1px solid transparent;}
+  .nav button .sn{width:20px;height:20px;border-radius:5px; background:var(--surface-2); color:var(--muted); display:flex;align-items:center;justify-content:center; font-size:11px; font-weight:700; border:1px solid var(--border); font-family:"JetBrains Mono",monospace;}
+  .nav button:hover{color:var(--ink); background:var(--surface-2);}
+  .nav button.active{color:var(--ink); background:var(--accent-soft); border-color:var(--accent-line);}
+  .nav button.active .sn{background:var(--accent); color:#fff; border-color:var(--accent);}
+
+  main{padding:20px 0 48px;}
+  .pagehead{margin-bottom:16px;}
+  .pagehead h1{font-size:23px;}
+  .pagehead .lead{font-size:13px; color:var(--muted); margin-top:3px; max-width:82ch;}
+
+  .card{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow); margin-bottom:18px; overflow:hidden;}
+  .card-head{display:flex; align-items:center; gap:10px; padding:13px 16px; border-bottom:1px solid var(--border);}
+  .card-head .ico{width:28px;height:28px;border-radius:7px; background:var(--accent-soft); color:var(--accent); display:flex;align-items:center;justify-content:center; font-size:14px; flex:none;}
+  .card-head h3{font-size:14.5px;}
+  .card-head .hsub{font-size:11.5px; color:var(--muted);}
+  .card-head .right{margin-left:auto; display:flex; gap:8px; align-items:center; flex-wrap:wrap;}
+  .card-body{padding:16px;}
+
+  .note-strip{display:flex; gap:9px; padding:11px 16px; background:var(--paper); border-bottom:1px solid var(--border); font-size:12px; color:var(--ink-2); line-height:1.6;}
+  .note-strip b{color:var(--ink);}
+
+  .selbar{display:flex; flex-wrap:wrap; gap:14px; align-items:flex-end;}
+  .fld{display:flex; flex-direction:column; gap:4px; min-width:130px;}
+  .fld label{font-size:10.5px; color:var(--muted); font-weight:700; text-transform:uppercase; letter-spacing:.05em;}
+  select, input[type=number], input[type=text]{font-family:inherit; font-size:13px; padding:8px 10px; border:1px solid var(--border-2); border-radius:8px; background:var(--surface); color:var(--ink); min-width:0;}
+  input[type=number]{font-family:"JetBrains Mono",monospace; text-align:right;}
+  input[type=range]{accent-color:var(--accent); width:100%;}
+  .seg{display:inline-flex; background:var(--surface-2); border:1px solid var(--border); border-radius:8px; padding:3px; gap:2px; flex-wrap:wrap; align-items:center;}
+  .seg button{border:none; background:transparent; color:var(--ink-2); font-weight:700; font-size:12px; padding:6px 12px; border-radius:6px;}
+  .seg button.on{background:var(--accent); color:#fff;}
+  .seg input[type=number]{width:72px; margin-left:4px; padding:5px 7px;}
+  .btn{display:inline-flex; align-items:center; gap:6px; background:var(--accent); color:#fff; border:none; border-radius:8px; padding:8px 13px; font-size:12.5px; font-weight:600;}
+  .btn.ghost{background:var(--surface-2); color:var(--ink-2); border:1px solid var(--border);}
+  .btn:hover{opacity:.92;}
+
+  .tiles{display:grid; grid-template-columns:repeat(auto-fit,minmax(132px,1fr)); gap:11px;}
+  .tile{background:var(--paper); border:1px solid var(--border); border-radius:10px; padding:11px 12px;}
+  .tile .tl{font-size:10px; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); font-weight:700;}
+  .tile .tv{font-weight:700; font-size:18px; font-family:"JetBrains Mono",monospace; margin-top:4px;}
+  .tile .tsub{font-size:10.5px; color:var(--muted); margin-top:2px;}
+  .tile.hi{background:var(--accent-soft); border-color:var(--accent-line);}
+  .tile.good{background:var(--green-soft); border-color:var(--green-line);}
+  .tile.bad{background:var(--red-soft); border-color:var(--red-line);}
+  .tile.warn{background:var(--amber-soft); border-color:var(--amber-line);}
+
+  .npl-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(250px,1fr)); gap:13px;}
+  .npl{border:1px solid var(--border); border-radius:11px; background:var(--surface); padding:13px; cursor:pointer; display:flex; flex-direction:column; gap:8px; min-width:0;}
+  .npl:hover{border-color:var(--accent-line);}
+  .npl.sel{border-color:var(--accent); box-shadow:inset 0 0 0 1px var(--accent);}
+  .npl.empty{border-style:dashed; background:var(--paper); align-items:center; justify-content:center; text-align:center; color:var(--muted); min-height:120px;}
+  .npl .nh{display:flex; align-items:center; gap:10px;}
+  .npl .emoji{width:38px;height:38px;border-radius:9px; background:var(--gold-soft); display:flex;align-items:center;justify-content:center; font-size:20px; flex:none;}
+  .npl .nm{font-weight:700; font-size:14px;}
+  .npl .sku{font-size:10.5px; color:var(--muted); font-family:"JetBrains Mono",monospace;}
+  .npl .statrow{display:flex; border:1px solid var(--border); border-radius:8px; overflow:hidden;}
+  .npl .statrow>div{flex:1; padding:7px 9px; text-align:center;}
+  .npl .statrow>div+div{border-left:1px solid var(--border);}
+  .npl .statrow .sv{font-weight:700; font-size:14px; font-family:"JetBrains Mono",monospace;}
+  .npl .statrow .sl{font-size:9px; color:var(--muted); text-transform:uppercase; margin-top:1px;}
+  .chips{display:flex; flex-wrap:wrap; gap:5px;}
+  .chip{font-size:10px; font-weight:700; padding:2px 8px; border-radius:999px; border:1px solid var(--border); background:var(--surface-2); color:var(--ink-2); white-space:nowrap;}
+  .chip.good{background:var(--green-soft); border-color:var(--green-line); color:var(--green);}
+  .chip.warn{background:var(--amber-soft); border-color:var(--amber-line); color:var(--amber);}
+  .chip.bad{background:var(--red-soft); border-color:var(--red-line); color:var(--red);}
+  .chip.gold{background:var(--gold-soft); border-color:var(--gold-line); color:var(--gold);}
+  .chip.brand{background:var(--navy); border-color:var(--navy); color:#fff;}
+  .chip.blue{background:var(--accent-soft); border-color:var(--accent-line); color:var(--accent);}
+  .roletag{display:inline-block; font-size:10px; font-weight:800; letter-spacing:.04em; text-transform:uppercase; padding:3px 9px; border-radius:6px; background:var(--navy); color:#fff;}
+  .callout{background:var(--accent-soft); border:1px solid var(--accent-line); border-radius:12px; padding:16px 18px; line-height:1.7; font-size:13px; color:var(--ink-2);}
+  .callout b{color:var(--ink);} .callout .big{font-size:14.5px; font-weight:700; color:var(--ink); display:block; margin-bottom:8px;}
+  .mcell{text-align:center !important; font-family:"JetBrains Mono",monospace;}
+  .npl .why{font-size:11.5px; color:var(--ink-2); line-height:1.55;}
+  .mini-btn{width:24px;height:24px;border-radius:6px;border:1px solid var(--border);background:var(--surface-2);color:var(--muted);font-size:12px;line-height:1;display:flex;align-items:center;justify-content:center;}
+  .mini-btn:hover{color:var(--ink);border-color:var(--accent-line);}
+  .photo-thumb{width:48px;height:48px;border-radius:9px;object-fit:cover;flex:none;border:1px solid var(--border);}
+  .photo-thumb.ph-empty{background:var(--gold-soft);display:flex;align-items:center;justify-content:center;font-size:22px;}
+  .photo-drop{border:1.5px dashed var(--border-2);border-radius:9px;padding:10px;text-align:center;background:var(--paper);color:var(--muted);font-size:11px;cursor:pointer;}
+  .photo-drop:hover{border-color:var(--accent);}
+  .photo-prev{max-width:100%;max-height:90px;border-radius:7px;object-fit:contain;}
+
+  .table-wrap{overflow-x:auto;}
+  table.dt{width:100%; border-collapse:collapse; font-size:12.5px; min-width:540px;}
+  table.dt th, table.dt td{padding:8px 11px; border-bottom:1px solid var(--border); text-align:left; white-space:nowrap;}
+  table.dt th{font-size:10px; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); font-weight:700; background:var(--paper);}
+  table.dt td.num, table.dt th.num{text-align:right; font-family:"JetBrains Mono",monospace;}
+  table.dt tbody tr.click{cursor:pointer;}
+  table.dt tbody tr.click:hover{background:var(--accent-soft);}
+  table.dt tbody tr.sel{background:var(--accent-soft); box-shadow:inset 3px 0 0 var(--accent);}
+  table.dt tr.grp td{font-weight:700; background:var(--surface-2);}
+  table.dt tr.hl td{background:var(--gold-soft);}
+  table.dt td input{width:98px; padding:5px 7px; font-size:12px;}
+  .delta-up{color:var(--green); font-weight:700;} .delta-dn{color:var(--red); font-weight:700;}
+  .badge{display:inline-block; font-size:10px; font-weight:800; padding:2px 10px; border-radius:999px; border:1px solid;}
+  .b-go{background:var(--green-soft); border-color:var(--green-line); color:var(--green);}
+  .b-pilot{background:var(--accent-soft); border-color:var(--accent-line); color:var(--accent);}
+  .b-rework,.b-hold{background:var(--amber-soft); border-color:var(--amber-line); color:var(--amber);}
+  .b-nogo{background:var(--red-soft); border-color:var(--red-line); color:var(--red);}
+
+  /* horizontal COGM matrix */
+  table.matrix{border-collapse:collapse; font-size:12.5px;}
+  table.matrix th,table.matrix td{border:1px solid var(--border); padding:7px 10px; white-space:nowrap;}
+  table.matrix thead th{background:var(--navy); color:#fff; font-size:11px; font-weight:700; text-align:center;}
+  table.matrix td.lab{text-align:left; color:var(--ink-2); background:var(--paper); font-weight:600; position:sticky; left:0;}
+  table.matrix td.num{text-align:right; font-family:"JetBrains Mono",monospace;}
+  table.matrix tr.sum td{font-weight:700; background:var(--surface-2);}
+  table.matrix tr.sum td.lab{background:var(--surface-2);}
+  table.matrix input{width:92px; padding:4px 6px; font-size:12px; text-align:right;}
+
+  .aistobe{width:100%; border-collapse:collapse; font-size:12.5px;}
+  .aistobe th,.aistobe td{padding:7px 11px; border-bottom:1px solid var(--border); white-space:nowrap;}
+  .aistobe th{font-size:10px; text-transform:uppercase; color:var(--muted); font-weight:700; text-align:right;}
+  .aistobe th:first-child{text-align:left;}
+  .aistobe td.lab{text-align:left; color:var(--ink-2);}
+  .aistobe td.sub{padding-left:24px; color:var(--muted); font-size:11.5px;}
+  .aistobe td.num{text-align:right; font-family:"JetBrains Mono",monospace;}
+  .aistobe .col-tobe{background:var(--accent-soft);}
+  .aistobe tr.move td{font-weight:700;} .aistobe tr.move .col-tobe{color:var(--accent);}
+  .aistobe tr.ebt td{font-weight:800; background:var(--gold-soft);}
+  .aistobe tr.gp td{font-weight:700; background:var(--paper);}
+
+  .legend{display:flex; gap:14px; flex-wrap:wrap; font-size:11px; color:var(--muted); margin-top:8px;}
+  .legend span{display:inline-flex; align-items:center; gap:6px;}
+  .legend i{width:10px;height:10px;border-radius:3px; display:inline-block;}
+  .bars{display:flex; flex-direction:column; gap:6px;}
+  .barrow{display:flex; align-items:center; gap:10px; font-size:12px;}
+  .barrow .bl{width:160px; color:var(--ink-2); flex:none; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .barrow .bt{flex:1; background:var(--surface-2); border-radius:5px; height:18px; overflow:hidden; min-width:50px;}
+  .barrow .bt i{display:block; height:100%;}
+  .barrow .bv{width:66px; text-align:right; font-family:"JetBrains Mono",monospace; flex:none;}
+
+  .reasons{display:flex; flex-direction:column; gap:7px;}
+  .ri{display:flex; gap:8px; font-size:12.5px; color:var(--ink-2); align-items:flex-start; line-height:1.5;}
+  .ri .ok{color:var(--green); font-weight:800;} .ri .no{color:var(--red); font-weight:800;} .ri .wn{color:var(--amber); font-weight:800;}
+  .note{font-size:11.5px; color:var(--muted); line-height:1.6; margin-top:10px;}
+  .srcbar{display:flex; gap:9px; align-items:flex-start; font-size:11px; color:var(--muted); background:var(--paper); border:1px dashed var(--border-2); border-radius:9px; padding:10px 12px; margin-top:14px; line-height:1.6;}
+  .grid2{display:grid; grid-template-columns:1fr 1fr; gap:16px;}
+  @media (max-width:820px){ .grid2{grid-template-columns:1fr;} }
+  .txt-green{color:var(--green);} .txt-amber{color:var(--amber);} .txt-red{color:var(--red);} .txt-muted{color:var(--muted);} .txt-accent{color:var(--accent);}
+  .foot{max-width:var(--maxw); margin:6px auto 0; padding:16px 24px 34px; color:var(--muted); font-size:11px;}
+  svg{display:block; max-width:100%;}
+
+  /* tab5 map (full width) + why overlay */
+  #mapBox{height:380px; border-radius:12px; overflow:hidden; position:relative; background:radial-gradient(130% 130% at 30% 18%, #1a3a63 0%, #0e2544 50%, #081a30 100%); border:1px solid var(--border);}
+  .map-legend{position:absolute; top:10px; right:12px; display:flex; gap:10px; z-index:4; flex-wrap:wrap; justify-content:flex-end;}
+  .map-legend span{display:inline-flex; align-items:center; gap:5px; font-size:10px; color:#d6e3f5; background:rgba(8,20,36,.6); padding:3px 7px; border-radius:999px;}
+  .map-legend i{width:8px;height:8px;border-radius:50%;}
+  .map-hint{position:absolute; bottom:12px; left:12px; z-index:4; font-size:11px; color:#d6e3f5; background:rgba(8,20,36,.6); padding:5px 11px; border-radius:999px;}
+  .whyover{position:absolute; top:12px; left:12px; width:278px; max-width:calc(100% - 24px); z-index:5; background:var(--surface); border:1px solid var(--border); border-radius:11px; box-shadow:0 14px 38px rgba(5,11,24,.5); overflow:hidden; animation:popIn .16s ease-out;}
+  @keyframes popIn{from{opacity:0; transform:translateY(6px) scale(.98);} to{opacity:1; transform:none;}}
+  @media (max-width:560px){ .whyover{position:static; width:auto; margin:10px; } }
+  .whyover .wh{display:flex; align-items:center; gap:9px; padding:10px 13px; border-bottom:1px solid var(--border);}
+  .whyover .wh b{font-family:"Fraunces",serif; font-size:14px;}
+  .whyover .wh .ws{font-family:"JetBrains Mono",monospace; font-weight:800; font-size:15px; color:#fff; border-radius:7px; padding:2px 9px;}
+  .whyover .wh .wclose{margin-left:4px; width:24px;height:24px;border-radius:50%; border:1px solid var(--border); background:var(--surface-2); color:var(--muted); font-size:16px; line-height:1; display:flex;align-items:center;justify-content:center; flex:none;}
+  .whyover .wrow{display:flex; justify-content:space-between; padding:5px 13px; font-size:12px; border-bottom:1px solid var(--border);}
+  .whyover .wrow .wl{color:var(--muted);} .whyover .wrow .wv{font-family:"JetBrains Mono",monospace; font-weight:700;}
+  .drill{display:flex; flex-wrap:wrap; gap:5px; padding:9px 13px; font-size:10.5px; color:var(--muted); line-height:1.6;}
+  .drill b{color:var(--ink);}
+  tr.detailrow:hover{background:var(--surface)!important;}
+  tr.detailrow .detail{margin:0; border-radius:0; border-left:none; border-right:none;}
+
+  .detail{border:1px solid var(--accent-line); border-radius:12px; margin-top:14px; overflow:hidden;}
+  .detail-head{display:flex; align-items:center; gap:12px; padding:13px 16px; background:var(--surface); border-bottom:1px solid var(--border);}
+  .detail-head .de{font-size:22px;}
+  .detail-head h4{font-size:14.5px;}
+  .detail-head .dsub{font-size:11.5px; color:var(--muted);}
+  .detail-head .dcall{margin-left:auto;}
+  .detail-body{padding:16px; background:var(--surface);}
+  .kpi4{display:grid; grid-template-columns:repeat(4,1fr); gap:10px;}
+  @media (max-width:560px){ .kpi4{grid-template-columns:repeat(2,1fr);} }
+  .kpi{text-align:center; border:1px solid var(--border); border-radius:10px; padding:11px; background:var(--paper);}
+  .kpi .kv{font-weight:700; font-size:18px; font-family:"JetBrains Mono",monospace;}
+  .kpi .kl{font-size:10px; color:var(--muted); text-transform:uppercase; margin-top:2px;}
+  .scorebars{display:flex; flex-direction:column; gap:7px; margin-top:4px;}
+  .sb{display:flex; align-items:center; gap:10px; font-size:11.5px;}
+  .sb .sbl{width:150px; flex:none; color:var(--ink-2);}
+  .sb .sbw{width:34px; flex:none; color:var(--muted); font-family:"JetBrains Mono",monospace; font-size:10.5px;}
+  .sb .sbt{flex:1; background:var(--surface-2); border-radius:5px; height:14px; overflow:hidden; min-width:50px;}
+  .sb .sbt i{display:block;height:100%;background:var(--accent);}
+  .sb .sbv{width:40px; text-align:right; font-family:"JetBrains Mono",monospace; flex:none;}
+  .sbnote{font-size:10px; color:var(--muted); margin:-3px 0 4px 150px; line-height:1.4;}
+  @media (max-width:560px){ .sbnote{margin-left:0;} }
+
+  /* right data sidebar */
+  .scrim{position:fixed; inset:0; background:rgba(10,16,24,.45); z-index:48; opacity:0; pointer-events:none;}
+  .scrim.open{opacity:1; pointer-events:auto;}
+  .sidebar{position:fixed; top:0; right:0; bottom:0; width:380px; max-width:92vw; background:var(--surface); border-left:1px solid var(--border); box-shadow:-8px 0 30px rgba(10,16,24,.2); z-index:49; transform:translateX(100%); display:flex; flex-direction:column;}
+  .sidebar.open{transform:translateX(0);}
+  .sb-head{display:flex; align-items:center; gap:10px; padding:16px; border-bottom:1px solid var(--border);}
+  .sb-head h3{font-size:15px;}
+  .sb-close{margin-left:auto; width:28px;height:28px;border-radius:7px; border:1px solid var(--border); background:var(--surface-2); color:var(--muted); font-size:16px;}
+  .sb-body{padding:16px; overflow-y:auto; flex:1;}
+  .sb-sec{margin-bottom:18px;}
+  .sb-sec h4{font-size:12px; margin-bottom:8px;}
+  .drop{border:1.5px dashed var(--border-2); border-radius:10px; padding:18px; text-align:center; background:var(--paper); color:var(--muted); font-size:12px;}
+  .drop.hot{border-color:var(--accent); background:var(--accent-soft); color:var(--ink);}
+  .hidden{display:none;}
+  /* scenario modal */
+  .modal-wrap{position:fixed; inset:0; z-index:60; display:flex; align-items:flex-start; justify-content:center; padding:28px 16px; overflow-y:auto;}
+  .modal{background:var(--surface); border:1px solid var(--border); border-radius:14px; box-shadow:0 20px 60px rgba(8,16,28,.35); width:min(940px,100%); max-width:100%;}
+  .modal-head{display:flex; align-items:center; gap:12px; padding:14px 18px; border-bottom:1px solid var(--border); position:sticky; top:0; background:var(--surface); border-radius:14px 14px 0 0;}
+  .modal-head h3{font-size:16px; font-family:"Fraunces",serif; font-weight:600;}
+  .modal-close{margin-left:auto; width:30px;height:30px;border-radius:8px; border:1px solid var(--border); background:var(--surface-2); color:var(--muted); font-size:17px;}
+  .modal-body{padding:16px 18px 20px;}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="topbar-inner">
+    <div class="brand-mark">
+      <div class="brand-logo">S</div>
+      <div><span class="brand-title">NPL Launch Decision Engine</span><span class="brand-sub" data-i18n="brandSub">SIIP · what, where, how big & when to launch</span></div>
+    </div>
+    <div class="top-right">
+      <button type="button" class="icon-btn data" id="dataBtn">⬆ <span data-i18n="data">Data</span></button>
+      <button type="button" class="icon-btn" id="langBtn">🌐 <span id="langLabel">EN</span></button>
+      <button type="button" class="icon-btn" id="themeBtn">◐ <span id="themeLabel">System</span></button>
+    </div>
+  </div>
+</header>
+
+<nav class="rail"><div class="rail-inner"><div class="nav" id="nav"></div></div></nav>
+<main><div class="shell"><div id="view"></div></div></main>
+<footer class="foot"><span data-i18n="footBrand">Atomic P&L — EBT = 0 is only break-even, not success. A launch must have a realistic path to positive EBT inside its capturable market.</span></footer>
+
+<div class="scrim" id="scrim"></div>
+<aside class="sidebar" id="sidebar" aria-hidden="true"></aside>
+<div id="modalHost"></div>
+
+<script>
+(function(){
+  "use strict";
+  function lget(k,f){ try{ var r=localStorage.getItem(k); if(r) return JSON.parse(r);}catch(e){} return f; }
+  function lset(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e){} }
+  var lang=lget('nple-lang','en');
+
+  /* ============ DEFAULT DATA ============ */
+  var BRANDS=['Snack','Wafer','Biscuit','Beverage','Noodle','Other'];
+  function defaultData(){ return {
+    npls:[
+      {k:'nori', name:'SIIP Nori', sku:'3.5g', emoji:'🍙', brand:'Snack', nielsen:'seaweed', fullCap:95256, dbp:94734.973, price:102000, photo:null, vol:95256,
+       cogm:{depreF:1394.1082, omcF:2492.1861, dl:6067.2232, listrik:732.3372, gas:413.1461, rm:28661.4524, pm:35171.9998}},
+      {k:'karaage', name:'SIIP Karaage', sku:'3.5g', emoji:'🍗', brand:'Snack', nielsen:'kaldu', fullCap:95256, dbp:94734.973, price:108000, photo:null, vol:95256,
+       cogm:{depreF:1394.1082, omcF:2492.1861, dl:6067.2232, listrik:732.4241, gas:413.1951, rm:34313.0064, pm:35171.9998}},
+      {k:'kari', name:'SIIP Kari', sku:'3.5g', emoji:'🍛', brand:'Snack', nielsen:'curry', fullCap:95256, dbp:94734.973, price:98000, photo:null, vol:95256,
+       cogm:{depreF:1394.1082, omcF:2492.1861, dl:6067.2232, listrik:732.4241, gas:413.1951, rm:24220.9457, pm:35171.9998}}
+    ],
+    // Country baseline P&L (estimate; Indonesia based on existing figures). Replace via Data upload.
+    base:{
+      id:{name:'Indonesia',flag:'🇮🇩',real:true, nsar:5.1e9,cogs:3.7e9,sm1:295.8e6,sm2:173.4e6,sm3:367.2e6,sm4:132.6e6,ga1:40e6,ga2:30e6,ga3:20e6},
+      my:{name:'Malaysia',flag:'🇲🇾',real:false,nsar:3.0e9,cogs:2.04e9,sm1:180e6,sm2:120e6,sm3:255e6,sm4:102e6,ga1:30e6,ga2:22e6,ga3:15e6},
+      cn:{name:'China',flag:'🇨🇳',real:false,nsar:4.2e9,cogs:2.73e9,sm1:273e6,sm2:172e6,sm3:336e6,sm4:168e6,ga1:38e6,ga2:28e6,ga3:18e6}
+    },
+    // Listing fee / trading term / VAT (% of NSAR) per MT account — editable in Reverse EBT.
+    acctFees:{}
+  };}
+  // Listing fee & PPN are absolute Rp amounts (per MT account, per period). Trading term stays a %.
+  function acctFee(accKey){ if(!DATA.acctFees) DATA.acctFees={}; var f=DATA.acctFees[accKey];
+    if(!f){ f=DATA.acctFees[accKey]={list:180000000, trade:3.0, ppn:990000000}; }
+    // migrate old percentage-style values (list/ppn were < 10000 when stored as %) to absolute Rp
+    if(f.list<100000) f.list=180000000; if(f.ppn<100000) f.ppn=990000000;
+    return f; }
+  var DATA=lget('nple-data', defaultData());
+  function saveData(){ lset('nple-data',DATA); }
+  function resetData(){ DATA=defaultData(); saveData(); }
+  function npl(k){ for(var i=0;i<DATA.npls.length;i++) if(DATA.npls[i].k===k) return DATA.npls[i]; return DATA.npls[0]; }
+
+  /* ============ COGM ENGINE ============ */
+  function fixedMo(c){ return (c.cogm.depreF+c.cogm.omcF)*c.fullCap; }
+  function constCtn(c){ var g=c.cogm; return g.dl+g.listrik+g.gas+g.rm+g.pm; }
+  function cogmAt(vol,c){ return constCtn(c)+fixedMo(c)/vol; }
+  function gpPctAt(vol,c){ return (1-cogmAt(vol,c)/c.dbp)*100; }
+  function cogmFull(c){ return cogmAt(c.fullCap,c); }
+  function gpFull(c){ return gpPctAt(c.fullCap,c); }
+  function beVol(c,load){ var denom=c.dbp*(1-load/100)-constCtn(c); return denom>0?fixedMo(c)/denom:Infinity; }
+
+  /* ============ Nielsen (real) ============ */
+  var NIELSEN={ marketT:9411074, period:'MAT TY · Apr-25',
+    flavors:[
+      {k:'kentang',n:{en:'Potato / French Fries',id:'Kentang Goreng'},val:1286349,chg:2.4,cont:13.67,rank:1},
+      {k:'choco',n:{en:'Chocolate',id:'Coklat'},val:1080856,chg:16.2,cont:11.48,rank:2},
+      {k:'corn',n:{en:'Roasted Corn',id:'Jagung Bakar'},val:1003967,chg:7.6,cont:10.67,rank:3},
+      {k:'cheese',n:{en:'Cheese',id:'Keju'},val:841347,chg:6.3,cont:8.94,rank:4},
+      {k:'seaweed',n:{en:'Seaweed (Nori)',id:'Seaweed (Nori)'},val:671213,chg:20.2,cont:7.13,rank:5},
+      {k:'bbq',n:{en:'Potato Barbeque',id:'Potato Barbeque'},val:350685,chg:6.0,cont:3.73,rank:6},
+      {k:'seasalt',n:{en:'Sea Salt',id:'Sea Salt'},val:218211,chg:15.4,cont:2.32,rank:7},
+      {k:'ubi',n:{en:'Ubi',id:'Ubi'},val:154705,chg:13.3,cont:1.64,rank:8},
+      {k:'pedas',n:{en:'Pedas Level 15',id:'Pedas Level 15'},val:121916,chg:-18.7,cont:1.30,rank:9},
+      {k:'kaldu',n:{en:'Kaldu Ayam',id:'Kaldu Ayam'},val:110704,chg:-1.1,cont:1.18,rank:10}
+    ],
+    // Top brand (MAT TY Rp Mill, share %, chg MAT %, ND & WD last month)
+    brands:[{n:'STT',val:1134369,sh:12.1,chg:6.0,nd:20,wd:91},{n:'TARO',val:826221,sh:8.8,chg:8.7,nd:27,wd:92},{n:'CHIKI Balls+Twist',val:735306,sh:7.8,chg:1.5,nd:18,wd:89},{n:'SIIP',val:493277,sh:5.2,chg:-2.5,me:true,nd:28,wd:87},{n:'OISHI Pillow',val:336849,sh:3.6,chg:6.4,nd:10,wd:82},{n:'KRISBEE',val:325394,sh:3.5,chg:2.5,nd:18,wd:85},{n:'TIC-TIC',val:294900,sh:3.1,chg:1.8,nd:12,wd:84},{n:'OISHI Sponge',val:268104,sh:2.8,chg:38.2,nd:8,wd:80},{n:'GURIBEE',val:265584,sh:2.8,chg:46.9,nd:6,wd:75},{n:'GARUDA O\'Corn',val:256696,sh:2.7,chg:16.6,nd:11,wd:85}],
+    // Top SKU (MAT TY Rp Mill, retail price Rp, ND & WD last month)
+    skus:[
+      {n:'STT French Fries Kentang Goreng 50-80G',val:325401,price:6615,nd:3,wd:67},
+      {n:'STT French Fries Kentang Goreng 130-155G',val:296579,price:16182,nd:2,wd:64},
+      {n:'STT French Fries Kentang Goreng 14-20G',val:246471,price:1888,nd:13,wd:22},
+      {n:'STT French Fries Kentang Goreng 23-45G',val:150772,price:3912,nd:4,wd:67},
+      {n:'OISHI Sponge Crunch Coklat 100-120G',val:130976,price:13706,nd:3,wd:66},
+      {n:'TARO Net Seaweed 62-70G',val:102195,price:8078,nd:3,wd:64},
+      {n:'GARUDA Crunchy O\'Corn Sea Salt 84-96G',val:100093,price:11314,nd:3,wd:64},
+      {n:'OISHI Pillow Coklat 100-120G',val:112767,price:11993,nd:2,wd:65},
+      {n:'GURIBEE Layers Rumput Laut 65-68G',val:95280,price:7128,nd:3,wd:66},
+      {n:'SIIP Roasted Corn 4-16G',val:89561,price:565,nd:16,wd:22,me:true}
+    ],
+    // SIIP by region segment (MAT TY Rp Mill, share %, cont %, ND & WD last month) — GT+MT
+    regions:[
+      {n:'Jakarta Greater',val:27044,sh:1.7,cont:5,nd:7,wd:73},
+      {n:'West Java',val:113830,sh:5.7,cont:23,nd:36,wd:94},
+      {n:'Central Java + DIY',val:99648,sh:6.2,cont:20,nd:31,wd:90},
+      {n:'East Java',val:116124,sh:8.2,cont:24,nd:34,wd:96},
+      {n:'North Sumatra',val:12014,sh:3.0,cont:2,nd:22,wd:87},
+      {n:'Central Sumatra',val:12251,sh:3.6,cont:2,nd:23,wd:83},
+      {n:'South Sumatra',val:21415,sh:4.6,cont:4,nd:34,wd:96},
+      {n:'Other Islands',val:90950,sh:5.7,cont:18,nd:30,wd:81}
+    ],
+    // SIIP by channel segment (MAT TY Rp Mill, share %, ND & WD last month, potential to grow Rp B, Nabati/category growth)
+    channels:[
+      {n:{en:'GT Large',id:'GT Besar'},val:324803,sh:7.5,nd:42,wd:80,pot:3982,gNab:-10.7,gCat:13.6},
+      {n:{en:'GT Small',id:'GT Kecil'},val:82445,sh:9.0,nd:22,wd:39,pot:838,gNab:3.8,gCat:21.7},
+      {n:{en:'MT Minimarket',id:'MT Minimarket'},val:61100,sh:1.7,nd:86,wd:94,pot:3514,gNab:53.3,gCat:9.5},
+      {n:{en:'MT Hyper / Super',id:'MT Hyper / Super'},val:24929,sh:4.1,nd:85,wd:85,pot:584,gNab:8.0,gCat:2.7},
+      {n:{en:'MT Independent',id:'MT Independen'},val:59664,sh:6.2,nd:81,wd:89,pot:0,gNab:12.0,gCat:0.4},
+      {n:{en:'MT Key Account',id:'MT Key Account'},val:26365,sh:0.8,nd:88,wd:94,pot:0,gNab:172.2,gCat:0.5}
+    ],
+    // Sales comparison: SIIP vs MOMOGI, Value Abs (Rp B) + ND + WD, monthly Apr-23..Apr-25 (Indonesia GT)
+    trend:{ months:['Apr23','','Jun23','','Aug23','','Oct23','','Dec23','','Feb24','','Apr24','','Jun24','','Aug24','','Oct24','','Dec24','','Feb25','','Apr25'],
+      siipVal:[32.0,33.6,33.8,38.0,39.2,37.4,39.8,37.3,38.6,42.3,36.7,34.9,31.6,31.8,32.8,35.0,33.8,33.3,34.5,35.8,35.6,35.1,32.9,35.5,31.3],
+      momoVal:[20.1,19.0,18.2,19.6,20.3,22.0,21.8,20.9,20.9,20.6,19.8,19.4,17.3,17.5,18.1,16.8,17.1,17.7,17.3,17.5,17.8,16.3,16.2,16.2,14.5],
+      siipWd:[53,52,53,54,54,55,55,55,54,52,51,49,53,55,57,54,56,58,56,55,56,58,56],
+      momoWd:[48,46,44,44,44,42,41,41,38,37,37,39,40,41,43,43,41,41,38,36,33,33,31] }
+  };
+  function flavor(k){ for(var i=0;i<NIELSEN.flavors.length;i++) if(NIELSEN.flavors[i].k===k) return NIELSEN.flavors[i]; return null; }
+  // Re-apply a previously uploaded Nielsen workbook (persisted in DATA) so uploads survive reload.
+  if(typeof DATA!=='undefined' && DATA && DATA.nielsen){ try{ applyNielsen(DATA.nielsen); }catch(e){} }
+
+  /* ============ REGIONAL — Indonesia (Roll) vs Malaysia & China (Flat) ============ */
+  // CAVEAT: Indonesia = WAFER ROLL (to Aug-26). Malaysia & China = WAFER FLAT (to Jun-26).
+  // Different categories — market size / share across MY-CN must NOT be summed or compared directly with ID Roll.
+  // MY-CN are read as an ADJACENT-CATEGORY benchmark for flavour / pack / distribution / consumer preference.
+  var MARKETS={
+    Indonesia:{ flag:'🇮🇩', cat:{en:'Wafer Roll',id:'Wafer Roll'}, period:'MAT YTD Aug-26', unit:'IDR',
+      role:{en:'Roll category battlefield',id:'Arena kategori Roll'}, problem:{en:'Opportunity problem',id:'Masalah opportunity'},
+      cond:{en:'Relatively flat −0.9% YoY',id:'Relatif flat −0.9% YoY'}, pos:{en:'Challenger',id:'Challenger'},
+      issue:{en:'Gain share & expand Rolls',id:'Rebut share & kembangkan Rolls'},
+      mkt:{en:'Rp2.37T national Roll market',id:'Pasar Roll nasional Rp2,37T'},
+      nab:{en:'Rolls + Big Rolls ≈ Rp154.7B / 6.53% share, +7.3% — outperforms category',id:'Rolls + Big Rolls ≈ Rp154,7B / 6,53% share, +7,3% — outperform kategori'},
+      // Roll channel split (not the Tab-4 category audit)
+      chan:[ {seg:{en:'GT',id:'GT'}, sh:9.53, g:1.3, role:{en:'Scale',id:'Scale'}, hero:{en:'Rp500 single',id:'Single Rp500'}, flav:{en:'Cheese + Chocolate',id:'Keju + Coklat'}},
+             {seg:{en:'MT',id:'MT'}, sh:2.37, g:60.9, role:{en:'Growth engine',id:'Mesin growth'}, hero:{en:'Box / larger format',id:'Box / format besar'}, flav:{en:'Strawberry Cheese + Cheese',id:'Strawberry Cheese + Keju'}} ],
+      note:{en:'Flavour × pack × channel cannot run on one national strategy. GT = distribution width + velocity; MT share is small but exploding (Strawberry Keju 55g & Richeese box).',
+            id:'Flavour × pack × channel tak bisa satu strategi nasional. GT = lebar distribusi + velocity; share MT kecil tapi meledak (Strawberry Keju 55g & box Richeese).'} },
+    Malaysia:{ flag:'🇲🇾', cat:{en:'Wafer Flat',id:'Wafer Flat'}, period:'MAT Jun-26', unit:'USD',
+      role:{en:'Growing wafer market, Nabati losing share',id:'Pasar wafer tumbuh, Nabati kehilangan share'}, problem:{en:'Competitive capture problem',id:'Masalah capture kompetitif'},
+      cond:{en:'Booming +14.4% MAT',id:'Booming +14.4% MAT'}, pos:{en:'#2, 28.7% share',id:'#2, 28,7% share'},
+      issue:{en:'Recover MT share — capture category growth',id:'Rebut share MT — tangkap growth kategori'},
+      mktVal:30.01, mktG:14.4, nabShChg:-2.97, nd:37.4, wd:91.3,
+      nab:{en:'Nabati +3.7% while category +14.4% → share 31.68% → 28.72% (−2.97ppt). Loacker overtakes to #1.',id:'Nabati +3,7% sementara kategori +14,4% → share 31,68% → 28,72% (−2,97ppt). Loacker menyalip jadi #1.'},
+      brands:[ {n:'Loacker',val:9.26,sh:30.86,chg:30.0,dsh:3.72},{n:'Nabati',val:8.62,sh:28.72,chg:3.7,dsh:-2.97,me:true},{n:'Muzic',val:6.39,sh:21.28,chg:18.8,dsh:0.79},{n:'Delio',val:1.45,sh:4.84,chg:30.1},{n:"Julie's",val:0.63,sh:2.10,chg:-0.2} ],
+      flavors:[ {n:{en:'Chocolate',id:'Coklat'},val:13.25,mix:44.2,chg:15.5},{n:{en:'Hazelnut',id:'Hazelnut'},val:7.83,mix:26.1,chg:20.9},{n:{en:'Cheese',id:'Keju'},val:4.29,mix:14.3,chg:2.7},{n:{en:'Vanilla',id:'Vanilla'},val:1.18,mix:3.9,chg:22.2},{n:{en:'Milk',id:'Susu'},val:0.74,mix:2.5,chg:1.1},{n:{en:'Strawberry',id:'Strawberry'},val:0.37,mix:1.2,chg:10.1},{n:{en:'Goguma',id:'Goguma'},val:0.18,mix:0.6,chg:-27.6},{n:{en:'Matcha',id:'Matcha'},val:0.09,mix:0.3,chg:342},{n:{en:'Coconut',id:'Kelapa'},val:0.11,mix:0.4,chg:140} ],
+      skus:[ {n:'Richeese Cheese 125g',val:0.983,chg:34.7,csh:3.27,nd:19.7,wd:77.6},{n:'Richoco Chocolate 50g×10',val:0.973,chg:-1.8,csh:3.24,nd:7.6,wd:32.5},{n:'Richeese Cheese 50g×10',val:0.895,chg:0.4,csh:2.98,nd:7.5,wd:31.9},{n:'Richoco Chocolate 23g×18',val:0.791,chg:6.0,csh:2.64,nd:3.3,wd:39.8},{n:'Richeese Cheese 23g×18',val:0.559,chg:16.3,csh:1.86,nd:6.7,wd:30.6} ],
+      chan:[ {seg:{en:'Modern Trade',id:'Modern Trade'},mkt:28.55,mg:15.8,nv:8.16,nsh:28.57,ng:3.1},{seg:{en:'Traditional Trade',id:'Traditional Trade'},mkt:1.46,mg:-7.7,nv:0.46,nsh:31.68,ng:14.1} ],
+      note:{en:'Distribution is NOT the issue — Loacker has slightly lower ND than Nabati (≈34.3 vs 37.4) yet higher sales. The gap is velocity + portfolio attractiveness + premium perception. Market is Chocolate/Hazelnut-led (≈70%), not cheese. Priority: recover MT, don\'t transplant the ID cheese strategy.',
+            id:'Distribusi BUKAN masalahnya — ND Loacker sedikit lebih rendah dari Nabati (≈34,3 vs 37,4) tapi sales lebih tinggi. Gap-nya velocity + daya tarik portfolio + persepsi premium. Pasar dipimpin Coklat/Hazelnut (≈70%), bukan keju. Prioritas: rebut MT, jangan transplant strategi keju ID.'} },
+    China:{ flag:'🇨🇳', cat:{en:'Wafer Flat',id:'Wafer Flat'}, period:'MAT Jun-26', unit:'USD',
+      role:{en:'Large Nabati stronghold in category contraction',id:'Benteng besar Nabati di kategori yang menyusut'}, problem:{en:'Category / demand problem',id:'Masalah kategori / demand'},
+      cond:{en:'Contracting −23.1% MAT',id:'Menyusut −23.1% MAT'}, pos:{en:'#1, 46.8% share',id:'#1, 46,8% share'},
+      issue:{en:'Defend leadership + rejuvenate demand',id:'Pertahankan kepemimpinan + rejuvenasi demand'},
+      mktVal:184.90, mktG:-23.1, nabShChg:-2.96, nd:20.5, wd:80.0,
+      nab:{en:'Still clear #1 — US$86.62M, 46.85% share — but falling faster (−27.7%, −2.96ppt). The consumer is buying less of the category, not abandoning the brand.',id:'Tetap #1 jelas — US$86,62M, 46,85% share — tapi turun lebih cepat (−27,7%, −2,96ppt). Konsumen beli lebih sedikit kategorinya, bukan meninggalkan brand.'},
+      brands:[ {n:'Nabati',val:86.62,sh:46.85,chg:-27.7,me:true},{n:'Jia Shi Li',val:18.37,sh:9.93,chg:-23.8},{n:'Garden',val:13.15,sh:7.11,chg:-10.0},{n:'Loacker',val:8.53,sh:4.61,chg:-22.9},{n:'Oreo',val:6.32,sh:3.42,chg:-37.1},{n:'CCS',val:6.10,sh:3.30,chg:5.9} ],
+      flavors:[ {n:{en:'Cheese',id:'Keju'},val:64.2,mix:37.5,chg:-26.5},{n:{en:'Chocolate',id:'Coklat'},val:55.0,mix:32.1,chg:-15.7},{n:{en:'Strawberry',id:'Strawberry'},val:11.6,mix:6.8,chg:-24.8},{n:{en:'Coconut',id:'Kelapa'},val:7.0,mix:4.1,chg:-32.5},{n:{en:'Milk',id:'Susu'},val:5.9,mix:3.4,chg:-16.7},{n:{en:'Lemon',id:'Lemon'},val:5.4,mix:3.1,chg:-30.1},{n:{en:'Vanilla',id:'Vanilla'},val:4.8,mix:2.8,chg:-32.2} ],
+      skus:[ {n:'Richeese Cheese 145g',val:20.90,csh:12.21,chg:-27.2},{n:'Richeese Cheese 56g',val:11.70,csh:6.84,chg:-16.2},{n:'Richoco Chocolate 145g',val:10.85,csh:6.34,chg:-18.0},{n:'Richeese Strawberry 145g',val:7.70,csh:4.50,chg:-25.4},{n:'Richoco Chocolate 56g',val:5.18,csh:3.03,chg:-12.2} ],
+      chan:[ {seg:{en:'China GT',id:'China GT'},nsh:57.3,ng:-25.6,nd:16.8,wd:64.3},{seg:{en:'China MT',id:'China MT'},nsh:41.0,ng:-29.2,nd:63.3,wd:88.6},{seg:{en:'Hypermarket',id:'Hypermarket'},nsh:29.3,ng:-47.3,nd:92.2,wd:99.6,flag:'smoking'},{seg:{en:'Supermarket',id:'Supermarket'},nsh:39.6,ng:-32.2,nd:77.5,wd:92.8},{seg:{en:'Minimarket',id:'Minimarket'},nsh:48.3,ng:-25.3,nd:61.6,wd:83.1},{seg:{en:'CVS',id:'CVS'},nsh:34.9,ng:-8.1,nd:64.2,wd:80.1,flag:'resilient'} ],
+      note:{en:'Hypermarket is the smoking gun: ND 92 + WD ~100 yet sales −47% — more distribution solves almost nothing. The resilient channel is CVS (−8.1%, Kinder Tronky +18.2%): opportunity is shifting to immediate-consumption / convenience, not large take-home. Nabati is cheese-heavy (≈72%) and Cheese (−26.5%) falls faster than Chocolate (−15.7%).',
+            id:'Hypermarket adalah smoking gun: ND 92 + WD ~100 tapi sales −47% — tambah distribusi hampir tak menolong. Channel paling resilient adalah CVS (−8,1%, Kinder Tronky +18,2%): opportunity bergeser ke immediate-consumption / convenience, bukan take-home besar. Nabati cheese-heavy (≈72%) dan Keju (−26,5%) turun lebih cepat dari Coklat (−15,7%).'} }
+  };
+  // Cross-market flavour architecture (section: flavour learnings)
+  var FLAVARCH=[
+    {f:{en:'Chocolate',id:'Coklat'}, id_:{en:'Huge core; dark growing',id:'Core besar; dark tumbuh'}, my:{en:'#1, +15.5%',id:'#1, +15,5%'}, cn:{en:'#2, more resilient',id:'#2, lebih resilient'}, say:{en:'Global safest platform',id:'Platform paling aman global'}, tone:'good'},
+    {f:{en:'Cheese',id:'Keju'}, id_:{en:'Strong Nabati equity',id:'Equity Nabati kuat'}, my:{en:'Smaller, only +2.7%',id:'Lebih kecil, hanya +2,7%'}, cn:{en:'#1 but −26.5%',id:'#1 tapi −26,5%'}, say:{en:'Strong equity, not a universal growth engine',id:'Equity kuat, bukan mesin growth universal'}, tone:'warn'},
+    {f:{en:'Strawberry Cheese',id:'Strawberry Cheese'}, id_:{en:'MT hero',id:'Hero MT'}, my:{en:'Emerging +10%',id:'Muncul +10%'}, cn:{en:'Large Nabati SKU',id:'SKU Nabati besar'}, say:{en:'Strong cross-market candidate',id:'Kandidat lintas-pasar kuat'}, tone:'good'},
+    {f:{en:'Hazelnut',id:'Hazelnut'}, id_:{en:'Small',id:'Kecil'}, my:{en:'26% market, +21%',id:'26% pasar, +21%'}, cn:{en:'Present via premium brands',id:'Ada via brand premium'}, say:{en:'Malaysia white-space signal',id:'Sinyal white-space Malaysia'}, tone:'good'},
+    {f:{en:'Dark / Intense Chocolate',id:'Dark / Intense Coklat'}, id_:{en:'+77% Indonesia',id:'+77% Indonesia'}, my:{en:'Premium choc works',id:'Coklat premium jalan'}, cn:{en:'Chocolate resilient',id:'Coklat resilient'}, say:{en:'Very interesting platform',id:'Platform sangat menarik'}, tone:'good'},
+    {f:{en:'Matcha',id:'Matcha'}, id_:{en:'Emerging strongly',id:'Muncul kuat'}, my:{en:'Tiny but +342%',id:'Mungil tapi +342%'}, cn:{en:'Not material',id:'Tak material'}, say:{en:'Trial / innovation territory',id:'Wilayah trial / inovasi'}, tone:'warn'},
+    {f:{en:'Goguma',id:'Goguma'}, id_:{en:'Collapsing',id:'Ambruk'}, my:{en:'−28%',id:'−28%'}, cn:{en:'Not material',id:'Tak material'}, say:{en:'Hype ≠ repeat',id:'Hype ≠ repeat'}, tone:'bad'}
+  ];
+  // Regional Rolls Opportunity Matrix — Keep / Develop / Test / Stop per country
+  // K=keep(good) · D=develop(blue) · T=test(warn) · S=stop(bad) · -=n/a
+  // ---- Market Share opportunity engine --------------------------------------
+  // Each market has a strategic STANCE that changes how a flavour is scored & actioned:
+  //   opportunity (ID, flat market)  → gain share: keep strong ones, develop growers
+  //   capture     (MY, booming)      → capture growth: develop attractive growers, don't over-defend slow flavours
+  //   defend      (CN, contracting)  → defend equity: keep what Nabati owns, develop rejuvenation bets
+  var MKTSTANCE={Indonesia:'opportunity', Malaysia:'capture', China:'defend'};
+  // OPPMATRIX now carries raw SIGNALS per flavour × market (not pre-set actions):
+  //   g=flavour/category growth %, size=% of category value, nab=Nabati equity 0–5, kind:'inno' for innovation bets.
+  // The action (Keep/Develop/Test/Stop) and the 0–100 score are COMPUTED by catOpp()/catAction().
+  var OPPMATRIX=[
+    {f:{en:'Chocolate',id:'Coklat'}, sig:{id:{g:12,size:30,nab:4}, my:{g:15.5,size:44.2,nab:3}, cn:{g:-15.7,size:32.1,nab:4}}},
+    {f:{en:'Dark / Intense Chocolate',id:'Dark / Intense Coklat'}, sig:{id:{g:77,size:6,nab:2,kind:'inno'}, my:{g:18,size:8,nab:1,kind:'inno'}, cn:{g:-12,size:6,nab:2,kind:'inno'}}},
+    {f:{en:'Cheese',id:'Keju'}, sig:{id:{g:6,size:28,nab:5}, my:{g:2.7,size:14.3,nab:4}, cn:{g:-26.5,size:37.5,nab:5}}},
+    {f:{en:'Strawberry Cheese',id:'Strawberry Cheese'}, sig:{id:{g:20,size:10,nab:3}, my:{g:10.1,size:1.2,nab:2}, cn:{g:-24.8,size:6.8,nab:4}}},
+    {f:{en:'Hazelnut',id:'Hazelnut'}, sig:{id:{g:5,size:3,nab:1}, my:{g:20.9,size:26.1,nab:0}, cn:{g:-18,size:4,nab:1}}},
+    {f:{en:'Matcha',id:'Matcha'}, sig:{id:{g:40,size:0.5,nab:1,kind:'inno'}, my:{g:342,size:0.3,nab:0,kind:'inno'}, cn:null}},
+    {f:{en:'Goguma',id:'Goguma'}, sig:{id:{g:-77,size:1,nab:1}, my:{g:-27.6,size:0.6,nab:0}, cn:null}}
+  ];
+  // Core engine: normalise signals → Attractiveness (market pull) + Equity (right-to-win) → score.
+  function catOpp(sig, stance){
+    if(!sig) return null;
+    var gN=clamp((sig.g+30)/70, 0, 1);        // growth −30%…+40% → 0…1
+    var sizeN=clamp(sig.size/45, 0, 1);        // category share 0…45% → 0…1
+    var nabN=clamp(sig.nab/5, 0, 1);           // Nabati equity 0…5 → 0…1
+    var mf=stance==='capture'?1.15 : stance==='defend'?0.75 : 1.0; // stance weights the growth pull
+    var A=clamp((0.6*gN + 0.4*sizeN)*mf, 0, 1);// Attractiveness
+    var E=nabN;                                 // Equity / right-to-win
+    return {A:A, E:E, score:Math.round((0.55*A + 0.45*E)*100)};
+  }
+  // Classifier: turns the signals + stance into Keep / Develop / Test / Stop.
+  function catAction(sig, stance){
+    if(!sig) return '-';
+    if(sig.g<=-20 && sig.nab<=1) return 'S';                                   // declining + no equity → Stop
+    if(stance==='defend'      && sig.nab>=4) return 'K';                        // defend equity in a shrinking market
+    if(stance==='opportunity' && sig.nab>=4 && sig.size>=20) return 'K';        // own a big, established flavour
+    if(stance==='capture'     && sig.nab>=4 && sig.size>=30 && sig.g>=10) return 'K'; // only defend if dominant & growing
+    if(sig.kind==='inno' && sig.g>-20 && sig.size>=2) return 'D';              // innovation bet with real size
+    var attractive=sig.g>=10 || (stance==='capture' && sig.size>=20 && sig.g>=0);
+    if(attractive && sig.size>=1 && sig.nab<=3) return 'D';                     // growing, room to gain → Develop
+    return 'T';                                                                 // small / unproven / stuck → Test
+  }
+  function mktKey(country){ return country==='Indonesia'?'id':country==='Malaysia'?'my':'cn'; }
+  // Country strategy grid (rows × ID/MY/CN)
+  var CSTRAT=[
+    {r:{en:'Business objective',id:'Objektif bisnis'}, id_:{en:'Gain share',id:'Rebut share'}, my:{en:'Recover share',id:'Rebut kembali share'}, cn:{en:'Defend + rejuvenate',id:'Pertahankan + rejuvenasi'}},
+    {r:{en:'Distribution need',id:'Kebutuhan distribusi'}, id_:{en:'Expand',id:'Ekspansi'}, my:{en:'Already fairly strong',id:'Sudah cukup kuat'}, cn:{en:'Not the primary issue',id:'Bukan isu utama'}},
+    {r:{en:'Core flavour',id:'Flavour inti'}, id_:{en:'Cheese + Choc',id:'Keju + Coklat'}, my:{en:'Chocolate-led',id:'Dipimpin Coklat'}, cn:{en:'Cheese + Choc',id:'Keju + Coklat'}},
+    {r:{en:'Innovation',id:'Inovasi'}, id_:{en:'Strawberry, Dark Choc, Matcha test',id:'Strawberry, Dark Choc, tes Matcha'}, my:{en:'Hazelnut / rich choc / strawberry',id:'Hazelnut / rich choc / strawberry'}, cn:{en:'Chocolate, Strawberry, new occasion',id:'Coklat, Strawberry, okasi baru'}},
+    {r:{en:'Pack role',id:'Peran pack'}, id_:{en:'GT singles / MT box',id:'Single GT / box MT'}, my:{en:'Affordable multipack + take-home',id:'Multipack terjangkau + take-home'}, cn:{en:'Convenience / smaller format',id:'Convenience / format lebih kecil'}},
+    {r:{en:'Biggest threat',id:'Ancaman terbesar'}, id_:{en:'Chocolatos',id:'Chocolatos'}, my:{en:'Loacker + Muzic',id:'Loacker + Muzic'}, cn:{en:'Category contraction',id:'Kontraksi kategori'}},
+    {r:{en:'Wrong move',id:'Langkah salah'}, id_:{en:'Overfocus novelty',id:'Terlalu fokus novelty'}, my:{en:'Push cheese only',id:'Dorong keju saja'}, cn:{en:'Add more hypermarket distribution',id:'Tambah distribusi hypermarket'}, bad:true}
+  ];
+
+  /* ============ Countries / channels (launch areas from the slice & dice) ============ */
+  var COUNTRY={
+    Indonesia:{key:'id',flag:'🇮🇩',lat:-2.5,lng:118, loadGT:18,loadMT:24, capF:1.0, exec:85,reg:1,mktUnc:2,
+      gt:{en:'GT: DP / LP, GRBM',id:'GT: DP / LP, GRBM'},mt:{en:'MT: Indomaret, Alfamart, Club80s + Others',id:'MT: Indomaret, Alfamart, Club80s + Others'},uniq:{en:'4 PMA clusters; DP2 Central/East Java cheapest',id:'4 cluster PMA; DP2 Jateng/Jatim termurah'}},
+    Malaysia:{key:'my',flag:'🇲🇾',lat:4.2,lng:102, loadGT:20,loadMT:26, capF:0.55, exec:65,reg:2,mktUnc:3,
+      gt:{en:'GT: Total',id:'GT: Total'},mt:{en:'MT: 99 Speedmart, Eco-Shop, Mr DIY + Others (MTI)',id:'MT: 99 Speedmart, Eco-Shop, Mr DIY + Others (MTI)'},uniq:{en:'MTI-led route',id:'Rute dipimpin MTI'}},
+    China:{key:'cn',flag:'🇨🇳',lat:35,lng:104, loadGT:19.5,loadMT:25.5, capF:0.5, exec:55,reg:3,mktUnc:3,
+      gt:{en:'GT: by Province (WHS total)',id:'GT: per Provinsi (WHS total)'},mt:{en:'DB Reg heavy MT + Others',id:'DB Reg heavy MT + Others'},uniq:{en:'Snack Shop (no listing fee), e-Commerce',id:'Snack Shop (tanpa listing fee), e-Commerce'}}
+  };
+  var CAPRATE={GT:0.12, MT:0.07};
+  // Accounts per country/channel (launch detail). `load` = extra % on top of the channel load; `capF` scales capturable.
+  var ACCOUNTS={
+    Indonesia:{GT:[{k:'DP',name:'DP',load:0,capF:1},{k:'LP',name:'LP',load:1.5,capF:0.6}],
+               MT:[{k:'IDM',name:'Indomaret',load:0,capF:1},{k:'ALF',name:'Alfamart',load:0.5,capF:1},{k:'C80',name:'Club80s',load:-1,capF:0.4}]},
+    Malaysia:{GT:[{k:'TOT',name:'Total',load:0,capF:1}],
+              MT:[{k:'99SM',name:'99 Speedmart',load:0,capF:1},{k:'ECO',name:'Eco-Shop',load:0.5,capF:0.7},{k:'DIY',name:'Mr DIY',load:1,capF:0.6},{k:'MTI',name:'MTI',load:0,capF:0.8}]},
+    China:{GT:[{k:'PROV',name:'Province WHS',load:0,capF:1}],
+           MT:[{k:'DBR',name:'DB Reg',load:0,capF:1},{k:'SNK',name:'Snack Shop',load:-2,capF:0.9},{k:'ECM',name:'e-Commerce',load:-1,capF:0.7}]}
+  };
+  function accountsOf(country,channel){ return (ACCOUNTS[country]&&ACCOUNTS[country][channel])||[{k:'-',name:channel,load:0,capF:1}]; }
+  function baseCountryName(baseKey){ var nm='Indonesia'; Object.keys(COUNTRY).forEach(function(k){ if(COUNTRY[k].key===baseKey) nm=k; }); return nm; }
+
+  /* ============ SCORING ENGINE (concept book) ============ */
+  // weights
+  var OPP_W={market:0.25, product:0.20, channel:0.15, financial:0.20, execution:0.10, evidence:0.10};
+  var RISK_W={market:20, rm:15, channel:15, execution:15, supply:10, regulatory:10, competitive:10, cannibal:5};
+  var READY_W={market:0.20, product:0.20, price:0.10, channel:0.15, financial:0.15, execution:0.10, supply:0.10};
+  function clamp(x,a,b){ return Math.max(a,Math.min(b,x)); }
+
+  // Evaluate one candidate: members[] (npl keys), countryName, channel 'GT'|'MT', account {k,name,load,capF}
+  function evaluate(memberKeys, countryName, channel, account){
+    var co=COUNTRY[countryName]; account=account||accountsOf(countryName,channel)[0];
+    var load=(channel==='GT'?co.loadGT:co.loadMT)+(account.load||0);
+    var members=memberKeys.map(npl);
+    var combo=members.length>1;
+    // per-member realistic volume & EBT
+    var agg={nsar:0, ebt:0}, flavors=[], beList=[], capList=[], anyWhite=false;
+    members.forEach(function(m){
+      var fl=flavor(m.nielsen); flavors.push(fl);
+      var cap = fl ? (fl.val*1e6/12)*CAPRATE[channel]*co.capF*(account.capF||1)/m.dbp : null;
+      if(!fl) anyWhite=true;
+      var realVol = cap!=null ? Math.min(m.fullCap, cap) : m.fullCap*0.4;
+      var gpv=gpPctAt(realVol,m), ebtPct=gpv-load, nsar=realVol*m.dbp;
+      agg.nsar+=nsar; agg.ebt+=nsar*ebtPct/100;
+      beList.push(beVol(m,load)); capList.push(cap);
+    });
+    if(combo){ agg.nsar*=0.85; agg.ebt*=0.82; } // shelf cannibalisation haircut
+    var ebtPct=agg.nsar>0?agg.ebt/agg.nsar*100:-100;
+    // feasibility: can reach positive EBT within capturable market?
+    var feas = members.every(function(m,i){ var cap=capList[i]; var be=beList[i]; return isFinite(be) && (cap==null ? be<=m.fullCap : be<=cap); });
+    var feasKnown = members.every(function(m,i){ return capList[i]!=null; });
+    // representative flavor (best)
+    var repFl = flavors.filter(Boolean).sort(function(a,b){return b.chg-a.chg;})[0]||null;
+    var avgGp = members.reduce(function(s,m){return s+gpFull(m);},0)/members.length;
+
+    // ---- Opportunity dimensions (0-100) ----
+    var d={};
+    d.market = repFl ? clamp(35+repFl.chg*1.8+repFl.cont*3,0,100) : 30;
+    d.product = repFl ? clamp(45+repFl.chg*1.6,0,100) : 35;
+    d.channel = channel==='GT' ? (countryName==='Indonesia'?85:70) : (countryName==='Indonesia'?60:62);
+    d.financial = clamp(45+ebtPct*4,0,100);
+    d.execution = co.exec - (channel==='MT'?6:0);
+    d.evidence = repFl ? (repFl.rank<=5?85:65) : 30;
+    var oppBase = d.market*OPP_W.market+d.product*OPP_W.product+d.channel*OPP_W.channel+d.financial*OPP_W.financial+d.execution*OPP_W.execution+d.evidence*OPP_W.evidence;
+
+    // ---- Risk (ratings 1-5) ----
+    var r={};
+    r.market=co.mktUnc;
+    // RM & Cost Volatility is driven by COGM: low GP @ full (high COGM) = higher cost risk
+    var minGp=Math.min.apply(null,members.map(gpFull));
+    r.rm = minGp>=25?2 : minGp>=20?3 : minGp>=16?4 : 5;
+    r.channel=(channel==='MT'?3:2)+(countryName!=='Indonesia'?1:0); r.channel=Math.min(5,r.channel);
+    r.execution=countryName==='Indonesia'?2:3; r.supply=2; r.regulatory=co.reg;
+    r.competitive=repFl?(repFl.chg<0?4:3):3; r.cannibal=combo?4:2;
+    var riskTotal=0, rk=Object.keys(RISK_W);
+    rk.forEach(function(x){ riskTotal += RISK_W[x]*(r[x]/5); });
+    riskTotal=Math.round(riskTotal);
+    var riskBand=riskTotal<=34?'Low':riskTotal<=64?'Medium':'High';
+    var riskPenalty=Math.round(riskTotal/10);
+    var oppFinal=Math.round(clamp(oppBase-riskPenalty,0,100));
+
+    // ---- Probability (readiness -> evidence success rate) ----
+    var rd={market:d.market,product:d.product,price:repFl?70:50,channel:d.channel,financial:d.financial,execution:d.execution,supply:70};
+    var readiness=rd.market*READY_W.market+rd.product*READY_W.product+rd.price*READY_W.price+rd.channel*READY_W.channel+rd.financial*READY_W.financial+rd.execution*READY_W.execution+rd.supply*READY_W.supply;
+    var conf = !repFl ? 'Low' : (repFl.chg>=5 && repFl.rank<=6 ? 'High' : 'Medium');
+    var confFactor = conf==='High'?0.90:conf==='Medium'?0.78:0.62;
+    var prob=Math.round(clamp(readiness*confFactor,5,95));
+
+    // ---- Decision gate ----
+    var decision, gates={
+      capacity: feas,                                   // required sales <= capturable
+      ebt: ebtPct>=0,                                   // positive EBT at realistic scale
+      evidence: !anyWhite,                              // comparable demand exists
+      capability: co.exec>=60                           // execution capability
+    };
+    if(!isFinite(beList[0]) && members.length===1){ decision='nogo'; }
+    else if(!feas || ebtPct< -8) decision='nogo';
+    else if(co.reg>=3 && !feas) decision='hold';
+    else if(gates.capacity && gates.ebt && gates.evidence && oppFinal>=65 && riskBand!=='High' && conf!=='Low') decision='go';
+    else if(gates.capacity && (anyWhite || co.exec<60 || ebtPct<2)) decision='pilot';
+    else decision='pilot';
+
+    return {members:members, memberKeys:memberKeys, country:countryName, channel:channel, account:account, combo:combo,
+      nsar:agg.nsar, ebt:agg.ebt, ebtPct:ebtPct, avgGp:avgGp, feas:feas, feasKnown:feasKnown, anyWhite:anyWhite,
+      dims:d, oppBase:oppBase, oppFinal:oppFinal, risk:r, riskTotal:riskTotal, riskBand:riskBand, riskPenalty:riskPenalty,
+      readiness:Math.round(readiness), prob:prob, conf:conf, decision:decision, gates:gates, load:load, repFl:repFl};
+  }
+  function eachContext(fn){ DATA.npls, Object.keys(COUNTRY).forEach(function(co){ ['GT','MT'].forEach(function(ch){ accountsOf(co,ch).forEach(function(ac){ fn(co,ch,ac); }); }); }); }
+  function candidatesSingle(){ var out=[]; DATA.npls.forEach(function(m){ eachContext(function(co,ch,ac){ out.push(evaluate([m.k],co,ch,ac)); }); }); return out.sort(function(a,b){return b.oppFinal-a.oppFinal;}); }
+  function candidatesCombo(){ var out=[], ns=DATA.npls; for(var i=0;i<ns.length;i++)for(var j=i+1;j<ns.length;j++){ (function(a,b){ eachContext(function(co,ch,ac){ out.push(evaluate([a.k,b.k],co,ch,ac)); }); })(ns[i],ns[j]); } return out.sort(function(a,b){return b.oppFinal-a.oppFinal;}); }
+  function areaLabel(e){ return e.country+' · '+e.channel+' · '+e.account.name; }
+  function bestOppByCountry(){ var m={}; candidatesSingle().forEach(function(e){ if(m[e.country]==null||e.oppFinal>m[e.country]) m[e.country]=e.oppFinal; }); return m; }
+
+  /* ============ i18n ============ */
+  var T={en:{
+    brandSub:'SIIP · what, where, how big & when to launch', data:'Data',
+    footBrand:'Atomic P&L — EBT = 0 is only break-even, not success. A launch must have a realistic path to positive EBT inside its capturable market.',
+    n1:'Concepts', n2:'COGM', n3:'Small but Confounding', n4:'Market Share', n5:'Launch Ranking',
+    p1t:'NPL Concepts', p1l:'Stage-1 concepts that passed the taste gate. Pick one to carry through every tab; add as many as you need.',
+    cogmF:'COGM/ctn', gpF:'GP full', cat:'Category', brand:'Brand', addNpl:'Add NPL', newName:'NPL name', newRm:'RM / carton', newBrand:'Brand', newCat:'Nielsen category', fRm:'RM/ctn', fPrice:'Selling price', fPhoto:'Prototype photo', add:'Add', save:'Save', cancel:'Cancel',
+    p2t:'COGM — per SKU', p2l:'Columns are SKUs, rows are the cost components. Full capacity is per SKU. Depreciation & OMC are fixed per month, so per-carton cost rises when the operating volume is below capacity.',
+    sortBrand:'Sort by brand', lDepre:'Depreciation', lOmc:'OMC', lDl:'Direct Labour', lListrik:'Electricity', lGas:'Gas', lRm:'RM (seasoning)', lPm:'PM (packaging)', lTot:'COGM / carton (full)', lDbp:'DBP (base price)', lFull:'Full capacity (ctn/mo)', lGpFull:'GP % at full', lVol:'Operating volume', lCogmVol:'COGM at volume', lGpVol:'GP % at volume', fixedMo:'fixed/mo',
+    p3t:'Small but Confounding — per-SKU P&L', p3l:'Full P&L per SKU (columns) down to EBT, for a country / channel / MT account. Listing fee and VAT (PPN) are entered as absolute Rp amounts per MT account; trading term stays a %. Operating volume comes from the COGM tab.',
+    baseline:'Baseline', nplCogm:'NPL COGM', target:'Target EBT', custom:'Custom', breakEven:'Break-even', channel:'Channel', accountL:'MT account', ebtPctRow:'EBT % of NSAR',
+    brT:'Market Feasibility — Reverse EBT → Nielsen', brSub:'Target EBT → required sell-out → Nielsen market share → feasibility', brItem:'Reality check', brTarget:'Target EBT %', brTargetL:'Target EBT', brSrp:'SRP / pack', brPpc:'Packs / carton', brStatus:'Solver', brSolved:'SOLVED', brNoSol:'NO SOLUTION', brCartons:'Required cartons / mo', brUtil:'Capacity utilization', brRetailM:'Retail-equiv / mo', brRetailY:'Retail-equiv / MAT', brCatShare:'Required category share', brSegShare:'Required price-seg share', brFlavShare:'Required flavour share', brFeas:'Market feasibility', brTier:'tier', brSrpNote:'SRP & packs/carton apply to {n} (the selected NPL). The bridge uses cartons × packs × SRP, period-matched — Net Sales is never divided into Nielsen retail value directly.', brNote:'<b>Cross-tab.</b> Target EBT % is solved (bisection, utilization-adjusted COGM from the COGM tab) into required cartons; the physical retail-equivalent is compared against the uploaded Nielsen market, price-segment and flavour. Feasibility: ≤2% = Conservative · ≤5% Reasonable · ≤12% Aggressive · else Not Feasible.',
+    asis:'As-is', tobe:'To-be', ratio:'Ratio', item:'Item',
+    iGross:'Gross Sales', iRet:'(−) Return', iN:'Net Sales (NSAR)', iC:'(−) COGM / COGS', iG:'GP1 — Gross Margin', iS1:'SM1 Sales Force', iS2:'SM2 Distribution', iS3:'SM3 Trade Spending', iS4:'SM4 Overhead', iGP2:'GP2 / Operating Profit', iGA1:'GA1 General & Admin', iGA2:'GA2 Finance', iGA3:'GA3 Other', iList:'Listing fee (MT)', iTrade:'Trading term (MT)', iPPN:'VAT / PPN (pass-through)', iE:'EBT',
+    salesGap:'Net Sales change', ebtTobe:'EBT to-be', cogmR:'COGM ratio', decision:'Feasibility',
+    decGo:'GO', decPilot:'PILOT', decRework:'REWORK', decHold:'HOLD', decNogo:'NO-GO',
+    feasEasy:'Reachable (≤25% uplift)', feasMed:'Needs a big jump', feasNo:'Infeasible at this target',
+    p3read:'{name}: Net Sales must reach {ns} ({g}) to hold a {t} EBT. The COGM ratio is the lever — the lower the COGM, the smaller the sales climb.',
+    tobeHint:'This tab is for exploration. The Launch Ranking (tab 5) decides feasibility automatically per combination — it does not ask for a manual EBT.',
+    p4t:'Market Share — Indonesia · Malaysia · China', p4l:'Indonesia = Roll battlefield; Malaysia = booming wafer where Nabati under-grows; China = large Nabati stronghold in category contraction. Indonesia keeps its full category audit; Malaysia & China are an adjacent-category benchmark for flavour, pack & distribution — not summed with Indonesia Roll.',
+    mktSize:'Market', siipSh:'SIIP share', siipTr:'SIIP MAT', fastest:'Fastest flavour', verdict:'Verdict',
+    vRide:'RIDE', vWatch:'WATCH', vAvoid:'AVOID',
+    catShareT:'Category market share (your NPL categories)', nplVerdictT:'NPL verdict', flavorH:'Flavour category', valH:'Value MAT (Rp Mill)', chgH:'Chg MAT', contH:'% market', shareH:'Est. SIIP share', mapH:'NPL', brandH:'Brand', shareH2:'Share', topFlavorT:'Top Flavour', topBrandT:'Top Brand', topSkuT:'Top SKU', segPerfT:'Segment Performance', ndwdSegT:'Value / ND / WD by Segment', salesCompT:'Sales Comparison', skuNameH:'SKU', priceH:'Price', regionH:'Region', segmentH:'Channel segment', potH:'Potential (Rp B)', nabGrowH:'Nabati growth', byRegion:'by region', byChannel:'by channel', valAbsH:'Value Abs',
+    chFit:'Channel headroom for SIIP', chGrow:'Nabati / category',
+    siipPos:'SIIP: Rp493B, 5.2% share, −2.5% MAT. Strong in GT (83% of SIIP); thin in Minimarket (1.7%) where the category grows +9.5%.',
+    nielsenSrc:'Nielsen/NIQ snack audit, MAT TY to Apr-25, Indonesia. Malaysia & China audits not in this file.',
+    p5t:'Launch Ranking — SKU × Country', p5l:'Where each SIIP SKU should launch, scored by the concept-book method. Click a row for the full Opportunity, Probability, Risk and Confidence breakdown.',
+    optSingle:'Single SKU', optCombo:'Combination (Core + Halo)',
+    rkH:'#', skuH:'SKU', areaH:'Launch area', oppH:'Opportunity', probH:'Probability', riskH:'Risk', confH:'Confidence', ebtH:'EBT @ scale', callH:'Decision',
+    whyT:'Why this market', whyC:'Why {c}?', wMktSize:'Market size', wCap:'Capturable market', wMarket:'Best opportunity', wEbt:'Expected EBT', wConf:'Confidence', wDrill:'Drill-down', dCountry:'Country', dChannel:'Channel', dAccount:'Account', dRegion:'Region', dSku:'SKU', clickRow:'Click any row to open its full scenario breakdown in a popup.', mapHint:'Tap a country on the map for its why-panel',
+    sliceT:'Launch area by country', cC:'Country', cG:'GT channel', cM:'MT channel', cU:'Country-unique',
+    expEbt:'Expected EBT at realistic scale', nsScale:'Net Sales at scale',
+    methodT:'How the score is built', oppScore:'Opportunity Score', probSucc:'Probability', riskL:'Risk', confL:'Confidence',
+    scoreBreak:'Opportunity breakdown (weight × score)', riskBreak:'Risk breakdown (weight × rating/5)', rationale:'Decision rationale', probBreak:'Probability basis',
+    dMarket:'Market Attractiveness', dProduct:'Product-Market Fit', dChannel:'Channel / Account Fit', dFinancial:'Financial Sustainability', dExecution:'Execution Readiness', dEvidence:'Evidence Strength',
+    rMarket:'Market Uncertainty', rRm:'RM & Cost Volatility', rChannel:'Channel / Account', rExecution:'Execution Complexity', rSupply:'Supply', rRegulatory:'Regulatory', rCompetitive:'Competitive', rCannibal:'Cannibalisation',
+    gCap:'Required sales ≤ capturable market', gEbt:'Positive EBT at realistic scale', gEvid:'Comparable demand evidence', gCapability:'Execution capability available',
+    probText:'Readiness {r}/100 × confidence factor ({c}) → probability {p}%. Readiness is not probability — evidence quality discounts it.',
+    riskText:'Total risk {t}/100 → {b}. Opportunity penalty −{p}. Top driver: {d}.',
+    riskLow:'Low', riskMedium:'Medium', riskHigh:'High', confHigh:'High', confMedium:'Medium', confLow:'Low',
+    recFirst:'Recommended first launch', recNone:'No combination reaches positive EBT within its capturable market yet — the leanest-COGM route is the pilot candidate.',
+    // data sidebar
+    dataT:'Data & Upload', dataL:'Uploads stay in this browser (localStorage). Replace the estimates with your real files.',
+    upCogmT:'Upload workbook (.xlsx)', upCogmH:'Drop a COGM, Nielsen or P&L workbook — the type is auto-detected and every tab recalculates.', ingCogm:'COGM updated · {n} SKU cost stacks.', ingNielsen:'Nielsen market data updated — flavours, brands, SKUs & segments.', ingPnl:'P&L updated · {n} account fees & country baselines.', ingUnknown:'Workbook not recognised — expected a COGM, Nielsen or P&L file.',
+    upPnlT:'P&L by country', upPnlH:'Template: country, Net Sales, COGS, SM1–4, GA1–3. Download, fill, then import. (Excel format tuned when you send the real file.)',
+    dlTemplate:'Download template (JSON)', impPnl:'Import P&L', expAll:'Export all (JSON)', impAll:'Import all', resetAll:'Reset to defaults', upOk:'Updated {n} SKU.', pnlOk:'Updated {n} country baselines.', upErr:'Could not read the file — check the layout.',
+    ctn:'ctn', bil:'B'
+  }, id:{
+    brandSub:'SIIP · apa, di mana, seberapa besar & kapan launch', data:'Data',
+    footBrand:'Atomic P&L — EBT = 0 hanya break-even, bukan sukses. Launch harus punya jalur realistis ke EBT positif di dalam pasar yang dapat diraih.',
+    n1:'Konsep', n2:'COGM', n3:'Small but Confounding', n4:'Market Share', n5:'Ranking Launch',
+    p1t:'Konsep NPL', p1l:'Konsep Stage-1 yang lolos gate rasa. Pilih satu untuk dibawa ke semua tab; tambah sebanyak yang perlu.',
+    cogmF:'COGM/ktn', gpF:'GP penuh', cat:'Kategori', brand:'Brand', addNpl:'Tambah NPL', newName:'Nama NPL', newRm:'RM / karton', newBrand:'Brand', newCat:'Kategori Nielsen', fRm:'RM/ktn', fPrice:'Harga jual', fPhoto:'Foto prototype', add:'Tambah', save:'Simpan', cancel:'Batal',
+    p2t:'COGM — per SKU', p2l:'Kolom = SKU, baris = komponen biaya. Kapasitas penuh per SKU. Depresiasi & OMC tetap per bulan, jadi biaya per karton naik saat volume operasi di bawah kapasitas.',
+    sortBrand:'Urutkan per brand', lDepre:'Depresiasi', lOmc:'OMC', lDl:'Tenaga Kerja', lListrik:'Listrik', lGas:'Gas', lRm:'RM (bumbu)', lPm:'PM (kemasan)', lTot:'COGM / karton (penuh)', lDbp:'DBP (harga dasar)', lFull:'Kapasitas penuh (ktn/bln)', lGpFull:'GP % di penuh', lVol:'Volume operasi', lCogmVol:'COGM di volume', lGpVol:'GP % di volume', fixedMo:'tetap/bln',
+    p3t:'Small but Confounding — P&L per SKU', p3l:'P&L lengkap per SKU (kolom) sampai EBT, untuk negara / channel / akun MT. Listing fee & PPN diisi sebagai angka Rp absolut per akun MT; trading term tetap %. Volume operasi diambil dari tab COGM.',
+    baseline:'Baseline', nplCogm:'COGM NPL', target:'Target EBT', custom:'Custom', breakEven:'Break-even', channel:'Channel', accountL:'Akun MT', ebtPctRow:'EBT % dari NSAR',
+    brT:'Kelayakan Pasar — Reverse EBT → Nielsen', brSub:'Target EBT → sell-out dibutuhkan → market share Nielsen → kelayakan', brItem:'Reality check', brTarget:'Target EBT %', brTargetL:'Target EBT', brSrp:'SRP / pack', brPpc:'Pack / karton', brStatus:'Solver', brSolved:'SOLVED', brNoSol:'TAK ADA SOLUSI', brCartons:'Karton dibutuhkan / bln', brUtil:'Utilisasi kapasitas', brRetailM:'Retail-equiv / bln', brRetailY:'Retail-equiv / MAT', brCatShare:'Required share kategori', brSegShare:'Required share seg-harga', brFlavShare:'Required share flavour', brFeas:'Kelayakan pasar', brTier:'tier', brSrpNote:'SRP & pack/karton berlaku untuk {n} (NPL terpilih). Bridge pakai karton × pack × SRP, period-matched — Net Sales tak pernah dibagi langsung ke nilai retail Nielsen.', brNote:'<b>Lintas-tab.</b> Target EBT % di-solve (bisection, COGM tersesuaikan utilisasi dari tab COGM) jadi karton dibutuhkan; retail-equivalent fisiknya dibandingkan ke pasar, segmen harga & flavour Nielsen yang di-upload. Kelayakan: ≤2% = Konservatif · ≤5% Wajar · ≤12% Agresif · selain itu Tak Layak.',
+    asis:'As-is', tobe:'To-be', ratio:'Rasio', item:'Item',
+    iGross:'Penjualan Kotor', iRet:'(−) Retur', iN:'Net Sales (NSAR)', iC:'(−) COGM / COGS', iG:'GP1 — Margin Kotor', iS1:'SM1 Tenaga Penjual', iS2:'SM2 Distribusi', iS3:'SM3 Trade Spending', iS4:'SM4 Overhead', iGP2:'GP2 / Laba Operasi', iGA1:'GA1 Umum & Admin', iGA2:'GA2 Keuangan', iGA3:'GA3 Lainnya', iList:'Listing fee (MT)', iTrade:'Trading term (MT)', iPPN:'PPN (pass-through)', iE:'EBT',
+    salesGap:'Perubahan Net Sales', ebtTobe:'EBT to-be', cogmR:'Rasio COGM', decision:'Kelayakan',
+    decGo:'GO', decPilot:'PILOT', decRework:'REWORK', decHold:'HOLD', decNogo:'NO-GO',
+    feasEasy:'Terjangkau (≤25%)', feasMed:'Perlu lonjakan besar', feasNo:'Tak layak di target ini',
+    p3read:'{name}: Net Sales harus capai {ns} ({g}) untuk menahan EBT {t}. Rasio COGM adalah tuasnya — makin rendah COGM, makin kecil kenaikan sales.',
+    tobeHint:'Tab ini untuk eksplorasi. Ranking Launch (tab 5) menentukan kelayakan otomatis per kombinasi — tak minta EBT manual.',
+    p4t:'Market Share — Indonesia · Malaysia · China', p4l:'Indonesia = arena Roll; Malaysia = wafer booming tapi Nabati under-grow; China = benteng besar Nabati di kategori yang menyusut. Indonesia tetap dengan audit kategori lengkapnya; Malaysia & China sebagai benchmark kategori-berdekatan untuk flavour, pack & distribusi — tidak dijumlah dengan Roll Indonesia.',
+    mktSize:'Pasar', siipSh:'Share SIIP', siipTr:'SIIP MAT', fastest:'Rasa tercepat', verdict:'Verdict',
+    vRide:'RIDE', vWatch:'WATCH', vAvoid:'AVOID',
+    catShareT:'Market share kategori (kategori NPL-mu)', nplVerdictT:'Verdict NPL', flavorH:'Kategori rasa', valH:'Nilai MAT (Rp Juta)', chgH:'Chg MAT', contH:'% pasar', shareH:'Est. share SIIP', mapH:'NPL', brandH:'Brand', shareH2:'Share', topFlavorT:'Top Flavor', topBrandT:'Top Brand', topSkuT:'Top SKU', segPerfT:'Performa Segmen', ndwdSegT:'Value / ND / WD per Segmen', salesCompT:'Perbandingan Sales', skuNameH:'SKU', priceH:'Harga', regionH:'Region', segmentH:'Segmen channel', potH:'Potensi (Rp M)', nabGrowH:'Growth Nabati', byRegion:'per region', byChannel:'per channel', valAbsH:'Value Abs',
+    chFit:'Headroom channel SIIP', chGrow:'Nabati / kategori',
+    siipPos:'SIIP: Rp493M, share 5,2%, −2,5% MAT. Kuat di GT (83% SIIP); tipis di Minimarket (1,7%) di mana kategori tumbuh +9,5%.',
+    nielsenSrc:'Audit snack Nielsen/NIQ, MAT TY ke Apr-25, Indonesia. Audit Malaysia & China tak ada di file ini.',
+    p5t:'Ranking Launch — SKU × Negara', p5l:'Di mana tiap SKU SIIP sebaiknya launch, dinilai dengan metode concept-book. Klik baris untuk rincian penuh Opportunity, Probability, Risk & Confidence.',
+    optSingle:'SKU Satuan', optCombo:'Kombinasi (Core + Halo)',
+    rkH:'#', skuH:'SKU', areaH:'Area launch', oppH:'Opportunity', probH:'Probabilitas', riskH:'Risk', confH:'Confidence', ebtH:'EBT @ skala', callH:'Keputusan',
+    whyT:'Kenapa pasar ini', whyC:'Kenapa {c}?', wMktSize:'Ukuran pasar', wCap:'Pasar dapat diraih', wMarket:'Opportunity terbaik', wEbt:'Ekspektasi EBT', wConf:'Confidence', wDrill:'Drill-down', dCountry:'Negara', dChannel:'Channel', dAccount:'Akun', dRegion:'Region', dSku:'SKU', clickRow:'Klik baris mana pun untuk membuka rincian skenario lengkap di popup.', mapHint:'Tekan negara di peta untuk panel why-nya',
+    sliceT:'Area launch per negara', cC:'Negara', cG:'Channel GT', cM:'Channel MT', cU:'Khusus-negara',
+    expEbt:'Ekspektasi EBT di skala realistis', nsScale:'Net Sales di skala',
+    methodT:'Cara skor dibangun', oppScore:'Opportunity Score', probSucc:'Probabilitas', riskL:'Risk', confL:'Confidence',
+    scoreBreak:'Rincian Opportunity (bobot × skor)', riskBreak:'Rincian Risk (bobot × rating/5)', rationale:'Dasar keputusan', probBreak:'Dasar probabilitas',
+    dMarket:'Market Attractiveness', dProduct:'Product-Market Fit', dChannel:'Channel / Account Fit', dFinancial:'Financial Sustainability', dExecution:'Execution Readiness', dEvidence:'Evidence Strength',
+    rMarket:'Market Uncertainty', rRm:'RM & Cost Volatility', rChannel:'Channel / Account', rExecution:'Execution Complexity', rSupply:'Supply', rRegulatory:'Regulatory', rCompetitive:'Competitive', rCannibal:'Kanibalisasi',
+    gCap:'Required sales ≤ pasar capturable', gEbt:'EBT positif di skala realistis', gEvid:'Bukti demand pembanding', gCapability:'Kapabilitas eksekusi tersedia',
+    probText:'Readiness {r}/100 × faktor confidence ({c}) → probabilitas {p}%. Readiness ≠ probabilitas — kualitas bukti mendiskon.',
+    riskText:'Total risk {t}/100 → {b}. Penalti opportunity −{p}. Driver utama: {d}.',
+    riskLow:'Rendah', riskMedium:'Sedang', riskHigh:'Tinggi', confHigh:'Tinggi', confMedium:'Sedang', confLow:'Rendah',
+    recFirst:'Rekomendasi launch pertama', recNone:'Belum ada kombinasi yang mencapai EBT positif di dalam pasar capturable-nya — rute COGM paling ramping jadi kandidat pilot.',
+    dataT:'Data & Upload', dataL:'Upload tersimpan di browser ini (localStorage). Ganti estimasi dengan file asli-mu.',
+    upCogmT:'Upload workbook (.xlsx)', upCogmH:'Taruh workbook COGM, Nielsen atau P&L — tipenya terdeteksi otomatis dan semua Tab dihitung ulang.', ingCogm:'COGM diperbarui · {n} cost stack SKU.', ingNielsen:'Data pasar Nielsen diperbarui — flavour, brand, SKU & segmen.', ingPnl:'P&L diperbarui · {n} fee akun & baseline negara.', ingUnknown:'Workbook tak dikenali — diharapkan file COGM, Nielsen atau P&L.',
+    upPnlT:'P&L per negara', upPnlH:'Template: country, Net Sales, COGS, SM1–4, GA1–3. Download, isi, lalu import. (Format Excel disesuaikan saat kamu kirim file asli.)',
+    dlTemplate:'Download template (JSON)', impPnl:'Import P&L', expAll:'Export semua (JSON)', impAll:'Import semua', resetAll:'Reset ke default', upOk:'Memperbarui {n} SKU.', pnlOk:'Memperbarui {n} baseline negara.', upErr:'Gagal membaca file — cek layout.',
+    ctn:'ktn', bil:'M'
+  }};
+  function t(k,v){ var d=T[lang]||T.en, s=d[k]; if(s==null)s=T.en[k]; if(s==null)return k; if(v)Object.keys(v).forEach(function(x){ s=s.replace(new RegExp('\\{'+x+'\\}','g'),v[x]); }); return s; }
+  function L(o){ return o?(o[lang]||o.en):''; }
+
+  function grp(n){ return Math.round(n).toLocaleString(lang==='id'?'id-ID':'en-US'); }
+  function dec(x,d){ var s=(+x).toFixed(d==null?1:d); return lang==='id'?s.replace('.',','):s; }
+  function rpShort(n){ var s=n<0?'−':''; n=Math.abs(n); if(n>=1e12)return s+'Rp'+dec(n/1e12)+'T'; if(n>=1e9)return s+'Rp'+dec(n/1e9)+(lang==='id'?'M':'B'); if(n>=1e6)return s+'Rp'+dec(n/1e6)+(lang==='id'?'Jt':'M'); return s+'Rp'+grp(n); }
+  function rpFull(n){ return (n<0?'−Rp':'Rp')+grp(Math.abs(n)); }
+  function pct(n,d){ return dec(n,d)+'%'; }
+  function pctS(n){ return (n<0?'−':'+')+dec(Math.abs(n))+'%'; }
+  function scoreColor(s){ return s>=70?'var(--green)':s>=50?'var(--gold)':'var(--red)'; }
+
+  var st={ page:1, sel:'nori', base:'id', revChannel:'MT', revAcc:null, ebtTarget:0, rankOpt:'single', selRank:-1, mapCountry:'Indonesia', whyOpen:false, mktSel:'Indonesia', addOpen:false, editKey:null, modal:null };
+  var globe=null;
+
+  /* ============ NAV ============ */
+  function renderNav(){
+    var n=document.getElementById('nav'), labels=['n1','n2','n3','n4','n5'];
+    n.innerHTML=labels.map(function(l,i){ return '<button type="button" data-p="'+(i+1)+'" class="'+(st.page===i+1?'active':'')+'"><span class="sn">'+(i+1)+'</span>'+t(l)+'</button>'; }).join('');
+    n.querySelectorAll('button').forEach(function(b){ b.addEventListener('click',function(){ st.page=+b.getAttribute('data-p'); render(); window.scrollTo(0,0); }); });
+  }
+  function pagehead(title,lead){ return '<div class="pagehead"><h1>'+title+'</h1><p class="lead">'+lead+'</p></div>'; }
+  function card(ico,title,sub,note,body,right){ return '<section class="card"><div class="card-head"><div class="ico">'+ico+'</div><div><h3>'+title+'</h3>'+(sub?'<div class="hsub">'+sub+'</div>':'')+'</div>'+(right?'<div class="right">'+right+'</div>':'')+'</div>'+(note?'<div class="note-strip">'+note+'</div>':'')+body+'</section>'; }
+  function tile(label,val,cls,sub){ return '<div class="tile '+(cls||'')+'"><div class="tl">'+label+'</div><div class="tv">'+val+'</div>'+(sub?'<div class="tsub">'+sub+'</div>':'')+'</div>'; }
+  function nplPicker(){ return '<select id="nplSel">'+DATA.npls.map(function(c){ return '<option value="'+c.k+'"'+(c.k===st.sel?' selected':'')+'>'+c.emoji+' '+c.name+'</option>'; }).join('')+'</select>'; }
+
+  /* ============ PAGE 1 ============ */
+  function nplForm(c){ // c=null for add
+    var photo = (c&&c.photo) ? c.photo : (window._npPhoto||null);
+    return '<div class="npl" style="cursor:default;gap:7px">'+
+      '<input id="aName" type="text" placeholder="'+t('newName')+'" value="'+(c?c.name.replace(/"/g,'&quot;'):'')+'">'+
+      '<select id="aBrand">'+BRANDS.map(function(b){return '<option'+(c&&c.brand===b?' selected':'')+'>'+b+'</option>';}).join('')+'</select>'+
+      '<select id="aCat">'+NIELSEN.flavors.map(function(f){return '<option value="'+f.k+'"'+(c&&c.nielsen===f.k?' selected':'')+'>'+L(f.n)+'</option>';}).join('')+'<option value=""'+(c&&!c.nielsen?' selected':'')+'>white space</option></select>'+
+      '<label style="font-size:10px;color:var(--muted);font-weight:700">'+t('fRm')+'<input id="aRm" type="number" value="'+(c?Math.round(c.cogm.rm):26000)+'" style="width:100%;margin-top:2px"></label>'+
+      '<label style="font-size:10px;color:var(--muted);font-weight:700">'+t('fPrice')+'<input id="aPrice" type="number" value="'+(c?Math.round(c.price||c.dbp):100000)+'" style="width:100%;margin-top:2px"></label>'+
+      '<div class="photo-drop" id="aPhotoDrop">'+(photo?'<img src="'+photo+'" class="photo-prev">':'<span>📷 '+t('fPhoto')+'</span>')+'<input type="file" id="aPhoto" accept="image/*" class="hidden"></div>'+
+      '<div style="display:flex;gap:6px"><button class="btn" id="aSave">'+(c?t('save'):t('add'))+'</button><button class="btn ghost" id="aCancel">'+t('cancel')+'</button></div></div>';
+  }
+  function page1(){
+    var cards=DATA.npls.map(function(c){
+      if(st.editKey===c.k) return nplForm(c);
+      var fl=flavor(c.nielsen), gpv=gpFull(c), cgm=cogmFull(c);
+      var demand=fl?(fl.chg>=10?'<span class="chip good">▲ '+pctS(fl.chg)+'</span>':fl.chg<0?'<span class="chip bad">▼ '+pctS(fl.chg)+'</span>':'<span class="chip warn">'+pctS(fl.chg)+'</span>'):'<span class="chip">white space</span>';
+      var gpc=gpv>=22?'txt-green':gpv>=18?'txt-amber':'txt-red';
+      var photo = c.photo ? '<img src="'+c.photo+'" class="photo-thumb">' : '<div class="photo-thumb ph-empty">'+c.emoji+'</div>';
+      return '<div class="npl'+(c.k===st.sel?' sel':'')+'" data-k="'+c.k+'">'+
+        '<div class="nh">'+photo+'<div style="flex:1;min-width:0"><div class="nm">'+c.name+'</div><div class="sku">'+c.sku+'</div></div>'+
+          '<div style="display:flex;gap:4px"><button class="mini-btn" data-edit="'+c.k+'" title="edit">✎</button><button class="mini-btn" data-del="'+c.k+'" title="delete">🗑</button></div></div>'+
+        '<div class="chips"><span class="chip brand">'+c.brand+'</span><span class="chip gold">'+(fl?L(fl.n):'—')+'</span>'+demand+'</div>'+
+        '<div class="statrow"><div><div class="sv">'+rpShort(cgm)+'</div><div class="sl">'+t('cogmF')+'</div></div><div><div class="sv">'+rpShort(c.price||c.dbp)+'</div><div class="sl">'+t('fPrice')+'</div></div><div><div class="sv '+gpc+'">'+pct(gpv)+'</div><div class="sl">'+t('gpF')+'</div></div></div>'+
+      '</div>';
+    }).join('');
+    var addCard = st.addOpen ? nplForm(null)
+      : '<div class="npl empty" id="addSlot"><div style="font-size:24px">＋</div><div style="font-weight:700;margin-top:4px">'+t('addNpl')+'</div></div>';
+    return pagehead(t('p1t'),t('p1l'))+card('🧪',t('n1'),DATA.npls.length+' SKU',null,'<div class="card-body"><div class="npl-grid">'+cards+addCard+'</div></div>',nplPicker());
+  }
+
+  /* ============ PAGE 2 — COGM matrix: columns = SKU, rows = components ============ */
+  function page2(){
+    var list=DATA.npls.slice();
+    if(st.sortBrand) list.sort(function(a,b){ return BRANDS.indexOf(a.brand)-BRANDS.indexOf(b.brand) || a.name.localeCompare(b.name); });
+    var lines=[['lDepre','depreF',1,100],['lOmc','omcF',1,100],['lDl','dl',0,100],['lListrik','listrik',0,10],['lGas','gas',0,10],['lRm','rm',0,100],['lPm','pm',0,100]];
+    function headRow(){ return '<tr><th style="text-align:left">'+t('line')+'</th>'+list.map(function(c){return '<th>'+c.emoji+' '+c.name+'<div style="font-size:8px;opacity:.8;font-weight:400">'+c.brand+'</div></th>';}).join('')+'</tr>'; }
+    var rows=lines.map(function(ln){ return '<tr><td class="lab">'+t(ln[0])+(ln[2]?' <span class="chip warn" style="font-size:9px">'+t('fixedMo')+'</span>':'')+'</td>'+
+      list.map(function(c){ return '<td class="num"><input type="number" data-k="'+c.k+'" data-f="'+ln[1]+'" value="'+(Math.round(c.cogm[ln[1]]*100)/100)+'" step="'+ln[3]+'"></td>'; }).join('')+'</tr>'; }).join('');
+    function sumRow(lab,fn,inp,cls){ return '<tr'+(cls?' class="sum"':'')+'><td class="lab">'+lab+'</td>'+list.map(fn).join('')+'</tr>'; }
+    var r_dbp='<tr><td class="lab">'+t('lDbp')+'</td>'+list.map(function(c){return '<td class="num"><input type="number" data-k="'+c.k+'" data-f="dbp" value="'+Math.round(c.dbp)+'" step="100"></td>';}).join('')+'</tr>';
+    var r_full='<tr><td class="lab">'+t('lFull')+'</td>'+list.map(function(c){return '<td class="num"><input type="number" data-k="'+c.k+'" data-f="fullCap" value="'+Math.round(c.fullCap)+'" step="1000"></td>';}).join('')+'</tr>';
+    var r_cogm='<tr class="sum"><td class="lab">'+t('lTot')+'</td>'+list.map(function(c){return '<td class="num">'+rpFull(cogmFull(c))+'</td>';}).join('')+'</tr>';
+    var r_gpf='<tr class="sum"><td class="lab">'+t('lGpFull')+'</td>'+list.map(function(c){var g=gpFull(c);return '<td class="num '+(g>=22?'txt-green':g<16?'txt-red':'txt-amber')+'">'+pct(g)+'</td>';}).join('')+'</tr>';
+    var r_vol='<tr><td class="lab">'+t('lVol')+'</td>'+list.map(function(c){return '<td class="num"><input type="number" data-k="'+c.k+'" data-f="vol" value="'+Math.round(c.vol)+'" step="1000"></td>';}).join('')+'</tr>';
+    var r_cogmv='<tr><td class="lab">'+t('lCogmVol')+'</td>'+list.map(function(c){return '<td class="num">'+rpFull(cogmAt(c.vol,c))+'</td>';}).join('')+'</tr>';
+    var r_gpv='<tr class="sum"><td class="lab">'+t('lGpVol')+'</td>'+list.map(function(c){var g=gpPctAt(c.vol,c);return '<td class="num '+(g>=22?'txt-green':g<16?'txt-red':'txt-amber')+'">'+pct(g)+'</td>';}).join('')+'</tr>';
+    var spacer='<tr><td colspan="'+(list.length+1)+'" style="background:var(--surface);border:none;height:8px"></td></tr>';
+    var table='<div class="table-wrap"><table class="matrix"><thead>'+headRow()+'</thead><tbody>'+rows+r_dbp+r_full+r_cogm+r_gpf+spacer+r_vol+r_cogmv+r_gpv+'</tbody></table></div>';
+    var right='<label style="font-size:12px;display:inline-flex;gap:6px;align-items:center"><input type="checkbox" id="sortChk" '+(st.sortBrand?'checked':'')+'> '+t('sortBrand')+'</label>';
+    return pagehead(t('p2t'),t('p2l'))+card('🏭',t('n2'),null,null,'<div class="card-body">'+table+srcbar('cogm')+'</div>',right);
+  }
+
+  /* ============ PAGE 3 — Reverse EBT ============ */
+  // Per-NPL forward P&L at its operating volume, for a country/channel/account.
+  function nplPnl(c,b,mt,fees){
+    var nsar=c.vol*c.dbp, cogm=c.vol*cogmAt(c.vol,c), gp1=nsar-cogm;
+    function r(x){ return b[x]/b.nsar; }
+    var sm1=r('sm1')*nsar, sm2=r('sm2')*nsar, sm3=r('sm3')*nsar, sm4=r('sm4')*nsar;
+    var gp2=gp1-sm1-sm2-sm3-sm4;
+    var ga1=r('ga1')*nsar, ga2=r('ga2')*nsar, ga3=r('ga3')*nsar;
+    var list=mt?fees.list:0, trade=mt?fees.trade/100*nsar:0, ppn=fees.ppn;
+    var ebt=gp2-ga1-ga2-ga3-list-trade;
+    return {nsar:nsar,cogm:cogm,gp1:gp1,sm1:sm1,sm2:sm2,sm3:sm3,sm4:sm4,gp2:gp2,ga1:ga1,ga2:ga2,ga3:ga3,list:list,trade:trade,ppn:ppn,ebt:ebt,ebtPct:ebt/nsar*100};
+  }
+
+  /* ===== Reverse EBT → retail bridge → Nielsen market reality (ATOMIC logic) ===== */
+  // EBT % at carton volume v, using the current P&L structure + utilization-adjusted COGM.
+  function ebtPctAtVol(c,b,mt,fees,v){
+    var nsar=v*c.dbp, cogm=v*cogmAt(v,c), gp1=nsar-cogm; function r(x){ return b[x]/b.nsar; }
+    var sm=(r('sm1')+r('sm2')+r('sm3')+r('sm4'))*nsar, gp2=gp1-sm;
+    var ga=(r('ga1')+r('ga2')+r('ga3'))*nsar, list=mt?fees.list:0, trade=mt?fees.trade/100*nsar:0;
+    return (gp2-ga-list-trade)/nsar*100;
+  }
+  // Bisection solver: smallest monthly cartons that reaches the target EBT % within capacity.
+  function solveReqCartons(c,b,mt,fees,targetPct){
+    var cap=c.fullCap, lo=Math.max(1,cap*0.005), hi=cap;
+    var eHi=ebtPctAtVol(c,b,mt,fees,hi);
+    if(eHi<targetPct-1e-9) return {status:'NOT_REACHABLE', cartons:cap, util:1, ebtPct:eHi};
+    if(ebtPctAtVol(c,b,mt,fees,lo)>=targetPct) { return {status:'SOLVED', cartons:lo, util:lo/cap, ebtPct:ebtPctAtVol(c,b,mt,fees,lo)}; }
+    for(var i=0;i<60;i++){ var mid=(lo+hi)/2; if(ebtPctAtVol(c,b,mt,fees,mid)>=targetPct) hi=mid; else lo=mid; }
+    return {status:'SOLVED', cartons:hi, util:hi/cap, ebtPct:ebtPctAtVol(c,b,mt,fees,hi)};
+  }
+  function srpOf(c){ return c.srp||500; } function ppcOf(c){ return c.ppc||300; }
+  // Physical retail bridge + Nielsen required-share + feasibility for one NPL.
+  function nielsenReality(c,b,mt,fees,targetPct){
+    var sol=solveReqCartons(c,b,mt,fees,targetPct);
+    var ppc=ppcOf(c), srp=srpOf(c);
+    var retailM=sol.cartons*ppc*srp, retailMAT=retailM*12;           // retail-equivalent at SRP
+    var catMkt=(NIELSEN.marketT||0)*1e6;                             // Nielsen market value (Rp)
+    var catShare=catMkt?retailMAT/catMkt*100:null;
+    // price-segment denominator (GT tiers from the uploaded Nielsen, matched to SRP)
+    var seg=null; if(NIELSEN.segmentsGT){ var tier=srp<=500?500:srp<=1000?1000:srp<=2000?2000:'3000 UP';
+      seg=NIELSEN.segmentsGT.filter(function(s){return ''+s.tier===''+tier;})[0]; }
+    var segShare=(seg&&seg.val)?retailMAT/(seg.val*1e6)*100:null;
+    var fl=flavor(c.nielsen), flavShare=(fl&&fl.val)?retailMAT/(fl.val*1e6)*100:null;
+    // feasibility classification (simplified from the ATOMIC spec §19)
+    var feas, fcls;
+    if(sol.status==='NOT_REACHABLE'){ feas='NOT FEASIBLE'; fcls='bad'; }
+    else if(sol.util>1){ feas='NOT FEASIBLE'; fcls='bad'; }
+    else if(segShare==null && catShare==null){ feas='INSUFFICIENT DATA'; fcls='warn'; }
+    else { var probe=segShare!=null?segShare:catShare;
+      if(probe<=2){ feas='CONSERVATIVE'; fcls='good'; }
+      else if(probe<=5){ feas='REASONABLE'; fcls='good'; }
+      else if(probe<=12){ feas='AGGRESSIVE'; fcls='warn'; }
+      else { feas='NOT FEASIBLE'; fcls='bad'; } }
+    return {sol:sol, retailM:retailM, retailMAT:retailMAT, catShare:catShare, seg:seg, segShare:segShare, flavShare:flavShare, feas:feas, fcls:fcls};
+  }
+
+  function page3(){
+    var b=DATA.base[st.base], mt=st.revChannel==='MT';
+    var accts=accountsOf(baseCountryName(st.base), st.revChannel);
+    if(!st.revAcc || !accts.filter(function(a){return a.k===st.revAcc;}).length) st.revAcc=accts[0].k;
+    var acc=accts.filter(function(a){return a.k===st.revAcc;})[0];
+    var fees=acctFee(st.revChannel+':'+acc.k);
+    var list=DATA.npls.slice();
+    var baseSel='<select id="baseSel">'+Object.keys(DATA.base).map(function(k){var x=DATA.base[k];return '<option value="'+k+'"'+(k===st.base?' selected':'')+'>'+x.flag+' '+x.name+(x.real?'':' *')+'</option>';}).join('')+'</select>';
+    var chSeg='<div class="seg" id="chSeg"><button data-c="GT" class="'+(!mt?'on':'')+'">GT</button><button data-c="MT" class="'+(mt?'on':'')+'">MT</button></div>';
+    var accSel='<select id="accSel">'+accts.map(function(a){return '<option value="'+a.k+'"'+(a.k===st.revAcc?' selected':'')+'>'+a.name+'</option>';}).join('')+'</select>';
+    var P=list.map(function(c){return nplPnl(c,b,mt,fees);});
+    function hrow(){ return '<tr><th style="text-align:left">'+t('item')+'</th>'+list.map(function(c){return '<th>'+c.emoji+' '+c.name+'</th>';}).join('')+'</tr>'; }
+    function row(lab,fn,cls){ return '<tr'+(cls?' class="'+cls+'"':'')+'><td class="lab'+(cls==='subl'?' sub':'')+'">'+lab+'</td>'+P.map(fn).join('')+'</tr>'; }
+    function amt(v){ return '<td class="num">'+rpShort(v)+'</td>'; }
+    function amtp(v,p){ return '<td class="num">'+rpShort(v)+' <span class="txt-muted" style="font-size:10px">'+pct(p)+'</span></td>'; }
+    var volRow='<tr><td class="lab">'+t('lVol')+'</td>'+list.map(function(c){return '<td class="num"><input type="number" data-k="'+c.k+'" data-f="vol" value="'+Math.round(c.vol)+'" step="1000"></td>';}).join('')+'</tr>';
+    var rows=
+      volRow+
+      row(t('iN'),function(p){return '<td class="num" style="font-weight:700">'+rpShort(p.nsar)+'</td>';},'gp')+
+      row(t('iC'),function(p){return amtp(-p.cogm,p.cogm/p.nsar*100);})+
+      row(t('iG'),function(p){return '<td class="num" style="font-weight:700">'+rpShort(p.gp1)+' <span class="txt-muted" style="font-size:10px">'+pct(p.gp1/p.nsar*100)+'</span></td>';},'gp')+
+      row(t('iS1'),function(p){return amtp(-p.sm1,p.sm1/p.nsar*100);},'subl')+
+      row(t('iS2'),function(p){return amtp(-p.sm2,p.sm2/p.nsar*100);},'subl')+
+      row(t('iS3'),function(p){return amtp(-p.sm3,p.sm3/p.nsar*100);},'subl')+
+      row(t('iS4'),function(p){return amtp(-p.sm4,p.sm4/p.nsar*100);},'subl')+
+      row(t('iGP2'),function(p){return '<td class="num" style="font-weight:700">'+rpShort(p.gp2)+' <span class="txt-muted" style="font-size:10px">'+pct(p.gp2/p.nsar*100)+'</span></td>';},'gp')+
+      row(t('iGA1'),function(p){return amtp(-p.ga1,p.ga1/p.nsar*100);},'subl')+
+      row(t('iGA2'),function(p){return amtp(-p.ga2,p.ga2/p.nsar*100);},'subl')+
+      row(t('iGA3'),function(p){return amtp(-p.ga3,p.ga3/p.nsar*100);},'subl')+
+      (mt?row(t('iList'),function(p){return amt(-p.list);},'subl')+row(t('iTrade'),function(p){return amtp(-p.trade,fees.trade);},'subl'):'')+
+      row(t('iPPN'),function(p){return amt(p.ppn);},'subl')+
+      row(t('iE'),function(p){return '<td class="num" style="font-weight:800">'+rpShort(p.ebt)+'</td>';},'ebt')+
+      row(t('ebtPctRow'),function(p){return '<td class="num '+(p.ebtPct>=0?'txt-green':'txt-red')+'" style="font-weight:800">'+pct(p.ebtPct)+'</td>';},'ebt');
+    var feeRow = mt ? '<div class="selbar" style="margin-top:12px">'+
+      '<div class="fld"><label>'+t('iList')+' Rp ('+acc.name+')</label><input type="number" id="feeList" value="'+Math.round(fees.list)+'" step="1000000" style="width:130px"></div>'+
+      '<div class="fld"><label>'+t('iTrade')+' %</label><input type="number" id="feeTrade" value="'+fees.trade+'" step="0.5" style="width:90px"></div>'+
+      '<div class="fld"><label>'+t('iPPN')+' Rp</label><input type="number" id="feePpn" value="'+Math.round(fees.ppn)+'" step="1000000" style="width:130px"></div>'+
+      '<span class="note" style="margin:0;align-self:center">'+(lang==='id'?'Listing & PPN angka Rp; trading term %. Diisi per akun MT.':'Listing & VAT in Rp; trading term in %. Set per MT account.')+'</span></div>' : '';
+    var table='<div class="table-wrap" style="margin-top:14px"><table class="matrix"><thead>'+hrow()+'</thead><tbody>'+rows+'</tbody></table></div>';
+    var body='<div class="card-body"><div class="selbar">'+
+      '<div class="fld"><label>'+t('baseline')+'</label>'+baseSel+'</div>'+
+      '<div class="fld"><label>'+t('channel')+'</label>'+chSeg+'</div>'+
+      '<div class="fld"><label>'+t('accountL')+'</label>'+accSel+'</div></div>'+
+      feeRow+table+srcbar('rev')+'</div>';
+    return pagehead(t('p3t'),t('p3l'))+card('🧮',t('n3'),b.name+' · '+st.revChannel+' · '+acc.name,null,body)+bridgeCard(b,mt,fees,acc);
+  }
+  // Reverse-EBT → Nielsen bridge card (connects Tab 2 COGM, Tab 3 EBT target, Tab 4 Nielsen)
+  function bridgeCard(b,mt,fees,acc){
+    if(st.ebtTarget==null) st.ebtTarget=0;
+    var tgt=st.ebtTarget, list=DATA.npls.slice();
+    var R=list.map(function(c){return nielsenReality(c,b,mt,fees,tgt);});
+    function hrow(){ return '<tr><th style="text-align:left">'+t('brItem')+'</th>'+list.map(function(c){return '<th>'+c.emoji+' '+c.name+'</th>';}).join('')+'</tr>'; }
+    function row(lab,fn,cls){ return '<tr'+(cls?' class="'+cls+'"':'')+'><td class="lab">'+lab+'</td>'+R.map(fn).join('')+'</tr>'; }
+    function shc(v){ return v==null?'txt-muted':(v<=2?'txt-green':v<=5?'txt-amber':'txt-red'); }
+    var rows=
+      row(t('brTarget'),function(){return '<td class="num">'+pct(tgt)+'</td>';})+
+      row(t('brStatus'),function(r){return '<td class="num">'+(r.sol.status==='SOLVED'?'<span class="chip good">'+t('brSolved')+'</span>':'<span class="chip bad">'+t('brNoSol')+'</span>')+'</td>';})+
+      row(t('brCartons'),function(r){return '<td class="num">'+grp(r.sol.cartons)+'</td>';})+
+      row(t('brUtil'),function(r){return '<td class="num '+(r.sol.util>1?'txt-red':r.sol.util>0.95?'txt-amber':'txt-green')+'">'+pct(r.sol.util*100)+'</td>';})+
+      row(t('brRetailM'),function(r){return '<td class="num">'+rpShort(r.retailM)+'</td>';})+
+      row(t('brRetailY'),function(r){return '<td class="num">'+rpShort(r.retailMAT)+'</td>';})+
+      row(t('brCatShare'),function(r){return '<td class="num '+shc(r.catShare)+'">'+(r.catShare==null?'N/A':pct(r.catShare,2))+'</td>';})+
+      row(t('brSegShare'),function(r){return '<td class="num '+shc(r.segShare)+'">'+(r.segShare==null?'N/A':pct(r.segShare,2))+(r.seg?' <span class="txt-muted" style="font-size:9px">'+t('brTier')+' '+r.seg.tier+'</span>':'')+'</td>';})+
+      row(t('brFlavShare'),function(r){return '<td class="num '+shc(r.flavShare)+'">'+(r.flavShare==null?'N/A':pct(r.flavShare,2))+'</td>';})+
+      row(t('brFeas'),function(r){return '<td class="num"><span class="chip '+r.fcls+'">'+r.feas+'</span></td>';},'ebt');
+    var ctrl='<div class="selbar"><div class="fld"><label>'+t('brTargetL')+' %</label><input type="number" id="ebtTgt" value="'+tgt+'" step="1" style="width:90px"></div>'+
+      '<div class="fld"><label>'+t('brSrp')+' (Rp)</label><input type="number" id="brSrp" value="'+srpOf(npl(st.sel))+'" step="100" style="width:100px"></div>'+
+      '<div class="fld"><label>'+t('brPpc')+'</label><input type="number" id="brPpc" value="'+ppcOf(npl(st.sel))+'" step="10" style="width:90px"></div>'+
+      '<span class="note" style="margin:0;align-self:center">'+t('brSrpNote',{n:npl(st.sel).name})+'</span></div>';
+    var tbl='<div class="table-wrap" style="margin-top:12px"><table class="matrix"><thead>'+hrow()+'</thead><tbody>'+rows+'</tbody></table></div>';
+    var note=t('brNote');
+    return card('🔗',t('brT'),t('brSub'),note,'<div class="card-body">'+ctrl+tbl+'</div>');
+  }
+
+  /* ============ PAGE 4 — Market Share grouped by brand category ============ */
+  // Category Opportunity Score for an NPL, from its mapped Indonesia category (opportunity stance).
+  // The NPL is SIIP's own product in that category → assume solid equity (nab 4) and scale the
+  // fragmented ID category contribution onto the same 0–45 size axis the engine uses.
+  function nplCatScore(f){ if(!f) return 18; var o=catOpp({g:f.chg,size:Math.min(f.cont*2,45),nab:4},'opportunity'); return o.score; }
+  function verdictCard(c){ var f=flavor(c.nielsen), v, reason, sc=nplCatScore(f);
+    // verdict band is driven by the computed score, with declining / white-space overrides
+    if(!f){ v='avoid'; reason=lang==='id'?'White space — demand belum terbukti, validasi dulu (pilot).':'White space — demand unproven, validate first (pilot).'; }
+    else if(f.chg<0){ v='avoid'; reason=lang==='id'?'Kategori menurun '+pctS(f.chg)+' — hindari kecuali ada diferensiasi kuat.':'Category declining '+pctS(f.chg)+' — avoid unless strongly differentiated.'; }
+    else if(sc>=60){ v='ride'; reason=lang==='id'?'Skor opportunity '+sc+'/100 — kategori tumbuh '+pctS(f.chg)+' & cukup besar ('+pct(f.cont)+' pasar). Tunggangi.':'Opportunity score '+sc+'/100 — category growing '+pctS(f.chg)+' & sizeable ('+pct(f.cont)+' of market). Ride it.'; }
+    else if(sc>=45){ v='watch'; reason=lang==='id'?'Skor opportunity '+sc+'/100 — momentum sedang, launch selektif.':'Opportunity score '+sc+'/100 — moderate momentum, launch selectively.'; }
+    else { v='avoid'; reason=lang==='id'?'Skor opportunity '+sc+'/100 — terlalu tipis, hindari kecuali diferensiasi kuat.':'Opportunity score '+sc+'/100 — too thin, avoid unless strongly differentiated.'; }
+    var vb=v==='ride'?'b-go':v==='watch'?'b-rework':'b-nogo';
+    var scCol=v==='ride'?'var(--green)':v==='watch'?'var(--gold)':'var(--red)';
+    var scPill='<span style="font-family:\'JetBrains Mono\',monospace;font-weight:800;font-size:12px;color:#fff;background:'+scCol+';border-radius:6px;padding:1px 7px">'+sc+'</span>';
+    return '<div class="npl" style="cursor:default"><div class="nh"><span class="emoji">'+c.emoji+'</span><div><div class="nm">'+c.name+'</div><div class="sku">'+(f?L(f.n)+' · '+pctS(f.chg):'white space')+'</div></div><div style="margin-left:auto;display:flex;gap:6px;align-items:center">'+scPill+'<span class="badge '+vb+'">'+t('v'+v.charAt(0).toUpperCase()+v.slice(1))+'</span></div></div><div class="why">'+reason+'</div></div>';
+  }
+  function ndBadge(v){ var c=v>=60?'txt-green':v>=30?'txt-amber':'txt-red'; return '<span class="'+c+'">'+v+'</span>'; }
+  function dualLine(a,bArr,labelA,labelB,fmt){
+    var W=560,H=150,pL=30,pR=12,pT=10,pB=22, n=a.length;
+    var all=a.concat(bArr), mn=Math.min.apply(null,all)*0.9, mx=Math.max.apply(null,all)*1.05;
+    function X(i){ return pL+i/(n-1)*(W-pL-pR); } function Y(v){ return pT+(mx-v)/(mx-mn)*(H-pT-pB); }
+    function poly(arr,col){ return '<polyline points="'+arr.map(function(v,i){return X(i)+','+Y(v);}).join(' ')+'" fill="none" stroke="'+col+'" stroke-width="2"/>'; }
+    var end='<text x="'+X(n-1)+'" y="'+(Y(a[n-1])-5)+'" font-size="10" fill="var(--accent)" text-anchor="end" font-family="JetBrains Mono">'+(fmt?fmt(a[n-1]):a[n-1])+'</text>'+
+      '<text x="'+X(n-1)+'" y="'+(Y(bArr[n-1])+12)+'" font-size="10" fill="var(--gold)" text-anchor="end" font-family="JetBrains Mono">'+(fmt?fmt(bArr[n-1]):bArr[n-1])+'</text>';
+    return '<div class="table-wrap"><svg viewBox="0 0 '+W+' '+H+'">'+poly(a,'var(--accent)')+poly(bArr,'var(--gold)')+end+'</svg></div>'+
+      '<div class="legend"><span><i style="background:var(--accent)"></i>'+labelA+'</span><span><i style="background:var(--gold)"></i>'+labelB+'</span></div>';
+  }
+  function page4(){
+    var N=NIELSEN, fl=flavor('seaweed');
+    // verdict per NPL
+    var verdicts=DATA.npls.map(verdictCard).join('');
+    var tiles='<div class="tiles">'+tile(t('mktSize'),rpShort(N.marketT*1e6),'hi',N.period)+tile(t('siipSh'),pct(5.2),'warn','Rp493'+t('bil'))+tile(t('siipTr'),pctS(-2.5),'bad','')+tile(t('fastest'),L(fl.n),'good',pctS(fl.chg))+'</div>';
+    // 1. Top Flavor
+    var frows=N.flavors.map(function(f){ var m=DATA.npls.filter(function(x){return x.nielsen===f.k;})[0]; var cc=f.chg>=10?'delta-up':f.chg<0?'delta-dn':'';
+      return '<tr'+(m?' class="hl"':'')+'><td class="num">'+f.rank+'</td><td>'+L(f.n)+'</td><td class="num">'+grp(f.val)+'</td><td class="num '+cc+'">'+pctS(f.chg)+'</td><td class="num txt-muted">'+pct(f.cont)+'</td><td>'+(m?m.emoji+' '+m.name:'—')+'</td></tr>'; }).join('');
+    var flavTab='<div class="table-wrap"><table class="dt"><thead><tr><th class="num">#</th><th>'+t('flavorH')+'</th><th class="num">'+t('valH')+'</th><th class="num">'+t('chgH')+'</th><th class="num">'+t('contH')+'</th><th>'+t('mapH')+'</th></tr></thead><tbody>'+frows+'</tbody></table></div>';
+    // 2. Top Brand
+    var brows=N.brands.map(function(b,i){ return '<tr'+(b.me?' class="hl"':'')+'><td class="num">'+(i+1)+'</td><td>'+(b.me?'★ ':'')+b.n+'</td><td class="num">'+grp(b.val)+'</td><td class="num">'+pct(b.sh)+'</td><td class="num '+(b.chg<0?'delta-dn':'delta-up')+'">'+pctS(b.chg)+'</td><td class="num">'+ndBadge(b.nd)+'</td><td class="num">'+ndBadge(b.wd)+'</td></tr>'; }).join('');
+    var brandTab='<div class="table-wrap"><table class="dt"><thead><tr><th class="num">#</th><th>'+t('brandH')+'</th><th class="num">'+t('valH')+'</th><th class="num">'+t('shareH2')+'</th><th class="num">'+t('chgH')+'</th><th class="num">ND</th><th class="num">WD</th></tr></thead><tbody>'+brows+'</tbody></table></div>';
+    // 3. Top SKU
+    var srows=N.skus.map(function(s,i){ return '<tr'+(s.me?' class="hl"':'')+'><td class="num">'+(i+1)+'</td><td style="white-space:normal;min-width:200px">'+(s.me?'★ ':'')+s.n+'</td><td class="num">'+grp(s.val)+'</td><td class="num">Rp'+grp(s.price)+'</td><td class="num">'+ndBadge(s.nd)+'</td><td class="num">'+ndBadge(s.wd)+'</td></tr>'; }).join('');
+    var skuTab='<div class="table-wrap"><table class="dt"><thead><tr><th class="num">#</th><th>'+t('skuNameH')+'</th><th class="num">'+t('valH')+'</th><th class="num">'+t('priceH')+'</th><th class="num">ND</th><th class="num">WD</th></tr></thead><tbody>'+srows+'</tbody></table></div>';
+    // 4. Segment performance (SIIP by region)
+    var rrows=N.regions.map(function(r){ return '<tr><td>'+r.n+'</td><td class="num">'+grp(r.val)+'</td><td class="num">'+pct(r.sh)+'</td><td class="num txt-muted">'+r.cont+'%</td><td class="num">'+ndBadge(r.nd)+'</td><td class="num">'+ndBadge(r.wd)+'</td></tr>'; }).join('');
+    var regTab='<div class="table-wrap"><table class="dt"><thead><tr><th>'+t('regionH')+'</th><th class="num">'+t('valH')+'</th><th class="num">'+t('shareH2')+'</th><th class="num">'+t('contH')+'</th><th class="num">ND</th><th class="num">WD</th></tr></thead><tbody>'+rrows+'</tbody></table></div>';
+    // 5. Value ND/WD by Segment (SIIP by channel) + potential bar
+    var crows=N.channels.map(function(ch){ return '<tr><td>'+L(ch.n)+'</td><td class="num">'+grp(ch.val)+'</td><td class="num">'+pct(ch.sh)+'</td><td class="num">'+ndBadge(ch.nd)+'</td><td class="num">'+ndBadge(ch.wd)+'</td><td class="num">'+(ch.pot?ch.pot.toLocaleString()+t('bil'):'—')+'</td><td class="num '+(ch.gNab>=0?'txt-green':'txt-red')+'">'+pctS(ch.gNab)+'</td></tr>'; }).join('');
+    var chanTab='<div class="table-wrap"><table class="dt"><thead><tr><th>'+t('segmentH')+'</th><th class="num">'+t('valH')+'</th><th class="num">'+t('shareH2')+'</th><th class="num">ND</th><th class="num">WD</th><th class="num">'+t('potH')+'</th><th class="num">'+t('nabGrowH')+'</th></tr></thead><tbody>'+crows+'</tbody></table></div>';
+    // 6. Sales comparison (SIIP vs MOMOGI)
+    var salesChart=dualLine(N.trend.siipVal,N.trend.momoVal,'SIIP','MOMOGI',function(v){return dec(v)+'B';});
+    var wdChart=dualLine(N.trend.siipWd,N.trend.momoWd,'SIIP WD','MOMOGI WD',function(v){return v+'';});
+
+    // Indonesia full category audit (shown only when Indonesia is the selected market)
+    var idAudit=
+      card('📈', L({en:'Indonesia category snapshot',id:'Snapshot kategori Indonesia'}), N.period, null, '<div class="card-body">'+tiles+'<h4 style="font-size:12px;margin:14px 0 8px">'+t('nplVerdictT')+'</h4><div class="npl-grid">'+verdicts+'</div><p class="note">'+t('siipPos')+'</p></div>')+
+      card('🏅', t('topFlavorT'), null, null, '<div class="card-body">'+flavTab+'</div>')+
+      card('🏷️', t('topBrandT'), null, null, '<div class="card-body">'+brandTab+'</div>')+
+      card('📦', t('topSkuT'), null, null, '<div class="card-body">'+skuTab+'</div>')+
+      card('🗺️', t('segPerfT'), 'SIIP · '+t('byRegion'), null, '<div class="card-body">'+regTab+'</div>')+
+      card('🧮', t('ndwdSegT'), 'SIIP · '+t('byChannel'), null, '<div class="card-body">'+chanTab+'</div>')+
+      card('📊', t('salesCompT'), 'SIIP vs MOMOGI · Indonesia GT · Apr-23→Apr-25', null, '<div class="card-body"><div class="grid2"><div><h4 style="font-size:12px;margin-bottom:6px">'+t('valAbsH')+' (Rp B)</h4>'+salesChart+'</div><div><h4 style="font-size:12px;margin-bottom:6px">WD %</h4>'+wdChart+'</div></div></div>')+
+      '<div class="srcbar"><span>📎</span><span>'+t('nielsenSrc')+'</span></div>';
+    return pagehead(t('p4t'),t('p4l'))+regionalBlocks(idAudit);
+  }
+  // Combined regional market-share blocks (Indonesia Roll vs Malaysia/China Flat benchmark) + Indonesia audit
+  function regionalBlocks(idAudit){
+    var sel=st.mktSel, M=MARKETS[sel], order=['Indonesia','Malaysia','China'];
+    var caveat=card('⚠️', L({en:'Read this first — different categories',id:'Baca dulu — kategori berbeda'}), null, null,
+      '<div class="note-strip" style="border-bottom:none"><div>'+L({en:'<b>Indonesia file = Wafer ROLL</b> (to Aug-26). <b>Malaysia & China files = Wafer FLAT</b> (to Jun-26). Market size & share for MY–CN must <b>not be summed or compared directly</b> with Indonesia Roll. They are an <b>adjacent-category benchmark</b> for flavour, pack, distribution and consumer preference.',id:'<b>File Indonesia = Wafer ROLL</b> (sampai Aug-26). <b>File Malaysia & China = Wafer FLAT</b> (sampai Jun-26). Ukuran pasar & share MY–CN <b>tidak boleh dijumlah atau dibandingkan langsung</b> dengan Roll Indonesia. Mereka adalah <b>benchmark kategori-berdekatan</b> untuk flavour, pack, distribusi & preferensi konsumen.'})+'</div></div>','');
+    var exHead='<tr><th>'+L({en:'Market',id:'Pasar'})+'</th><th>'+L({en:'Source category',id:'Kategori sumber'})+'</th><th>'+L({en:'Market condition',id:'Kondisi pasar'})+'</th><th>'+L({en:'Nabati position',id:'Posisi Nabati'})+'</th><th>'+L({en:'Main issue',id:'Isu utama'})+'</th></tr>';
+    var exRows=order.map(function(k){ var m=MARKETS[k]; var cg=k==='Malaysia'?'delta-up':k==='China'?'delta-dn':'txt-muted';
+      return '<tr'+(k===sel?' class="hl"':'')+'><td><b>'+m.flag+' '+k+'</b></td><td>'+L(m.cat)+'</td><td class="'+cg+'">'+L(m.cond)+'</td><td>'+L(m.pos)+'</td><td>'+L(m.issue)+'</td></tr>'; }).join('');
+    var exTab='<div class="table-wrap"><table class="dt" style="min-width:720px"><thead>'+exHead+'</thead><tbody>'+exRows+'</tbody></table></div>';
+    var probTiles='<div class="tiles" style="margin-top:14px">'+
+      tile('🇮🇩 Indonesia',L(MARKETS.Indonesia.problem),'hi',L({en:'opportunity to expand',id:'peluang ekspansi'}))+
+      tile('🇲🇾 Malaysia',L(MARKETS.Malaysia.problem),'good',L({en:'market is booming',id:'pasar booming'}))+
+      tile('🇨🇳 China',L(MARKETS.China.problem),'bad',L({en:'category contracting',id:'kategori menyusut'}))+'</div>';
+    var execCard=card('🧭', L({en:'Executive picture',id:'Gambaran eksekutif'}), L({en:'Three markets, three different business problems',id:'Tiga pasar, tiga masalah bisnis berbeda'}), null,'<div class="card-body">'+exTab+probTiles+'</div>');
+    var switcher='<div class="seg" id="mktSeg">'+order.map(function(k){ return '<button data-m="'+k+'" class="'+(k===sel?'on':'')+'">'+MARKETS[k].flag+' '+k+'</button>'; }).join('')+'</div>';
+    var detail;
+    if(sel==='Indonesia'){
+      var rollTiles='<div class="tiles">'+tile(L({en:'Category',id:'Kategori'}),L(M.cat),'hi',M.period)+tile(L({en:'Condition',id:'Kondisi'}),'−0.9%','warn',L({en:'flat YoY',id:'flat YoY'}))+tile(L({en:'Nabati Rolls+Big Rolls',id:'Nabati Rolls+Big Rolls'}),'6.53%','good','+7.3% · Rp154.7B')+tile(L({en:'Role',id:'Peran'}),L(M.role),'','')+'</div>';
+      var chRows=M.chan.map(function(c){ return '<tr><td><b>'+L(c.seg)+'</b></td><td class="num">'+pct(c.sh)+'</td><td class="num">'+dChip(c.g)+'</td><td>'+L(c.role)+'</td><td>'+L(c.hero)+'</td><td>'+L(c.flav)+'</td></tr>'; }).join('');
+      var chTab='<div class="table-wrap"><table class="dt" style="min-width:640px"><thead><tr><th>'+L({en:'Channel',id:'Channel'})+'</th><th class="num">'+L({en:'Roll share',id:'Share Roll'})+'</th><th class="num">'+L({en:'Growth',id:'Growth'})+'</th><th>'+L({en:'Role',id:'Peran'})+'</th><th>'+L({en:'Hero pack',id:'Pack hero'})+'</th><th>'+L({en:'Winning flavour',id:'Flavour menang'})+'</th></tr></thead><tbody>'+chRows+'</tbody></table></div>';
+      detail='<div class="card-body">'+rollTiles+'<p class="note" style="margin:12px 0 10px">'+L(M.nab)+'</p>'+chTab+'<div class="note-strip" style="margin-top:12px;border:1px solid var(--border);border-radius:9px"><div>'+L(M.note)+'</div></div></div>';
+    } else {
+      var dtiles='<div class="tiles">'+tile(L({en:'Category',id:'Kategori'}),L(M.cat),'hi',M.period)+
+        tile(L({en:'Market (MAT)',id:'Pasar (MAT)'}),usdM(M.mktVal),M.mktG>=0?'good':'bad',pctS(M.mktG))+
+        tile(L({en:'Nabati position',id:'Posisi Nabati'}),L(M.pos),sel==='China'?'bad':'warn','<span class="'+(M.nabShChg<0?'delta-dn':'delta-up')+'">'+pctS(M.nabShChg).replace('%','ppt')+'</span> '+L({en:'share Δ',id:'Δ share'}))+
+        tile(L({en:'Nabati ND / WD',id:'ND / WD Nabati'}),dec(M.nd)+' / '+dec(M.wd),'',L({en:'national',id:'nasional'}))+'</div>';
+      var bHead=sel==='Malaysia'
+        ? '<tr><th>#</th><th>'+L({en:'Brand',id:'Brand'})+'</th><th class="num">'+L({en:'MAT value',id:'Nilai MAT'})+'</th><th class="num">'+L({en:'Share',id:'Share'})+'</th><th class="num">'+L({en:'Growth',id:'Growth'})+'</th><th class="num">'+L({en:'Share Δ',id:'Share Δ'})+'</th></tr>'
+        : '<tr><th>#</th><th>'+L({en:'Brand',id:'Brand'})+'</th><th class="num">'+L({en:'MAT value',id:'Nilai MAT'})+'</th><th class="num">'+L({en:'Share',id:'Share'})+'</th><th class="num">'+L({en:'Growth',id:'Growth'})+'</th></tr>';
+      var bRows=M.brands.map(function(b,i){ var row='<tr'+(b.me?' class="hl"':'')+'><td class="num">'+(i+1)+'</td><td>'+(b.me?'★ ':'')+b.n+'</td><td class="num">'+usdM(b.val)+'</td><td class="num">'+pct(b.sh)+'</td><td class="num">'+dChip(b.chg)+'</td>';
+        if(sel==='Malaysia') row+='<td class="num">'+(b.dsh!=null?dChip(b.dsh).replace('%','ppt'):'—')+'</td>'; return row+'</tr>'; }).join('');
+      var bTab='<div class="table-wrap"><table class="dt"><thead>'+bHead+'</thead><tbody>'+bRows+'</tbody></table></div>';
+      var fRows=M.flavors.map(function(f){ return '<tr><td>'+L(f.n)+'</td><td class="num">'+usdM(f.val)+'</td><td class="num">'+pct(f.mix)+'</td><td class="num">'+dChip(f.chg)+'</td></tr>'; }).join('');
+      var fTab='<div class="table-wrap"><table class="dt"><thead><tr><th>'+L({en:'Flavour (proxy)',id:'Flavour (proxy)'})+'</th><th class="num">'+L({en:'MAT value',id:'Nilai MAT'})+'</th><th class="num">'+L({en:'Mix',id:'Mix'})+'</th><th class="num">'+L({en:'Growth',id:'Growth'})+'</th></tr></thead><tbody>'+fRows+'</tbody></table></div>';
+      var sRows=M.skus.map(function(s){ var row='<tr><td style="white-space:normal;min-width:180px">'+s.n+'</td><td class="num">'+usdM(s.val)+'</td><td class="num">'+pct(s.csh)+'</td><td class="num">'+dChip(s.chg)+'</td>';
+        if(sel==='Malaysia') row+='<td class="num">'+ndBadge(s.nd)+'</td><td class="num">'+ndBadge(s.wd)+'</td>'; return row+'</tr>'; }).join('');
+      var sHead=sel==='Malaysia'
+        ? '<tr><th>'+L({en:'Top Nabati SKU',id:'Top SKU Nabati'})+'</th><th class="num">'+L({en:'MAT value',id:'Nilai MAT'})+'</th><th class="num">'+L({en:'Cat. share',id:'Share kat.'})+'</th><th class="num">'+L({en:'Growth',id:'Growth'})+'</th><th class="num">ND</th><th class="num">WD</th></tr>'
+        : '<tr><th>'+L({en:'Top category SKU',id:'Top SKU kategori'})+'</th><th class="num">'+L({en:'MAT value',id:'Nilai MAT'})+'</th><th class="num">'+L({en:'Cat. share',id:'Share kat.'})+'</th><th class="num">'+L({en:'Growth',id:'Growth'})+'</th></tr>';
+      var sTab='<div class="table-wrap"><table class="dt"><thead>'+sHead+'</thead><tbody>'+sRows+'</tbody></table></div>';
+      var cRows, cHead;
+      if(sel==='Malaysia'){
+        cHead='<tr><th>'+L({en:'Channel',id:'Channel'})+'</th><th class="num">'+L({en:'Market',id:'Pasar'})+'</th><th class="num">'+L({en:'Mkt growth',id:'Growth pasar'})+'</th><th class="num">'+L({en:'Nabati value',id:'Nilai Nabati'})+'</th><th class="num">'+L({en:'Nab share',id:'Share Nab'})+'</th><th class="num">'+L({en:'Nab growth',id:'Growth Nab'})+'</th></tr>';
+        cRows=M.chan.map(function(c){ return '<tr><td><b>'+L(c.seg)+'</b></td><td class="num">'+usdM(c.mkt)+'</td><td class="num">'+dChip(c.mg)+'</td><td class="num">'+usdM(c.nv)+'</td><td class="num">'+pct(c.nsh)+'</td><td class="num">'+dChip(c.ng)+'</td></tr>'; }).join('');
+      } else {
+        cHead='<tr><th>'+L({en:'Channel',id:'Channel'})+'</th><th class="num">'+L({en:'Nab share',id:'Share Nab'})+'</th><th class="num">'+L({en:'Nab growth',id:'Growth Nab'})+'</th><th class="num">ND</th><th class="num">WD</th><th></th></tr>';
+        cRows=M.chan.map(function(c){ var tag=c.flag==='smoking'?'<span class="chip bad">'+L({en:'smoking gun',id:'smoking gun'})+'</span>':c.flag==='resilient'?'<span class="chip good">'+L({en:'resilient',id:'resilient'})+'</span>':'';
+          return '<tr><td><b>'+L(c.seg)+'</b></td><td class="num">'+pct(c.nsh)+'</td><td class="num">'+dChip(c.ng)+'</td><td class="num">'+ndBadge(c.nd)+'</td><td class="num">'+ndBadge(c.wd)+'</td><td>'+tag+'</td></tr>'; }).join('');
+      }
+      var cTab='<div class="table-wrap"><table class="dt" style="min-width:620px"><thead>'+cHead+'</thead><tbody>'+cRows+'</tbody></table></div>';
+      detail='<div class="card-body">'+dtiles+'<p class="note" style="margin:12px 0 10px">'+L(M.nab)+'</p>'+
+        '<h4 style="font-size:12px;margin:14px 0 6px">'+L({en:'Brand ranking',id:'Ranking brand'})+'</h4>'+bTab+
+        '<h4 style="font-size:12px;margin:16px 0 6px">'+L({en:'Flavour structure (SKU proxy)',id:'Struktur flavour (proxy SKU)'})+'</h4>'+fTab+
+        '<h4 style="font-size:12px;margin:16px 0 6px">'+(sel==='Malaysia'?L({en:'Top Nabati SKUs',id:'Top SKU Nabati'}):L({en:'Top category SKUs (Nabati-led)',id:'Top SKU kategori (dipimpin Nabati)'}))+'</h4>'+sTab+
+        '<h4 style="font-size:12px;margin:16px 0 6px">'+L({en:'Channel — distribution vs demand',id:'Channel — distribusi vs demand'})+'</h4>'+cTab+
+        '<div class="note-strip" style="margin-top:12px;border:1px solid var(--border);border-radius:9px"><div>'+L(M.note)+'</div></div></div>';
+    }
+    var detailCard=card(M.flag, sel+' — '+L(M.cat), M.period+' · '+L(M.role), null, detail, switcher);
+    var idBlock = sel==='Indonesia' ? idAudit : '';
+    var faRows=FLAVARCH.map(function(x){ return '<tr><td><b>'+L(x.f)+'</b></td><td>'+L(x.id_)+'</td><td>'+L(x.my)+'</td><td>'+L(x.cn)+'</td><td><span class="chip '+x.tone+'">'+L(x.say)+'</span></td></tr>'; }).join('');
+    var faTab='<div class="table-wrap"><table class="dt" style="min-width:780px"><thead><tr><th>'+L({en:'Flavour',id:'Flavour'})+'</th><th>🇮🇩 '+L({en:'Indonesia Roll',id:'Roll Indonesia'})+'</th><th>🇲🇾 Malaysia</th><th>🇨🇳 China</th><th>'+L({en:'Strategic interpretation',id:'Interpretasi strategis'})+'</th></tr></thead><tbody>'+faRows+'</tbody></table></div>';
+    var faCard=card('🎨', L({en:'Flavour architecture — three markets combined',id:'Arsitektur flavour — tiga pasar digabung'}), L({en:'What to read beyond “what is trending”',id:'Yang dibaca di luar “rasa apa yang tren”'}), null,'<div class="card-body">'+faTab+'</div>');
+    function actCell(sig,stance){ var o=catOpp(sig,stance); return '<td class="mcell">'+actChip(catAction(sig,stance))+(o?'<div style="font-size:9px;color:var(--muted);font-family:\'JetBrains Mono\',monospace;margin-top:3px">'+o.score+'</div>':'')+'</td>'; }
+    var omRows=OPPMATRIX.map(function(x){ return '<tr><td><b>'+L(x.f)+'</b></td>'+actCell(x.sig.id,'opportunity')+actCell(x.sig.my,'capture')+actCell(x.sig.cn,'defend')+'</tr>'; }).join('');
+    var omTab='<div class="table-wrap"><table class="dt" style="min-width:560px"><thead><tr><th>'+L({en:'Flavour platform',id:'Platform flavour'})+'</th><th class="mcell">🇮🇩 Indonesia</th><th class="mcell">🇲🇾 Malaysia</th><th class="mcell">🇨🇳 China</th></tr></thead><tbody>'+omRows+'</tbody></table></div>';
+    var omLegend='<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px">'+actChip('K')+actChip('D')+actChip('T')+actChip('S')+'<span class="note" style="margin:0">'+L({en:'Badge = computed action · number = Category Opportunity Score (0–100).',id:'Badge = aksi terhitung · angka = Category Opportunity Score (0–100).'})+'</span></div>';
+    var omNote=L({en:'<b>Computed, not hand-set.</b> Score = 55% Attractiveness (growth & category size, weighted by each market’s stance: ID gain-share · MY capture · CN defend) + 45% Equity (Nabati strength). Action: <b>Stop</b> if declining with no equity · <b>Keep</b> if Nabati already owns the flavour (stance-aware) · <b>Develop</b> if growing with room to gain, or an innovation bet with real size · otherwise <b>Test</b>.',id:'<b>Dihitung, bukan hardcoded.</b> Skor = 55% Attractiveness (growth & ukuran kategori, dibobot stance tiap pasar: ID rebut-share · MY capture · CN defend) + 45% Equity (kekuatan Nabati). Aksi: <b>Stop</b> bila menurun tanpa equity · <b>Keep</b> bila Nabati sudah menguasai flavour (sesuai stance) · <b>Develop</b> bila tumbuh dengan ruang gain, atau innovation bet berukuran nyata · selain itu <b>Test</b>.'});
+    var omCard=card('🎯', L({en:'Regional Rolls Opportunity Matrix',id:'Matriks Opportunity Rolls Regional'}), L({en:'Keep / Develop / Test / Stop — computed per flavour, per country',id:'Pertahankan / Kembangkan / Tes / Hentikan — dihitung per flavour, per negara'}), omNote,'<div class="card-body">'+omTab+omLegend+'</div>');
+    var csRows=CSTRAT.map(function(x){ var bc=x.bad?' class="txt-red"':''; return '<tr><td><b>'+L(x.r)+'</b></td><td'+bc+'>'+L(x.id_)+'</td><td'+bc+'>'+L(x.my)+'</td><td'+bc+'>'+L(x.cn)+'</td></tr>'; }).join('');
+    var csTab='<div class="table-wrap"><table class="dt" style="min-width:720px"><thead><tr><th></th><th>🇮🇩 Indonesia</th><th>🇲🇾 Malaysia</th><th>🇨🇳 China</th></tr></thead><tbody>'+csRows+'</tbody></table></div>';
+    var csCard=card('♟️', L({en:'Country strategy for Rolls',id:'Strategi negara untuk Rolls'}), null, null,'<div class="card-body">'+csTab+'</div>');
+    var concl=card('📌', L({en:'Management conclusion',id:'Kesimpulan manajemen'}), null, null,
+      '<div class="card-body"><div class="callout"><span class="big">'+L({en:'Nabati should not run Rolls as one regional product strategy.',id:'Nabati tidak boleh menjalankan Rolls sebagai satu strategi produk regional.'})+'</span>'+
+      '<p style="margin:0 0 8px"><b>🇮🇩 Indonesia</b> — '+L({en:'Rolls has momentum and can gain category share, especially Rp500 GT singles and Strawberry Cheese / larger packs in MT.',id:'Rolls punya momentum dan bisa rebut share kategori, terutama single GT Rp500 dan Strawberry Cheese / pack besar di MT.'})+'</p>'+
+      '<p style="margin:0 0 8px"><b>🇲🇾 Malaysia</b> — '+L({en:'Strong distribution and brand scale, but growth is moving to Chocolate, Hazelnut and richer wafer experiences. The issue is portfolio competitiveness & velocity, not shelf access.',id:'Distribusi & skala brand kuat, tapi growth bergerak ke Coklat, Hazelnut & pengalaman wafer lebih kaya. Masalahnya daya saing portfolio & velocity, bukan akses rak.'})+'</p>'+
+      '<p style="margin:0 0 10px"><b>🇨🇳 China</b> — '+L({en:'Enormous equity (almost half of wafer flat) but category consumption is collapsing. Full hypermarket distribution is not saving sales — China needs demand rejuvenation, pack/channel redesign and stronger occasions, not more listings.',id:'Equity besar (hampir separuh wafer flat) tapi konsumsi kategori ambruk. Distribusi hypermarket penuh tak menyelamatkan sales — China butuh rejuvenasi demand, desain ulang pack/channel & okasi lebih kuat, bukan tambah listing.'})+'</p>'+
+      '<p style="margin:0"><b>'+L({en:'Three signals are consistent across all markets:',id:'Tiga sinyal konsisten di semua pasar:'})+'</b> '+L({en:'Chocolate is the safest scalable platform · Strawberry Cheese looks increasingly repeatable · novelty alone (Goguma) does not guarantee sustainable sales.',id:'Coklat adalah platform paling aman untuk di-scale · Strawberry Cheese makin terlihat repeatable · novelty saja (Goguma) tak menjamin sales berkelanjutan.'})+'</p></div>'+
+      '<div class="srcbar" style="margin-top:14px"><span>📎</span><span>'+L({en:'Nielsen/NIQ snack audits — Indonesia Wafer Roll (to Aug-26); Malaysia & China Wafer Flat (to Jun-26). Flavour figures for MY/CN are SKU-description proxies (≈92–96% of value classified), not official Nielsen FLAVOR. Directional context: Euromonitor (Snacks in Malaysia / China), NIQ (APAC snacking, two-consumers), and marketplace/social signals (Shopee MY, Reddit, SMZDM, JD, Nabati Food CN).',id:'Audit snack Nielsen/NIQ — Indonesia Wafer Roll (sampai Aug-26); Malaysia & China Wafer Flat (sampai Jun-26). Angka flavour MY/CN adalah proxy deskripsi SKU (≈92–96% nilai terklasifikasi), bukan dimensi FLAVOR Nielsen resmi. Konteks arah: Euromonitor (Snacks in Malaysia / China), NIQ (APAC snacking, two-consumers), & sinyal marketplace/sosial (Shopee MY, Reddit, SMZDM, JD, Nabati Food CN).'})+'</span></div></div>');
+    return caveat+execCard+detailCard+idBlock+faCard+omCard+csCard+concl;
+  }
+
+  /* ============ PAGE 5 — Launch Ranking ============ */
+  function page5(){
+    var evals= st.rankOpt==='single'?candidatesSingle():candidatesCombo();
+    var decMap={go:'b-go',pilot:'b-pilot',rework:'b-rework',hold:'b-hold',nogo:'b-nogo'};
+    var trs=evals.map(function(e,i){
+      var sku=e.members.map(function(m){return m.emoji+' '+m.name;}).join(' + ');
+      var row='<tr class="click'+(i===st.selRank?' sel':'')+'" data-i="'+i+'"><td class="num">'+(i+1)+'</td><td>'+sku+'</td>'+
+        '<td style="white-space:normal;min-width:150px">'+COUNTRY[e.country].flag+' '+e.country+' · '+e.channel+' · '+e.account.name+'</td>'+
+        '<td class="num"><b>'+e.oppFinal+'</b></td><td class="num">'+e.prob+'%</td>'+
+        '<td class="num '+(e.riskBand==='Low'?'txt-green':e.riskBand==='High'?'txt-red':'txt-amber')+'">'+t('risk'+e.riskBand)+'</td>'+
+        '<td class="num '+(e.conf==='High'?'txt-green':e.conf==='Low'?'txt-red':'txt-amber')+'">'+t('conf'+e.conf)+'</td>'+
+        '<td class="num '+(e.ebtPct>=0?'txt-green':'txt-red')+'">'+pct(e.ebtPct)+'</td>'+
+        '<td><span class="badge '+decMap[e.decision]+'">'+t('dec'+e.decision.charAt(0).toUpperCase()+e.decision.slice(1))+'</span></td></tr>';
+      return row;
+    }).join('');
+    window._rankEvals=evals;
+    var table='<div class="table-wrap"><table class="dt" id="rankT" style="min-width:760px"><thead><tr><th class="num">'+t('rkH')+'</th><th>'+t('skuH')+'</th><th>'+t('areaH')+'</th><th class="num">'+t('oppH')+'</th><th class="num">'+t('probH')+'</th><th class="num">'+t('riskH')+'</th><th class="num">'+t('confH')+'</th><th class="num">'+t('ebtH')+'</th><th>'+t('callH')+'</th></tr></thead><tbody>'+trs+'</tbody></table></div>';
+    var opt='<div class="seg" id="optSeg"><button data-o="single" class="'+(st.rankOpt==='single'?'on':'')+'">'+t('optSingle')+'</button><button data-o="combo" class="'+(st.rankOpt==='combo'?'on':'')+'">'+t('optCombo')+'</button></div>';
+    var best=evals[0], recHtml='';
+    if(best && (best.decision==='go'||best.decision==='pilot') && best.ebtPct>=0){
+      var sku=best.members.map(function(m){return m.name;}).join(' + ');
+      recHtml='<div class="tile hi" style="display:flex;gap:13px;align-items:center;margin-bottom:12px"><div style="font-size:26px">🏆</div><div><div class="tl">'+t('recFirst')+'</div><div style="font-weight:700;font-size:15px;font-family:Fraunces,serif;margin:2px 0">'+sku+' · '+areaLabel(best)+'</div><div style="font-size:11.5px;color:var(--ink-2)">Opportunity '+best.oppFinal+'/100 · '+t('expEbt')+' '+pct(best.ebtPct)+' · '+t('conf'+best.conf)+' confidence</div></div></div>';
+    } else { recHtml='<div class="tile warn" style="margin-bottom:12px"><div class="tl">'+t('recFirst')+'</div><div style="font-size:12px;color:var(--ink-2);margin-top:4px">'+t('recNone')+'</div></div>'; }
+    var slice=Object.keys(COUNTRY).map(function(k){var a=COUNTRY[k];return '<tr><td>'+a.flag+' '+k+'</td><td style="white-space:normal">'+L(a.gt)+'</td><td style="white-space:normal">'+L(a.mt)+'</td><td style="white-space:normal">'+L(a.uniq)+'</td></tr>';}).join('');
+    var sliceTab='<div class="table-wrap"><table class="dt" style="min-width:640px"><thead><tr><th>'+t('cC')+'</th><th>'+t('cG')+'</th><th>'+t('cM')+'</th><th>'+t('cU')+'</th></tr></thead><tbody>'+slice+'</tbody></table></div>';
+    var body='<div class="card-body">'+mapBlock()+
+      '<div style="margin-top:16px">'+recHtml+'<p class="note" style="margin:0 0 8px">'+t('clickRow')+'</p>'+table+'</div>'+
+      '<h4 style="font-size:12.5px;margin:16px 0 8px">'+t('sliceT')+'</h4>'+sliceTab+srcbar('rank')+'</div>';
+    return pagehead(t('p5t'),t('p5l'))+card('🌐',t('n5'),null,null,body,opt);
+  }
+
+  /* ============ PAGE 6 — Regional (ID Roll vs MY/CN Flat) ============ */
+  function usdM(n){ return 'US$'+dec(n)+'M'; }
+  function dChip(v){ var c=v<0?'delta-dn':'delta-up'; return '<span class="'+c+'">'+pctS(v)+'</span>'; }
+  function actChip(code){ var m={K:['good',{en:'Keep',id:'Pertahankan'}],D:['blue',{en:'Develop',id:'Kembangkan'}],T:['warn',{en:'Test',id:'Tes'}],S:['bad',{en:'Stop',id:'Hentikan'}]};
+    if(!m[code]) return '<span class="txt-muted">—</span>'; return '<span class="chip '+m[code][0]+'">'+L(m[code][1])+'</span>'; }
+  function mapBlock(){
+    var co=COUNTRY[st.mapCountry];
+    var best=candidatesSingle().filter(function(e){return e.country===st.mapCountry;}).sort(function(a,b){return b.oppFinal-a.oppFinal;})[0];
+    var score=best?best.oppFinal:0;
+    var fl=best&&best.repFl;
+    var mktSize = fl? fl.val*1e6 : null;
+    var capturable = (fl&&best)? fl.val*1e6/12*CAPRATE[best.channel]*co.capF*(best.account.capF||1)*12 : null;
+    var legend='<div class="map-legend"><span><i style="background:#1C8560"></i>≥70</span><span><i style="background:#B6873B"></i>50–69</span><span><i style="background:#C13A49"></i>&lt;50</span></div>';
+    function wrow(l,v,cls){ return '<div class="wrow"><span class="wl">'+l+'</span><span class="wv '+(cls||'')+'">'+v+'</span></div>'; }
+    var why = st.whyOpen ? '<div class="whyover" id="whyOver"><div class="wh"><span style="font-size:18px">'+co.flag+'</span><b style="flex:1">'+t('whyC',{c:st.mapCountry})+'</b><span class="ws" style="background:'+scoreColor(score)+'">'+score+'</span><button type="button" class="wclose" id="whyClose" aria-label="close">×</button></div>'+
+      wrow(t('wMktSize'), mktSize?rpShort(mktSize):'—')+
+      wrow(t('wCap'), capturable?rpShort(capturable):'—')+
+      wrow(t('wEbt'), best?pct(best.ebtPct):'—', best&&best.ebtPct>=0?'txt-green':'txt-red')+
+      wrow(t('probSucc'), best?best.prob+'%':'—')+
+      wrow(t('riskL'), best?t('risk'+best.riskBand):'—', best?(best.riskBand==='Low'?'txt-green':best.riskBand==='High'?'txt-red':'txt-amber'):'')+
+      wrow(t('confL'), best?t('conf'+best.conf):'—')+
+      '<div class="drill"><b>'+t('dCountry')+'</b> '+st.mapCountry+' › <b>'+t('dChannel')+'</b> '+(best?best.channel:'GT')+' › <b>'+t('dAccount')+'</b> '+(best?best.account.name:'—')+' › <b>'+t('dSku')+'</b> '+(best?best.members[0].name:'—')+'</div></div>' : '';
+    var hint = st.whyOpen ? '' : '<div class="map-hint">'+t('mapHint')+'</div>';
+    return '<div id="mapBox">'+legend+why+hint+'</div>';
+  }
+  function comboDetail(e,full){
+    if(!e) return '';
+    var decMap={go:'b-go',pilot:'b-pilot',rework:'b-rework',hold:'b-hold',nogo:'b-nogo'};
+    var sku=e.members.map(function(m){return m.emoji+' '+m.name;}).join(' + ');
+    var minGp=Math.min.apply(null,e.members.map(gpFull));
+    function sb(lab,wt,score,note){ return '<div class="sb"><span class="sbl">'+lab+'</span><span class="sbw">'+Math.round(wt*100)+'%</span><div class="sbt"><i style="width:'+score+'%"></i></div><span class="sbv">'+Math.round(score)+'</span></div>'+(full&&note?'<div class="sbnote">'+note+'</div>':''); }
+    function rb(lab,wt,rating,note){ return '<div class="sb"><span class="sbl">'+lab+'</span><span class="sbw">'+wt+'%</span><div class="sbt"><i style="width:'+(rating/5*100)+'%;background:'+(rating>=4?'var(--red)':rating>=3?'var(--gold)':'var(--green)')+'"></i></div><span class="sbv">'+rating+'/5</span></div>'+(full&&note?'<div class="sbnote">'+note+'</div>':''); }
+    var fl=e.repFl, ID=lang==='id';
+    var oppBars=sb(t('dMarket'),OPP_W.market,e.dims.market, fl?(ID?'Nielsen: '+L(fl.n)+' '+pctS(fl.chg)+', '+pct(fl.cont)+' pasar':'Nielsen: '+L(fl.n)+' '+pctS(fl.chg)+', '+pct(fl.cont)+' of market'):(ID?'white space — tak ada di audit':'white space — not in audit'))+
+      sb(t('dProduct'),OPP_W.product,e.dims.product, fl?(ID?'pertumbuhan rasa '+pctS(fl.chg):'flavour growth '+pctS(fl.chg)):(ID?'demand belum terbukti':'demand unproven'))+
+      sb(t('dChannel'),OPP_W.channel,e.dims.channel, (ID?'fit SIIP di '+e.channel+' '+e.country:'SIIP fit in '+e.channel+' '+e.country))+
+      sb(t('dFinancial'),OPP_W.financial,e.dims.financial, (ID?'EBT di skala '+pct(e.ebtPct)+' · GP@penuh '+pct(minGp):'EBT at scale '+pct(e.ebtPct)+' · GP@full '+pct(minGp)))+
+      sb(t('dExecution'),OPP_W.execution,e.dims.execution, (ID?'kapabilitas negara '+COUNTRY[e.country].exec+'/100':'country capability '+COUNTRY[e.country].exec+'/100'))+
+      sb(t('dEvidence'),OPP_W.evidence,e.dims.evidence, fl?(ID?'rank audit #'+fl.rank:'audit rank #'+fl.rank):(ID?'tanpa pembanding':'no comparable'));
+    var riskBars=rb(t('rMarket'),RISK_W.market,e.risk.market, ID?'ketidakpastian pasar '+e.country:e.country+' market uncertainty')+
+      rb(t('rRm'),RISK_W.rm,e.risk.rm, ID?'dari COGM: GP@penuh terendah '+pct(minGp):'from COGM: lowest GP@full '+pct(minGp))+
+      rb(t('rChannel'),RISK_W.channel,e.risk.channel, ID?'risiko channel/akun ('+e.channel+')':'channel/account risk ('+e.channel+')')+
+      rb(t('rExecution'),RISK_W.execution,e.risk.execution, ID?'kompleksitas eksekusi':'execution complexity')+
+      rb(t('rSupply'),RISK_W.supply,e.risk.supply, ID?'risiko pasokan':'supply risk')+
+      rb(t('rRegulatory'),RISK_W.regulatory,e.risk.regulatory, ID?'regulasi '+e.country:e.country+' regulatory')+
+      rb(t('rCompetitive'),RISK_W.competitive,e.risk.competitive, fl?(ID?'tekanan kompetitif ('+pctS(fl.chg)+')':'competitive pressure ('+pctS(fl.chg)+')'):'')+
+      rb(t('rCannibal'),RISK_W.cannibal,e.risk.cannibal, e.combo?(ID?'kanibalisasi antar-SKU (bundle)':'cross-SKU cannibalisation (bundle)'):(ID?'SKU tunggal':'single SKU'));
+    var gates=[['gCap',e.gates.capacity],['gEbt',e.gates.ebt],['gEvid',e.gates.evidence],['gCapability',e.gates.capability]];
+    var rationale=gates.map(function(g){return '<div class="ri"><span class="'+(g[1]?'ok':'no')+'">'+(g[1]?'✓':'✕')+'</span>'+t(g[0])+'</div>';}).join('');
+    // top risk driver
+    var drv=Object.keys(RISK_W).map(function(x){return [x,RISK_W[x]*e.risk[x]/5];}).sort(function(a,b){return b[1]-a[1];})[0];
+    var drvName=t('r'+drv[0].charAt(0).toUpperCase()+drv[0].slice(1));
+    var risk=e.riskBand==='Low'?'txt-green':e.riskBand==='Medium'?'txt-amber':'txt-red';
+    var conf=e.conf==='High'?'txt-green':e.conf==='Medium'?'txt-amber':'txt-red';
+    var head = full ? '' : '<div class="detail-head"><span class="de">'+e.members[0].emoji+'</span><div><h4>'+sku+' — '+areaLabel(e)+'</h4><div class="dsub">'+(e.repFl?L(e.repFl.n)+' '+pctS(e.repFl.chg):'white space')+' · '+t('nsScale')+' '+rpShort(e.nsar)+'</div></div><div class="dcall"><span class="badge '+decMap[e.decision]+'" style="font-size:12px;padding:4px 12px">'+t('dec'+e.decision.charAt(0).toUpperCase()+e.decision.slice(1))+'</span></div></div>';
+    return '<div class="'+(full?'':'detail')+'">'+head+
+      '<div class="'+(full?'':'detail-body')+'">'+(full?'<div style="margin-bottom:12px"><span class="badge '+decMap[e.decision]+'" style="font-size:12px;padding:4px 12px">'+t('dec'+e.decision.charAt(0).toUpperCase()+e.decision.slice(1))+'</span> <span class="txt-muted" style="font-size:11.5px">'+(e.repFl?L(e.repFl.n)+' '+pctS(e.repFl.chg):'white space')+' · '+t('nsScale')+' '+rpShort(e.nsar)+'</span></div>':'')+'<div class="kpi4">'+
+        '<div class="kpi"><div class="kv">'+e.oppFinal+'<span style="font-size:11px;color:var(--muted)">/100</span></div><div class="kl">'+t('oppScore')+'</div></div>'+
+        '<div class="kpi"><div class="kv">'+e.prob+'%</div><div class="kl">'+t('probSucc')+'</div></div>'+
+        '<div class="kpi"><div class="kv '+risk+'">'+t('risk'+e.riskBand)+'</div><div class="kl">'+t('riskL')+' '+e.riskTotal+'</div></div>'+
+        '<div class="kpi"><div class="kv '+conf+'">'+t('conf'+e.conf)+'</div><div class="kl">'+t('confL')+'</div></div>'+
+      '</div>'+
+      '<div class="grid2" style="margin-top:14px"><div><h4 style="font-size:12px;margin-bottom:8px">'+t('scoreBreak')+'</h4><div class="scorebars">'+oppBars+'</div>'+
+        '<p class="note">'+t('riskText',{t:e.riskTotal,b:t('risk'+e.riskBand),p:e.riskPenalty,d:drvName})+' '+t('probText',{r:e.readiness,c:dec(e.conf==='High'?0.9:e.conf==='Medium'?0.78:0.62,2),p:e.prob})+'</p></div>'+
+        '<div><h4 style="font-size:12px;margin-bottom:8px">'+t('riskBreak')+'</h4><div class="scorebars">'+riskBars+'</div></div></div>'+
+      '<div class="grid2" style="margin-top:14px"><div><h4 style="font-size:12px;margin-bottom:8px">'+t('rationale')+'</h4><div class="reasons">'+rationale+'</div></div>'+
+        '<div><h4 style="font-size:12px;margin-bottom:8px">'+t('expEbt')+'</h4><div class="tile '+(e.ebtPct>=0?'good':'bad')+'"><div class="tv '+(e.ebtPct>=0?'txt-green':'txt-red')+'">'+pct(e.ebtPct)+'</div><div class="tsub">'+t('nsScale')+' '+rpShort(e.nsar)+' · load '+pct(e.load)+'</div></div></div></div>'+
+      '</div></div>';
+  }
+
+  function srcbar(which){
+    var m={cogm:lang==='id'?'COGM dari workbook SIIP. Depre & OMC tetap/bulan → membengkak saat volume operasi < kapasitas. Edit angka langsung; tersimpan di browser. Upload workbook di tombol Data (kanan atas).':'COGM from the SIIP workbook. Depre & OMC fixed/month → balloon when operating volume < capacity. Edit numbers directly; stored in this browser. Upload a workbook via the Data button (top right).',
+      rev:lang==='id'?'SM/GA sebagai % dari baseline negara. COGM & volume dari tab COGM. Listing fee & PPN angka Rp absolut per akun MT; trading term %. PPN pass-through (tidak mengurangi EBT).':'SM/GA as % of the country baseline. COGM & volume from the COGM tab. Listing fee & VAT are absolute Rp per MT account; trading term is a %. VAT is pass-through (not reducing EBT).',
+      rank:lang==='id'?'Opportunity, Probability, Risk, Confidence, dan Decision mengikuti metode concept book. Kelayakan = EBT positif di dalam pasar capturable (Required Sales ≤ Capturable). Klik baris untuk rincian penuh.':'Opportunity, Probability, Risk, Confidence and Decision follow the concept-book method. Feasibility = positive EBT within the capturable market (Required Sales ≤ Capturable). Click a row for the full breakdown.'};
+    return '<div class="srcbar"><span>📎</span><span>'+m[which]+'</span></div>';
+  }
+
+  /* ============ globe ============ */
+  function initGlobe(){
+    var el=document.getElementById('mapBox'); if(!el) return;
+    var bestBy=bestOppByCountry();
+    var markers=Object.keys(COUNTRY).map(function(k){ var c=COUNTRY[k]; return {name:k,flag:c.flag,lat:c.lat,lng:c.lng,score:bestBy[k]||0}; });
+    if(typeof window.Globe==='undefined'){ mapFallback(el,markers); return; }
+    try{
+      var g=window.Globe()(el).globeImageUrl('https://cdn.jsdelivr.net/npm/three-globe/example/img/earth-blue-marble.jpg')
+        .bumpImageUrl('https://cdn.jsdelivr.net/npm/three-globe/example/img/earth-topology.png')
+        .backgroundColor('rgba(0,0,0,0)').showAtmosphere(true).atmosphereColor('#6aa0e0').atmosphereAltitude(0.18)
+        .width(el.clientWidth).height(el.clientHeight)
+        .htmlElementsData(markers).htmlLat(function(d){return d.lat;}).htmlLng(function(d){return d.lng;})
+        .htmlElement(function(d){ var col=scoreColor(d.score); var s=document.createElement('div'); s.style.cursor='pointer';
+          s.innerHTML='<div style="transform:translate(-50%,-100%);text-align:center"><div style="background:rgba(10,22,40,.85);border:1px solid '+col+';border-radius:999px;padding:3px 9px;white-space:nowrap;color:#fff;font-size:11px;font-weight:700">'+d.flag+' '+d.name+' <span style="color:'+col+'">'+d.score+'</span></div><div style="width:2px;height:12px;background:'+col+';margin:0 auto"></div></div>';
+          s.addEventListener('click',function(){ st.mapCountry=d.name; st.whyOpen=true; render(); });
+          return s; });
+      g.pointOfView({lat:12,lng:110,altitude:1.7},0);
+      try{ var ctr=g.controls(); ctr.autoRotate=false; ctr.enableZoom=false; }catch(e){}
+      globe=g;
+    }catch(e){ mapFallback(el,markers); }
+  }
+  function mapFallback(el,markers){
+    var pts={Indonesia:[320,205],Malaysia:[270,160],China:[340,80]};
+    var svg='<svg viewBox="0 0 640 300" preserveAspectRatio="xMidYMid slice" style="position:absolute;inset:0;width:100%;height:100%;z-index:1"><defs><radialGradient id="mg" cx="40%" cy="30%" r="80%"><stop offset="0%" stop-color="#1c4472"/><stop offset="60%" stop-color="#113258"/><stop offset="100%" stop-color="#081a30"/></radialGradient></defs>'+
+      '<rect width="640" height="300" fill="url(#mg)"/>'+
+      markers.map(function(m){var p=pts[m.name];var col=scoreColor(m.score);return '<g style="cursor:pointer" class="mk" data-c="'+m.name+'"><circle cx="'+p[0]+'" cy="'+p[1]+'" r="20" fill="'+col+'" opacity=".2"/><circle cx="'+p[0]+'" cy="'+p[1]+'" r="7" fill="'+col+'"/><text x="'+p[0]+'" y="'+(p[1]-14)+'" font-size="13" fill="#fff" text-anchor="middle" font-weight="700">'+m.flag+' '+m.name+' '+m.score+'</text></g>';}).join('')+'</svg>';
+    var old=el.querySelector('svg.mapfb'); if(old) old.remove();
+    el.insertAdjacentHTML('afterbegin', svg.replace('<svg ','<svg class="mapfb" '));
+    el.querySelectorAll('.mk').forEach(function(g){ g.addEventListener('click',function(){ st.mapCountry=g.getAttribute('data-c'); st.whyOpen=true; render(); }); });
+  }
+
+  /* ============ DATA SIDEBAR ============ */
+  function openSidebar(){
+    var sb=document.getElementById('sidebar'), sc=document.getElementById('scrim');
+    sb.innerHTML='<div class="sb-head"><div class="ico" style="width:28px;height:28px;border-radius:7px;background:var(--gold-soft);color:var(--gold);display:flex;align-items:center;justify-content:center">⬆</div><h3>'+t('dataT')+'</h3><button class="sb-close" id="sbClose">×</button></div>'+
+      '<div class="sb-body"><p class="note" style="margin:0 0 14px">'+t('dataL')+'</p>'+
+      '<div class="sb-sec"><h4>'+t('upCogmT')+'</h4><div class="drop" id="dropCogm">'+t('upCogmH')+'<input type="file" id="fileCogm" accept=".xlsx,.xls" class="hidden"></div><div id="msgCogm" class="note"></div></div>'+
+      '<div class="sb-sec"><h4>'+t('upPnlT')+'</h4><p class="note" style="margin:0 0 8px">'+t('upPnlH')+'</p><div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn ghost" id="dlTpl">'+t('dlTemplate')+'</button><button class="btn ghost" id="impPnlBtn">'+t('impPnl')+'</button><input type="file" id="filePnl" accept=".json" class="hidden"></div><div id="msgPnl" class="note"></div></div>'+
+      '<div class="sb-sec"><h4>JSON</h4><div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn ghost" id="expAll">'+t('expAll')+'</button><button class="btn ghost" id="impAllBtn">'+t('impAll')+'</button><input type="file" id="fileAll" accept=".json" class="hidden"><button class="btn ghost" id="resetAll">'+t('resetAll')+'</button></div></div>'+
+      '</div>';
+    sb.classList.add('open'); sb.setAttribute('aria-hidden','false'); sc.classList.add('open');
+    document.getElementById('sbClose').addEventListener('click',closeSidebar);
+    wireSidebar();
+  }
+  function closeSidebar(){ document.getElementById('sidebar').classList.remove('open'); document.getElementById('scrim').classList.remove('open'); }
+  function wireSidebar(){
+    var dc=document.getElementById('dropCogm'), fc=document.getElementById('fileCogm');
+    if(dc&&fc){ dc.addEventListener('click',function(){fc.click();});
+      ['dragover','dragenter'].forEach(function(ev){dc.addEventListener(ev,function(e){e.preventDefault();dc.classList.add('hot');});});
+      ['dragleave','drop'].forEach(function(ev){dc.addEventListener(ev,function(e){e.preventDefault();dc.classList.remove('hot');});});
+      dc.addEventListener('drop',function(e){if(e.dataTransfer.files[0])readWorkbook(e.dataTransfer.files[0]);});
+      fc.addEventListener('change',function(){if(fc.files[0])readWorkbook(fc.files[0]);}); }
+    var dlTpl=document.getElementById('dlTpl'); if(dlTpl) dlTpl.addEventListener('click',function(){ var tpl={countries:Object.keys(DATA.base).map(function(k){var b=DATA.base[k];return {code:k,name:b.name,nsar:b.nsar,cogs:b.cogs,sm1:b.sm1,sm2:b.sm2,sm3:b.sm3,sm4:b.sm4,ga1:b.ga1,ga2:b.ga2,ga3:b.ga3};})}; dl('npl-pnl-template.json',tpl); });
+    var impPnl=document.getElementById('impPnlBtn'), fp=document.getElementById('filePnl');
+    if(impPnl&&fp){ impPnl.addEventListener('click',function(){fp.click();}); fp.addEventListener('change',function(){ var f=fp.files[0]; if(!f)return; var rd=new FileReader(); rd.onload=function(){ try{ var o=JSON.parse(rd.result), n=0; (o.countries||[]).forEach(function(c){ if(DATA.base[c.code]){ ['nsar','cogs','sm1','sm2','sm3','sm4','ga1','ga2','ga3'].forEach(function(f){ if(c[f]!=null)DATA.base[c.code][f]=+c[f]; }); n++; } }); saveData(); var m=document.getElementById('msgPnl'); if(m){m.textContent=t('pnlOk',{n:n});m.className='note txt-green';} render(); }catch(e){ var m2=document.getElementById('msgPnl'); if(m2){m2.textContent=t('upErr');m2.className='note txt-red';} } }; rd.readAsText(f); }); }
+    var expAll=document.getElementById('expAll'); if(expAll) expAll.addEventListener('click',function(){ dl('npl-atomic-data.json',DATA); });
+    var impAll=document.getElementById('impAllBtn'), fa=document.getElementById('fileAll');
+    if(impAll&&fa){ impAll.addEventListener('click',function(){fa.click();}); fa.addEventListener('change',function(){ var f=fa.files[0]; if(!f)return; var rd=new FileReader(); rd.onload=function(){ try{ DATA=JSON.parse(rd.result); saveData(); render(); }catch(e){} }; rd.readAsText(f); }); }
+    var rs=document.getElementById('resetAll'); if(rs) rs.addEventListener('click',function(){ resetData(); render(); });
+  }
+  function dl(name,obj){ var a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([JSON.stringify(obj,null,2)],{type:'application/json'})); a.download=name; a.click(); }
+
+  /* ============ WORKBOOK INGEST — one upload cascades to every tab ============ */
+  var FLAVKEY={'KENTANG GORENG':'kentang','CHOCOLATE':'choco','ROASTED CORN':'corn','CHEESE':'cheese','SEAWEED':'seaweed','POTATO BARBEQUE':'bbq','SEA SALT':'seasalt','UBI':'ubi','PEDAS LEVEL 15':'pedas','KALDU AYAM':'kaldu'};
+  var FLAVID={kentang:'Kentang Goreng',choco:'Coklat',corn:'Jagung Bakar',cheese:'Keju',seaweed:'Seaweed (Nori)',bbq:'Potato Barbeque',seasalt:'Sea Salt',ubi:'Ubi',pedas:'Pedas Level 15',kaldu:'Kaldu Ayam'};
+  function titleCase(s){ return (''+s).toLowerCase().replace(/\b\w/g,function(c){return c.toUpperCase();}); }
+  function gridOf(wb,s){ return XLSX.utils.sheet_to_json(wb.Sheets[s],{header:1,blankrows:false,defval:''}); }
+  function gnum(x){ var n=parseFloat(x); return isFinite(n)?n:null; }
+  function detectWb(wb){ var s=wb.SheetNames; if(s.indexOf('COGM')>=0)return'cogm'; if(s.indexOf('FLAVOR')>=0&&s.indexOf('BRAND')>=0)return'nielsen'; if(s.indexOf('Calculator EBT')>=0||s.indexOf('MT Adjustments')>=0||s.indexOf('Summary')>=0)return'pnl'; return null; }
+
+  // COGM workbook → update matching NPL cost stacks (RM/PM/DL/Listrik/Gas/Depre/OMC per carton)
+  function ingestCogm(wb){
+    var g=gridOf(wb,'COGM'), n=0; DATA.cogmTable=[];
+    for(var i=1;i<g.length;i++){ var r=g[i]; if((''+r[1]).trim()==='')continue;
+      var row={sku:r[0], desc:(''+r[1]).toUpperCase(), depreF:gnum(r[2]),omcF:gnum(r[3]),dl:gnum(r[4]),listrik:gnum(r[5]),gas:gnum(r[6]),rm:gnum(r[7]),pm:gnum(r[8])};
+      DATA.cogmTable.push(row);
+      // map the 3.5g GT NPL rows onto the demo NPLs
+      var key=null; if(/NORI 3,5G GT/.test(row.desc))key='nori'; else if(/KARI 3,5G GT/.test(row.desc))key='kari'; else if(/KARAAGE 3,5G GT/.test(row.desc))key='karaage';
+      if(key){ var c=npl(key); if(c&&row.rm!=null){ c.cogm={depreF:row.depreF,omcF:row.omcF,dl:row.dl,listrik:row.listrik,gas:row.gas,rm:row.rm,pm:row.pm}; n++; } }
+    }
+    return n;
+  }
+  // Nielsen workbook → rebuild FLAVOR / BRAND / SKU / GT price-segments (persisted in DATA.nielsen)
+  function ingestNielsen(wb){
+    var F=gridOf(wb,'FLAVOR'), flavors=[];
+    for(var i=2;i<F.length;i++){ var r=F[i]; if(typeof r[0]!=='number')break; var nm=(''+r[1]).trim(), k=FLAVKEY[nm]||nm.toLowerCase().replace(/[^a-z]/g,'');
+      flavors.push({k:k, n:{en:titleCase(nm), id:FLAVID[k]||titleCase(nm)}, val:gnum(r[3]), chg:+(gnum(r[4])*100).toFixed(1), cont:+(gnum(r[5])*100).toFixed(2), rank:r[0]}); }
+    var B=gridOf(wb,'BRAND'), brands=[], marketT=null;
+    for(var j=3;j<B.length;j++){ var b=B[j], bn=(''+b[1]).trim(); if(!bn)continue; if(bn==='SNACK EXTRUDED'){ marketT=gnum(b[2]); continue; } if(typeof b[0]!=='number')continue;
+      brands.push({n:bn, val:gnum(b[2]), sh:gnum(b[7]), chg:gnum(b[3]), nd:gnum(b[12]), wd:gnum(b[15]), me:/SIIP/.test(bn)}); }
+    var S=gridOf(wb,'SKU'), skus=[];
+    for(var k2=3;k2<S.length;k2++){ var s=S[k2]; if(typeof s[0]!=='number')continue; skus.push({n:(''+s[1]).trim(), val:gnum(s[2]), price:gnum(s[12]), nd:gnum(s[15]), wd:gnum(s[18]), chg:gnum(s[3]), me:/SIIP/i.test(''+s[1])}); if(skus.length>=14)break; }
+    var SP=gridOf(wb,'Segment Performance'), seg=[];
+    for(var m=2;m<SP.length;m++){ var p=SP[m]; if((''+p[0]).trim()==='Indonesia General Trade'){ seg.push({tier:p[1], cont:+(gnum(p[2])*100).toFixed(1), val:gnum(p[3]), growth:+(gnum(p[4])*100).toFixed(1)}); } }
+    var obj={flavors:flavors, brands:brands, skus:skus, segmentsGT:seg, marketT:marketT, period:'MAT TY · uploaded'};
+    DATA.nielsen=obj; applyNielsen(obj);
+    return flavors.length+brands.length+skus.length;
+  }
+  function applyNielsen(o){ if(!o)return; if(o.flavors)NIELSEN.flavors=o.flavors; if(o.brands)NIELSEN.brands=o.brands; if(o.skus)NIELSEN.skus=o.skus; if(o.marketT)NIELSEN.marketT=o.marketT; if(o.segmentsGT)NIELSEN.segmentsGT=o.segmentsGT; if(o.period)NIELSEN.period=o.period; }
+  // PnL workbook → MT account fees (listing/trading/PPN) + per-country cost ratios
+  function ingestPnl(wb){
+    var n=0, CMAP={'IDM':'MT:IDM','CLUB 80':'MT:C80','SAT':'MT:ALF','REGULAR DB':'MT:DBR','99SM':'MT:99SM','MR DIY':'MT:DIY','2RM':'MT:MTI'};
+    if(wb.SheetNames.indexOf('MT Adjustments')>=0){ var A=gridOf(wb,'MT Adjustments');
+      for(var i=3;i<A.length;i++){ var r=A[i]; var ctry=(''+r[0]).trim(), acc=(''+r[1]).trim().toUpperCase();
+        if(['Indonesia','China','Malaysia'].indexOf(ctry)<0 || !acc || gnum(r[2])==null)continue;
+        var fk=null; Object.keys(CMAP).forEach(function(kw){ if(acc.indexOf(kw)>=0) fk=CMAP[kw]; });
+        if(!fk)continue; var f=acctFee(fk); f.list=(gnum(r[4])||0)*1e9; f.trade=+( (gnum(r[5])||0)*100 ).toFixed(2); f.ppn=(gnum(r[7])||0)*1e9; n++; }
+    }
+    if(wb.SheetNames.indexOf('Summary')>=0){ var S=gridOf(wb,'Summary'), bmap={'Indonesia':'id','China':'cn','Malaysia':'my'};
+      var seen={}; for(var j=3;j<S.length;j++){ var s=S[j]; var cc=(''+s[1]).trim(); var ctry2=(''+s[0]).trim(); var bk=bmap[ctry2];
+        if(!bk || seen[bk] || /GT/i.test(cc)===false)continue; // use each country's GT row once
+        var bse=DATA.base[bk]; if(!bse)continue; bse.nsar=1; bse.real=true;
+        bse.sm1=Math.abs(gnum(s[5])||0); bse.sm2=Math.abs(gnum(s[6])||0); bse.sm3=Math.abs(gnum(s[7])||0); bse.sm4=Math.abs(gnum(s[8])||0);
+        bse.ga1=Math.abs(gnum(s[10])||0); bse.cogs=1-(gnum(s[4])||0.45); seen[bk]=1; n++; }
+    }
+    return n;
+  }
+  function readWorkbook(file){
+    var msg=document.getElementById('msgCogm');
+    if(typeof XLSX==='undefined'){ if(msg){msg.textContent=t('upErr');msg.className='note txt-red';} return; }
+    var rd=new FileReader(); rd.onload=function(){ try{
+      var wb=XLSX.read(new Uint8Array(rd.result),{type:'array'}), kind=detectWb(wb), n=0, label='';
+      if(kind==='cogm'){ n=ingestCogm(wb); label=t('ingCogm',{n:n}); }
+      else if(kind==='nielsen'){ n=ingestNielsen(wb); label=t('ingNielsen'); }
+      else if(kind==='pnl'){ n=ingestPnl(wb); label=t('ingPnl',{n:n}); }
+      else { if(msg){msg.textContent=t('ingUnknown');msg.className='note txt-red';} return; }
+      saveData(); if(msg){msg.textContent=label;msg.className='note txt-green';} render();
+    }catch(e){ if(msg){msg.textContent=t('upErr')+' '+(e&&e.message?('('+e.message+')'):'');msg.className='note txt-red';} } };
+    rd.readAsArrayBuffer(file);
+  }
+
+  /* ============ render + wire ============ */
+  function render(){
+    document.querySelectorAll('[data-i18n]').forEach(function(el){ el.textContent=t(el.getAttribute('data-i18n')); });
+    document.documentElement.setAttribute('lang',lang);
+    renderNav(); globe=null;
+    if(st.page!==5) st.modal=null;
+    document.getElementById('view').innerHTML=[page1,page2,page3,page4,page5][st.page-1]();
+    wire();
+    renderModal();
+    if(st.page===5) setTimeout(initGlobe,30);
+  }
+  function wire(){
+    document.querySelectorAll('.npl[data-k]').forEach(function(el){ el.addEventListener('click',function(ev){ if(ev.target.closest('.mini-btn'))return; st.sel=el.getAttribute('data-k'); render(); }); });
+    document.querySelectorAll('[data-edit]').forEach(function(b){ b.addEventListener('click',function(ev){ ev.stopPropagation(); st.editKey=b.getAttribute('data-edit'); st.addOpen=false; render(); }); });
+    document.querySelectorAll('[data-del]').forEach(function(b){ b.addEventListener('click',function(ev){ ev.stopPropagation(); var k=b.getAttribute('data-del'); if(DATA.npls.length<=1)return; DATA.npls=DATA.npls.filter(function(x){return x.k!==k;}); if(st.sel===k)st.sel=DATA.npls[0].k; saveData(); render(); }); });
+    var add=document.getElementById('addSlot'); if(add) add.addEventListener('click',function(){ st.addOpen=true; st.editKey=null; render(); });
+    var aPhoto=document.getElementById('aPhoto'), aPD=document.getElementById('aPhotoDrop');
+    if(aPD&&aPhoto){ aPD.addEventListener('click',function(){aPhoto.click();}); aPhoto.addEventListener('change',function(){ var f=aPhoto.files[0]; if(!f)return; var rd=new FileReader(); rd.onload=function(){ window._npPhoto=rd.result; aPD.innerHTML='<img src="'+rd.result+'" class="photo-prev">'; aPD.appendChild(aPhoto); }; rd.readAsDataURL(f); }); }
+    var aSave=document.getElementById('aSave'); if(aSave) aSave.addEventListener('click',function(){
+      var name=(document.getElementById('aName').value||'New NPL').trim(), brand=document.getElementById('aBrand').value, cat=document.getElementById('aCat').value, rm=+document.getElementById('aRm').value||26000, price=+document.getElementById('aPrice').value||100000;
+      var photo = window._npPhoto || (st.editKey?npl(st.editKey).photo:null);
+      if(st.editKey){ var c=npl(st.editKey); c.name=name; c.brand=brand; c.nielsen=cat; c.cogm.rm=rm; c.price=price; c.photo=photo; st.editKey=null; }
+      else { var base=npl(DATA.npls[0].k).cogm; DATA.npls.push({k:'npl'+Date.now(), name:name, sku:'3.5g', emoji:'🆕', brand:brand, nielsen:cat, fullCap:95256, dbp:94734.973, price:price, photo:photo, vol:95256, cogm:{depreF:base.depreF,omcF:base.omcF,dl:base.dl,listrik:base.listrik,gas:base.gas,rm:rm,pm:base.pm}}); st.addOpen=false; }
+      window._npPhoto=null; saveData(); render(); });
+    var aC=document.getElementById('aCancel'); if(aC) aC.addEventListener('click',function(){ window._npPhoto=null; st.addOpen=false; st.editKey=null; render(); });
+    var sel=document.getElementById('nplSel'); if(sel) sel.addEventListener('change',function(){ st.sel=sel.value; render(); });
+    // cogm matrix
+    document.querySelectorAll('.matrix input[data-k]').forEach(function(inp){ inp.addEventListener('change',function(){ var c=npl(inp.getAttribute('data-k')), f=inp.getAttribute('data-f'), v=+inp.value||0;
+      if(f==='dbp')c.dbp=v; else if(f==='fullCap'){c.fullCap=v; if(c.vol>v)c.vol=v;} else if(f==='vol')c.vol=v; else c.cogm[f]=v; saveData(); render(); }); });
+    var sc=document.getElementById('sortChk'); if(sc) sc.addEventListener('change',function(){ st.sortBrand=sc.checked; render(); });
+    // EBT P&L (tab 3)
+    var bs=document.getElementById('baseSel'); if(bs) bs.addEventListener('change',function(){ st.base=bs.value; st.revAcc=null; render(); });
+    var chS=document.getElementById('chSeg'); if(chS) chS.querySelectorAll('button').forEach(function(b){ b.addEventListener('click',function(){ st.revChannel=b.getAttribute('data-c'); st.revAcc=null; render(); }); });
+    var acS=document.getElementById('accSel'); if(acS) acS.addEventListener('change',function(){ st.revAcc=acS.value; render(); });
+    var curFee=function(){ var accts=accountsOf(baseCountryName(st.base),st.revChannel); var a=accts.filter(function(x){return x.k===st.revAcc;})[0]||accts[0]; return acctFee(st.revChannel+':'+a.k); };
+    var fl1=document.getElementById('feeList'); if(fl1) fl1.addEventListener('change',function(){ curFee().list=+fl1.value||0; saveData(); render(); });
+    var ft1=document.getElementById('feeTrade'); if(ft1) ft1.addEventListener('change',function(){ curFee().trade=+ft1.value||0; saveData(); render(); });
+    var fp1=document.getElementById('feePpn'); if(fp1) fp1.addEventListener('change',function(){ curFee().ppn=+fp1.value||0; saveData(); render(); });
+    // Reverse-EBT → Nielsen bridge inputs
+    var et=document.getElementById('ebtTgt'); if(et) et.addEventListener('change',function(){ st.ebtTarget=+et.value||0; render(); });
+    var bs2=document.getElementById('brSrp'); if(bs2) bs2.addEventListener('change',function(){ npl(st.sel).srp=+bs2.value||500; saveData(); render(); });
+    var bp2=document.getElementById('brPpc'); if(bp2) bp2.addEventListener('change',function(){ npl(st.sel).ppc=+bp2.value||300; saveData(); render(); });
+    // rank
+    var opt=document.getElementById('optSeg'); if(opt) opt.querySelectorAll('button').forEach(function(b){ b.addEventListener('click',function(){ st.rankOpt=b.getAttribute('data-o'); st.selRank=-1; render(); }); });
+    var rt=document.getElementById('rankT'); if(rt) rt.querySelectorAll('tbody tr.click').forEach(function(tr){ tr.addEventListener('click',function(){ openModal(+tr.getAttribute('data-i')); }); });
+    var wc=document.getElementById('whyClose'); if(wc) wc.addEventListener('click',function(){ st.whyOpen=false; render(); });
+    // market switcher (tab 4)
+    var mkt=document.getElementById('mktSeg'); if(mkt) mkt.querySelectorAll('button').forEach(function(b){ b.addEventListener('click',function(){ st.mktSel=b.getAttribute('data-m'); render(); window.scrollTo(0,0); }); });
+    wireModal();
+  }
+  function openModal(i){ st.modal=i; render(); }
+  function closeModal(){ st.modal=null; render(); }
+  function wireModal(){
+    var mc=document.getElementById('modalClose'); if(mc) mc.addEventListener('click',closeModal);
+    var mw=document.getElementById('modalWrap'); if(mw) mw.addEventListener('click',function(e){ if(e.target===mw) closeModal(); });
+  }
+  function renderModal(){
+    var host=document.getElementById('modalHost'); if(!host) return;
+    if(st.modal==null || !window._rankEvals || !window._rankEvals[st.modal]){ host.innerHTML=''; return; }
+    var e=window._rankEvals[st.modal], sku=e.members.map(function(m){return m.emoji+' '+m.name;}).join(' + ');
+    host.innerHTML='<div class="modal-wrap" id="modalWrap"><div class="modal"><div class="modal-head"><span style="font-size:22px">'+e.members[0].emoji+'</span><div><h3>'+sku+'</h3><div style="font-size:11.5px;color:var(--muted)">'+areaLabel(e)+'</div></div><button class="modal-close" id="modalClose">×</button></div><div class="modal-body">'+comboDetail(e,true)+'</div></div></div>';
+    wireModal();
+  }
+
+  /* ============ theme + lang + data btn ============ */
+  function applyTheme(mode){ var r=document.documentElement; if(mode==='light')r.setAttribute('data-theme','light'); else if(mode==='dark')r.setAttribute('data-theme','dark'); else r.removeAttribute('data-theme');
+    var lbl=document.getElementById('themeLabel'); if(lbl)lbl.textContent=mode==='light'?(lang==='id'?'Terang':'Light'):mode==='dark'?(lang==='id'?'Gelap':'Dark'):(lang==='id'?'Sistem':'System'); try{localStorage.setItem('nple-theme',mode);}catch(e){} }
+  (function(){ var s='system'; try{s=localStorage.getItem('nple-theme')||'system';}catch(e){} applyTheme(s);
+    document.getElementById('themeBtn').addEventListener('click',function(){ var c='system'; try{c=localStorage.getItem('nple-theme')||'system';}catch(e){} applyTheme(c==='system'?'light':c==='light'?'dark':'system'); }); })();
+  document.getElementById('langBtn').addEventListener('click',function(){ lang=lang==='en'?'id':'en'; lset('nple-lang',lang); document.getElementById('langLabel').textContent=lang==='id'?'ID':'EN'; render(); });
+  document.getElementById('langLabel').textContent=lang==='id'?'ID':'EN';
+  document.getElementById('dataBtn').addEventListener('click',openSidebar);
+  document.getElementById('scrim').addEventListener('click',closeSidebar);
+
+  render();
+})();
+</script>
+</body>
+</html>
