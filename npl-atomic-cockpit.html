@@ -405,6 +405,8 @@
       momoWd:[48,46,44,44,44,42,41,41,38,37,37,39,40,41,43,43,41,41,38,36,33,33,31] }
   };
   function flavor(k){ for(var i=0;i<NIELSEN.flavors.length;i++) if(NIELSEN.flavors[i].k===k) return NIELSEN.flavors[i]; return null; }
+  // Re-apply a previously uploaded Nielsen workbook (persisted in DATA) so uploads survive reload.
+  if(typeof DATA!=='undefined' && DATA && DATA.nielsen){ try{ applyNielsen(DATA.nielsen); }catch(e){} }
 
   /* ============ REGIONAL — Indonesia (Roll) vs Malaysia & China (Flat) ============ */
   // CAVEAT: Indonesia = WAFER ROLL (to Aug-26). Malaysia & China = WAFER FLAT (to Jun-26).
@@ -636,6 +638,7 @@
     sortBrand:'Sort by brand', lDepre:'Depreciation', lOmc:'OMC', lDl:'Direct Labour', lListrik:'Electricity', lGas:'Gas', lRm:'RM (seasoning)', lPm:'PM (packaging)', lTot:'COGM / carton (full)', lDbp:'DBP (base price)', lFull:'Full capacity (ctn/mo)', lGpFull:'GP % at full', lVol:'Operating volume', lCogmVol:'COGM at volume', lGpVol:'GP % at volume', fixedMo:'fixed/mo',
     p3t:'Small but Confounding — per-SKU P&L', p3l:'Full P&L per SKU (columns) down to EBT, for a country / channel / MT account. Listing fee and VAT (PPN) are entered as absolute Rp amounts per MT account; trading term stays a %. Operating volume comes from the COGM tab.',
     baseline:'Baseline', nplCogm:'NPL COGM', target:'Target EBT', custom:'Custom', breakEven:'Break-even', channel:'Channel', accountL:'MT account', ebtPctRow:'EBT % of NSAR',
+    brT:'Market Feasibility — Reverse EBT → Nielsen', brSub:'Target EBT → required sell-out → Nielsen market share → feasibility', brItem:'Reality check', brTarget:'Target EBT %', brTargetL:'Target EBT', brSrp:'SRP / pack', brPpc:'Packs / carton', brStatus:'Solver', brSolved:'SOLVED', brNoSol:'NO SOLUTION', brCartons:'Required cartons / mo', brUtil:'Capacity utilization', brRetailM:'Retail-equiv / mo', brRetailY:'Retail-equiv / MAT', brCatShare:'Required category share', brSegShare:'Required price-seg share', brFlavShare:'Required flavour share', brFeas:'Market feasibility', brTier:'tier', brSrpNote:'SRP & packs/carton apply to {n} (the selected NPL). The bridge uses cartons × packs × SRP, period-matched — Net Sales is never divided into Nielsen retail value directly.', brNote:'<b>Cross-tab.</b> Target EBT % is solved (bisection, utilization-adjusted COGM from the COGM tab) into required cartons; the physical retail-equivalent is compared against the uploaded Nielsen market, price-segment and flavour. Feasibility: ≤2% = Conservative · ≤5% Reasonable · ≤12% Aggressive · else Not Feasible.',
     asis:'As-is', tobe:'To-be', ratio:'Ratio', item:'Item',
     iGross:'Gross Sales', iRet:'(−) Return', iN:'Net Sales (NSAR)', iC:'(−) COGM / COGS', iG:'GP1 — Gross Margin', iS1:'SM1 Sales Force', iS2:'SM2 Distribution', iS3:'SM3 Trade Spending', iS4:'SM4 Overhead', iGP2:'GP2 / Operating Profit', iGA1:'GA1 General & Admin', iGA2:'GA2 Finance', iGA3:'GA3 Other', iList:'Listing fee (MT)', iTrade:'Trading term (MT)', iPPN:'VAT / PPN (pass-through)', iE:'EBT',
     salesGap:'Net Sales change', ebtTobe:'EBT to-be', cogmR:'COGM ratio', decision:'Feasibility',
@@ -667,7 +670,7 @@
     recFirst:'Recommended first launch', recNone:'No combination reaches positive EBT within its capturable market yet — the leanest-COGM route is the pilot candidate.',
     // data sidebar
     dataT:'Data & Upload', dataL:'Uploads stay in this browser (localStorage). Replace the estimates with your real files.',
-    upCogmT:'COGM workbook (.xlsx)', upCogmH:'Reads Sheet1 rows 13–15 (Nori, Karaage, Kari) + capacity/DBP.',
+    upCogmT:'Upload workbook (.xlsx)', upCogmH:'Drop a COGM, Nielsen or P&L workbook — the type is auto-detected and every tab recalculates.', ingCogm:'COGM updated · {n} SKU cost stacks.', ingNielsen:'Nielsen market data updated — flavours, brands, SKUs & segments.', ingPnl:'P&L updated · {n} account fees & country baselines.', ingUnknown:'Workbook not recognised — expected a COGM, Nielsen or P&L file.',
     upPnlT:'P&L by country', upPnlH:'Template: country, Net Sales, COGS, SM1–4, GA1–3. Download, fill, then import. (Excel format tuned when you send the real file.)',
     dlTemplate:'Download template (JSON)', impPnl:'Import P&L', expAll:'Export all (JSON)', impAll:'Import all', resetAll:'Reset to defaults', upOk:'Updated {n} SKU.', pnlOk:'Updated {n} country baselines.', upErr:'Could not read the file — check the layout.',
     ctn:'ctn', bil:'B'
@@ -681,6 +684,7 @@
     sortBrand:'Urutkan per brand', lDepre:'Depresiasi', lOmc:'OMC', lDl:'Tenaga Kerja', lListrik:'Listrik', lGas:'Gas', lRm:'RM (bumbu)', lPm:'PM (kemasan)', lTot:'COGM / karton (penuh)', lDbp:'DBP (harga dasar)', lFull:'Kapasitas penuh (ktn/bln)', lGpFull:'GP % di penuh', lVol:'Volume operasi', lCogmVol:'COGM di volume', lGpVol:'GP % di volume', fixedMo:'tetap/bln',
     p3t:'Small but Confounding — P&L per SKU', p3l:'P&L lengkap per SKU (kolom) sampai EBT, untuk negara / channel / akun MT. Listing fee & PPN diisi sebagai angka Rp absolut per akun MT; trading term tetap %. Volume operasi diambil dari tab COGM.',
     baseline:'Baseline', nplCogm:'COGM NPL', target:'Target EBT', custom:'Custom', breakEven:'Break-even', channel:'Channel', accountL:'Akun MT', ebtPctRow:'EBT % dari NSAR',
+    brT:'Kelayakan Pasar — Reverse EBT → Nielsen', brSub:'Target EBT → sell-out dibutuhkan → market share Nielsen → kelayakan', brItem:'Reality check', brTarget:'Target EBT %', brTargetL:'Target EBT', brSrp:'SRP / pack', brPpc:'Pack / karton', brStatus:'Solver', brSolved:'SOLVED', brNoSol:'TAK ADA SOLUSI', brCartons:'Karton dibutuhkan / bln', brUtil:'Utilisasi kapasitas', brRetailM:'Retail-equiv / bln', brRetailY:'Retail-equiv / MAT', brCatShare:'Required share kategori', brSegShare:'Required share seg-harga', brFlavShare:'Required share flavour', brFeas:'Kelayakan pasar', brTier:'tier', brSrpNote:'SRP & pack/karton berlaku untuk {n} (NPL terpilih). Bridge pakai karton × pack × SRP, period-matched — Net Sales tak pernah dibagi langsung ke nilai retail Nielsen.', brNote:'<b>Lintas-tab.</b> Target EBT % di-solve (bisection, COGM tersesuaikan utilisasi dari tab COGM) jadi karton dibutuhkan; retail-equivalent fisiknya dibandingkan ke pasar, segmen harga & flavour Nielsen yang di-upload. Kelayakan: ≤2% = Konservatif · ≤5% Wajar · ≤12% Agresif · selain itu Tak Layak.',
     asis:'As-is', tobe:'To-be', ratio:'Rasio', item:'Item',
     iGross:'Penjualan Kotor', iRet:'(−) Retur', iN:'Net Sales (NSAR)', iC:'(−) COGM / COGS', iG:'GP1 — Margin Kotor', iS1:'SM1 Tenaga Penjual', iS2:'SM2 Distribusi', iS3:'SM3 Trade Spending', iS4:'SM4 Overhead', iGP2:'GP2 / Laba Operasi', iGA1:'GA1 Umum & Admin', iGA2:'GA2 Keuangan', iGA3:'GA3 Lainnya', iList:'Listing fee (MT)', iTrade:'Trading term (MT)', iPPN:'PPN (pass-through)', iE:'EBT',
     salesGap:'Perubahan Net Sales', ebtTobe:'EBT to-be', cogmR:'Rasio COGM', decision:'Kelayakan',
@@ -711,7 +715,7 @@
     riskLow:'Rendah', riskMedium:'Sedang', riskHigh:'Tinggi', confHigh:'Tinggi', confMedium:'Sedang', confLow:'Rendah',
     recFirst:'Rekomendasi launch pertama', recNone:'Belum ada kombinasi yang mencapai EBT positif di dalam pasar capturable-nya — rute COGM paling ramping jadi kandidat pilot.',
     dataT:'Data & Upload', dataL:'Upload tersimpan di browser ini (localStorage). Ganti estimasi dengan file asli-mu.',
-    upCogmT:'Workbook COGM (.xlsx)', upCogmH:'Membaca Sheet1 baris 13–15 (Nori, Karaage, Kari) + kapasitas/DBP.',
+    upCogmT:'Upload workbook (.xlsx)', upCogmH:'Taruh workbook COGM, Nielsen atau P&L — tipenya terdeteksi otomatis dan semua Tab dihitung ulang.', ingCogm:'COGM diperbarui · {n} cost stack SKU.', ingNielsen:'Data pasar Nielsen diperbarui — flavour, brand, SKU & segmen.', ingPnl:'P&L diperbarui · {n} fee akun & baseline negara.', ingUnknown:'Workbook tak dikenali — diharapkan file COGM, Nielsen atau P&L.',
     upPnlT:'P&L per negara', upPnlH:'Template: country, Net Sales, COGS, SM1–4, GA1–3. Download, isi, lalu import. (Format Excel disesuaikan saat kamu kirim file asli.)',
     dlTemplate:'Download template (JSON)', impPnl:'Import P&L', expAll:'Export semua (JSON)', impAll:'Import semua', resetAll:'Reset ke default', upOk:'Memperbarui {n} SKU.', pnlOk:'Memperbarui {n} baseline negara.', upErr:'Gagal membaca file — cek layout.',
     ctn:'ktn', bil:'M'
@@ -727,7 +731,7 @@
   function pctS(n){ return (n<0?'−':'+')+dec(Math.abs(n))+'%'; }
   function scoreColor(s){ return s>=70?'var(--green)':s>=50?'var(--gold)':'var(--red)'; }
 
-  var st={ page:1, sel:'nori', base:'id', revChannel:'MT', revAcc:null, rankOpt:'single', selRank:-1, mapCountry:'Indonesia', whyOpen:false, mktSel:'Indonesia', addOpen:false, editKey:null, modal:null };
+  var st={ page:1, sel:'nori', base:'id', revChannel:'MT', revAcc:null, ebtTarget:0, rankOpt:'single', selRank:-1, mapCountry:'Indonesia', whyOpen:false, mktSel:'Indonesia', addOpen:false, editKey:null, modal:null };
   var globe=null;
 
   /* ============ NAV ============ */
@@ -806,6 +810,50 @@
     var ebt=gp2-ga1-ga2-ga3-list-trade;
     return {nsar:nsar,cogm:cogm,gp1:gp1,sm1:sm1,sm2:sm2,sm3:sm3,sm4:sm4,gp2:gp2,ga1:ga1,ga2:ga2,ga3:ga3,list:list,trade:trade,ppn:ppn,ebt:ebt,ebtPct:ebt/nsar*100};
   }
+
+  /* ===== Reverse EBT → retail bridge → Nielsen market reality (ATOMIC logic) ===== */
+  // EBT % at carton volume v, using the current P&L structure + utilization-adjusted COGM.
+  function ebtPctAtVol(c,b,mt,fees,v){
+    var nsar=v*c.dbp, cogm=v*cogmAt(v,c), gp1=nsar-cogm; function r(x){ return b[x]/b.nsar; }
+    var sm=(r('sm1')+r('sm2')+r('sm3')+r('sm4'))*nsar, gp2=gp1-sm;
+    var ga=(r('ga1')+r('ga2')+r('ga3'))*nsar, list=mt?fees.list:0, trade=mt?fees.trade/100*nsar:0;
+    return (gp2-ga-list-trade)/nsar*100;
+  }
+  // Bisection solver: smallest monthly cartons that reaches the target EBT % within capacity.
+  function solveReqCartons(c,b,mt,fees,targetPct){
+    var cap=c.fullCap, lo=Math.max(1,cap*0.005), hi=cap;
+    var eHi=ebtPctAtVol(c,b,mt,fees,hi);
+    if(eHi<targetPct-1e-9) return {status:'NOT_REACHABLE', cartons:cap, util:1, ebtPct:eHi};
+    if(ebtPctAtVol(c,b,mt,fees,lo)>=targetPct) { return {status:'SOLVED', cartons:lo, util:lo/cap, ebtPct:ebtPctAtVol(c,b,mt,fees,lo)}; }
+    for(var i=0;i<60;i++){ var mid=(lo+hi)/2; if(ebtPctAtVol(c,b,mt,fees,mid)>=targetPct) hi=mid; else lo=mid; }
+    return {status:'SOLVED', cartons:hi, util:hi/cap, ebtPct:ebtPctAtVol(c,b,mt,fees,hi)};
+  }
+  function srpOf(c){ return c.srp||500; } function ppcOf(c){ return c.ppc||300; }
+  // Physical retail bridge + Nielsen required-share + feasibility for one NPL.
+  function nielsenReality(c,b,mt,fees,targetPct){
+    var sol=solveReqCartons(c,b,mt,fees,targetPct);
+    var ppc=ppcOf(c), srp=srpOf(c);
+    var retailM=sol.cartons*ppc*srp, retailMAT=retailM*12;           // retail-equivalent at SRP
+    var catMkt=(NIELSEN.marketT||0)*1e6;                             // Nielsen market value (Rp)
+    var catShare=catMkt?retailMAT/catMkt*100:null;
+    // price-segment denominator (GT tiers from the uploaded Nielsen, matched to SRP)
+    var seg=null; if(NIELSEN.segmentsGT){ var tier=srp<=500?500:srp<=1000?1000:srp<=2000?2000:'3000 UP';
+      seg=NIELSEN.segmentsGT.filter(function(s){return ''+s.tier===''+tier;})[0]; }
+    var segShare=(seg&&seg.val)?retailMAT/(seg.val*1e6)*100:null;
+    var fl=flavor(c.nielsen), flavShare=(fl&&fl.val)?retailMAT/(fl.val*1e6)*100:null;
+    // feasibility classification (simplified from the ATOMIC spec §19)
+    var feas, fcls;
+    if(sol.status==='NOT_REACHABLE'){ feas='NOT FEASIBLE'; fcls='bad'; }
+    else if(sol.util>1){ feas='NOT FEASIBLE'; fcls='bad'; }
+    else if(segShare==null && catShare==null){ feas='INSUFFICIENT DATA'; fcls='warn'; }
+    else { var probe=segShare!=null?segShare:catShare;
+      if(probe<=2){ feas='CONSERVATIVE'; fcls='good'; }
+      else if(probe<=5){ feas='REASONABLE'; fcls='good'; }
+      else if(probe<=12){ feas='AGGRESSIVE'; fcls='warn'; }
+      else { feas='NOT FEASIBLE'; fcls='bad'; } }
+    return {sol:sol, retailM:retailM, retailMAT:retailMAT, catShare:catShare, seg:seg, segShare:segShare, flavShare:flavShare, feas:feas, fcls:fcls};
+  }
+
   function page3(){
     var b=DATA.base[st.base], mt=st.revChannel==='MT';
     var accts=accountsOf(baseCountryName(st.base), st.revChannel);
@@ -850,7 +898,34 @@
       '<div class="fld"><label>'+t('channel')+'</label>'+chSeg+'</div>'+
       '<div class="fld"><label>'+t('accountL')+'</label>'+accSel+'</div></div>'+
       feeRow+table+srcbar('rev')+'</div>';
-    return pagehead(t('p3t'),t('p3l'))+card('🧮',t('n3'),b.name+' · '+st.revChannel+' · '+acc.name,null,body);
+    return pagehead(t('p3t'),t('p3l'))+card('🧮',t('n3'),b.name+' · '+st.revChannel+' · '+acc.name,null,body)+bridgeCard(b,mt,fees,acc);
+  }
+  // Reverse-EBT → Nielsen bridge card (connects Tab 2 COGM, Tab 3 EBT target, Tab 4 Nielsen)
+  function bridgeCard(b,mt,fees,acc){
+    if(st.ebtTarget==null) st.ebtTarget=0;
+    var tgt=st.ebtTarget, list=DATA.npls.slice();
+    var R=list.map(function(c){return nielsenReality(c,b,mt,fees,tgt);});
+    function hrow(){ return '<tr><th style="text-align:left">'+t('brItem')+'</th>'+list.map(function(c){return '<th>'+c.emoji+' '+c.name+'</th>';}).join('')+'</tr>'; }
+    function row(lab,fn,cls){ return '<tr'+(cls?' class="'+cls+'"':'')+'><td class="lab">'+lab+'</td>'+R.map(fn).join('')+'</tr>'; }
+    function shc(v){ return v==null?'txt-muted':(v<=2?'txt-green':v<=5?'txt-amber':'txt-red'); }
+    var rows=
+      row(t('brTarget'),function(){return '<td class="num">'+pct(tgt)+'</td>';})+
+      row(t('brStatus'),function(r){return '<td class="num">'+(r.sol.status==='SOLVED'?'<span class="chip good">'+t('brSolved')+'</span>':'<span class="chip bad">'+t('brNoSol')+'</span>')+'</td>';})+
+      row(t('brCartons'),function(r){return '<td class="num">'+grp(r.sol.cartons)+'</td>';})+
+      row(t('brUtil'),function(r){return '<td class="num '+(r.sol.util>1?'txt-red':r.sol.util>0.95?'txt-amber':'txt-green')+'">'+pct(r.sol.util*100)+'</td>';})+
+      row(t('brRetailM'),function(r){return '<td class="num">'+rpShort(r.retailM)+'</td>';})+
+      row(t('brRetailY'),function(r){return '<td class="num">'+rpShort(r.retailMAT)+'</td>';})+
+      row(t('brCatShare'),function(r){return '<td class="num '+shc(r.catShare)+'">'+(r.catShare==null?'N/A':pct(r.catShare,2))+'</td>';})+
+      row(t('brSegShare'),function(r){return '<td class="num '+shc(r.segShare)+'">'+(r.segShare==null?'N/A':pct(r.segShare,2))+(r.seg?' <span class="txt-muted" style="font-size:9px">'+t('brTier')+' '+r.seg.tier+'</span>':'')+'</td>';})+
+      row(t('brFlavShare'),function(r){return '<td class="num '+shc(r.flavShare)+'">'+(r.flavShare==null?'N/A':pct(r.flavShare,2))+'</td>';})+
+      row(t('brFeas'),function(r){return '<td class="num"><span class="chip '+r.fcls+'">'+r.feas+'</span></td>';},'ebt');
+    var ctrl='<div class="selbar"><div class="fld"><label>'+t('brTargetL')+' %</label><input type="number" id="ebtTgt" value="'+tgt+'" step="1" style="width:90px"></div>'+
+      '<div class="fld"><label>'+t('brSrp')+' (Rp)</label><input type="number" id="brSrp" value="'+srpOf(npl(st.sel))+'" step="100" style="width:100px"></div>'+
+      '<div class="fld"><label>'+t('brPpc')+'</label><input type="number" id="brPpc" value="'+ppcOf(npl(st.sel))+'" step="10" style="width:90px"></div>'+
+      '<span class="note" style="margin:0;align-self:center">'+t('brSrpNote',{n:npl(st.sel).name})+'</span></div>';
+    var tbl='<div class="table-wrap" style="margin-top:12px"><table class="matrix"><thead>'+hrow()+'</thead><tbody>'+rows+'</tbody></table></div>';
+    var note=t('brNote');
+    return card('🔗',t('brT'),t('brSub'),note,'<div class="card-body">'+ctrl+tbl+'</div>');
   }
 
   /* ============ PAGE 4 — Market Share grouped by brand category ============ */
@@ -1157,8 +1232,8 @@
     if(dc&&fc){ dc.addEventListener('click',function(){fc.click();});
       ['dragover','dragenter'].forEach(function(ev){dc.addEventListener(ev,function(e){e.preventDefault();dc.classList.add('hot');});});
       ['dragleave','drop'].forEach(function(ev){dc.addEventListener(ev,function(e){e.preventDefault();dc.classList.remove('hot');});});
-      dc.addEventListener('drop',function(e){if(e.dataTransfer.files[0])readCogm(e.dataTransfer.files[0]);});
-      fc.addEventListener('change',function(){if(fc.files[0])readCogm(fc.files[0]);}); }
+      dc.addEventListener('drop',function(e){if(e.dataTransfer.files[0])readWorkbook(e.dataTransfer.files[0]);});
+      fc.addEventListener('change',function(){if(fc.files[0])readWorkbook(fc.files[0]);}); }
     var dlTpl=document.getElementById('dlTpl'); if(dlTpl) dlTpl.addEventListener('click',function(){ var tpl={countries:Object.keys(DATA.base).map(function(k){var b=DATA.base[k];return {code:k,name:b.name,nsar:b.nsar,cogs:b.cogs,sm1:b.sm1,sm2:b.sm2,sm3:b.sm3,sm4:b.sm4,ga1:b.ga1,ga2:b.ga2,ga3:b.ga3};})}; dl('npl-pnl-template.json',tpl); });
     var impPnl=document.getElementById('impPnlBtn'), fp=document.getElementById('filePnl');
     if(impPnl&&fp){ impPnl.addEventListener('click',function(){fp.click();}); fp.addEventListener('change',function(){ var f=fp.files[0]; if(!f)return; var rd=new FileReader(); rd.onload=function(){ try{ var o=JSON.parse(rd.result), n=0; (o.countries||[]).forEach(function(c){ if(DATA.base[c.code]){ ['nsar','cogs','sm1','sm2','sm3','sm4','ga1','ga2','ga3'].forEach(function(f){ if(c[f]!=null)DATA.base[c.code][f]=+c[f]; }); n++; } }); saveData(); var m=document.getElementById('msgPnl'); if(m){m.textContent=t('pnlOk',{n:n});m.className='note txt-green';} render(); }catch(e){ var m2=document.getElementById('msgPnl'); if(m2){m2.textContent=t('upErr');m2.className='note txt-red';} } }; rd.readAsText(f); }); }
@@ -1168,17 +1243,73 @@
     var rs=document.getElementById('resetAll'); if(rs) rs.addEventListener('click',function(){ resetData(); render(); });
   }
   function dl(name,obj){ var a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([JSON.stringify(obj,null,2)],{type:'application/json'})); a.download=name; a.click(); }
-  function readCogm(file){
+
+  /* ============ WORKBOOK INGEST — one upload cascades to every tab ============ */
+  var FLAVKEY={'KENTANG GORENG':'kentang','CHOCOLATE':'choco','ROASTED CORN':'corn','CHEESE':'cheese','SEAWEED':'seaweed','POTATO BARBEQUE':'bbq','SEA SALT':'seasalt','UBI':'ubi','PEDAS LEVEL 15':'pedas','KALDU AYAM':'kaldu'};
+  var FLAVID={kentang:'Kentang Goreng',choco:'Coklat',corn:'Jagung Bakar',cheese:'Keju',seaweed:'Seaweed (Nori)',bbq:'Potato Barbeque',seasalt:'Sea Salt',ubi:'Ubi',pedas:'Pedas Level 15',kaldu:'Kaldu Ayam'};
+  function titleCase(s){ return (''+s).toLowerCase().replace(/\b\w/g,function(c){return c.toUpperCase();}); }
+  function gridOf(wb,s){ return XLSX.utils.sheet_to_json(wb.Sheets[s],{header:1,blankrows:false,defval:''}); }
+  function gnum(x){ var n=parseFloat(x); return isFinite(n)?n:null; }
+  function detectWb(wb){ var s=wb.SheetNames; if(s.indexOf('COGM')>=0)return'cogm'; if(s.indexOf('FLAVOR')>=0&&s.indexOf('BRAND')>=0)return'nielsen'; if(s.indexOf('Calculator EBT')>=0||s.indexOf('MT Adjustments')>=0||s.indexOf('Summary')>=0)return'pnl'; return null; }
+
+  // COGM workbook → update matching NPL cost stacks (RM/PM/DL/Listrik/Gas/Depre/OMC per carton)
+  function ingestCogm(wb){
+    var g=gridOf(wb,'COGM'), n=0; DATA.cogmTable=[];
+    for(var i=1;i<g.length;i++){ var r=g[i]; if((''+r[1]).trim()==='')continue;
+      var row={sku:r[0], desc:(''+r[1]).toUpperCase(), depreF:gnum(r[2]),omcF:gnum(r[3]),dl:gnum(r[4]),listrik:gnum(r[5]),gas:gnum(r[6]),rm:gnum(r[7]),pm:gnum(r[8])};
+      DATA.cogmTable.push(row);
+      // map the 3.5g GT NPL rows onto the demo NPLs
+      var key=null; if(/NORI 3,5G GT/.test(row.desc))key='nori'; else if(/KARI 3,5G GT/.test(row.desc))key='kari'; else if(/KARAAGE 3,5G GT/.test(row.desc))key='karaage';
+      if(key){ var c=npl(key); if(c&&row.rm!=null){ c.cogm={depreF:row.depreF,omcF:row.omcF,dl:row.dl,listrik:row.listrik,gas:row.gas,rm:row.rm,pm:row.pm}; n++; } }
+    }
+    return n;
+  }
+  // Nielsen workbook → rebuild FLAVOR / BRAND / SKU / GT price-segments (persisted in DATA.nielsen)
+  function ingestNielsen(wb){
+    var F=gridOf(wb,'FLAVOR'), flavors=[];
+    for(var i=2;i<F.length;i++){ var r=F[i]; if(typeof r[0]!=='number')break; var nm=(''+r[1]).trim(), k=FLAVKEY[nm]||nm.toLowerCase().replace(/[^a-z]/g,'');
+      flavors.push({k:k, n:{en:titleCase(nm), id:FLAVID[k]||titleCase(nm)}, val:gnum(r[3]), chg:+(gnum(r[4])*100).toFixed(1), cont:+(gnum(r[5])*100).toFixed(2), rank:r[0]}); }
+    var B=gridOf(wb,'BRAND'), brands=[], marketT=null;
+    for(var j=3;j<B.length;j++){ var b=B[j], bn=(''+b[1]).trim(); if(!bn)continue; if(bn==='SNACK EXTRUDED'){ marketT=gnum(b[2]); continue; } if(typeof b[0]!=='number')continue;
+      brands.push({n:bn, val:gnum(b[2]), sh:gnum(b[7]), chg:gnum(b[3]), nd:gnum(b[12]), wd:gnum(b[15]), me:/SIIP/.test(bn)}); }
+    var S=gridOf(wb,'SKU'), skus=[];
+    for(var k2=3;k2<S.length;k2++){ var s=S[k2]; if(typeof s[0]!=='number')continue; skus.push({n:(''+s[1]).trim(), val:gnum(s[2]), price:gnum(s[12]), nd:gnum(s[15]), wd:gnum(s[18]), chg:gnum(s[3]), me:/SIIP/i.test(''+s[1])}); if(skus.length>=14)break; }
+    var SP=gridOf(wb,'Segment Performance'), seg=[];
+    for(var m=2;m<SP.length;m++){ var p=SP[m]; if((''+p[0]).trim()==='Indonesia General Trade'){ seg.push({tier:p[1], cont:+(gnum(p[2])*100).toFixed(1), val:gnum(p[3]), growth:+(gnum(p[4])*100).toFixed(1)}); } }
+    var obj={flavors:flavors, brands:brands, skus:skus, segmentsGT:seg, marketT:marketT, period:'MAT TY · uploaded'};
+    DATA.nielsen=obj; applyNielsen(obj);
+    return flavors.length+brands.length+skus.length;
+  }
+  function applyNielsen(o){ if(!o)return; if(o.flavors)NIELSEN.flavors=o.flavors; if(o.brands)NIELSEN.brands=o.brands; if(o.skus)NIELSEN.skus=o.skus; if(o.marketT)NIELSEN.marketT=o.marketT; if(o.segmentsGT)NIELSEN.segmentsGT=o.segmentsGT; if(o.period)NIELSEN.period=o.period; }
+  // PnL workbook → MT account fees (listing/trading/PPN) + per-country cost ratios
+  function ingestPnl(wb){
+    var n=0, CMAP={'IDM':'MT:IDM','CLUB 80':'MT:C80','SAT':'MT:ALF','REGULAR DB':'MT:DBR','99SM':'MT:99SM','MR DIY':'MT:DIY','2RM':'MT:MTI'};
+    if(wb.SheetNames.indexOf('MT Adjustments')>=0){ var A=gridOf(wb,'MT Adjustments');
+      for(var i=3;i<A.length;i++){ var r=A[i]; var ctry=(''+r[0]).trim(), acc=(''+r[1]).trim().toUpperCase();
+        if(['Indonesia','China','Malaysia'].indexOf(ctry)<0 || !acc || gnum(r[2])==null)continue;
+        var fk=null; Object.keys(CMAP).forEach(function(kw){ if(acc.indexOf(kw)>=0) fk=CMAP[kw]; });
+        if(!fk)continue; var f=acctFee(fk); f.list=(gnum(r[4])||0)*1e9; f.trade=+( (gnum(r[5])||0)*100 ).toFixed(2); f.ppn=(gnum(r[7])||0)*1e9; n++; }
+    }
+    if(wb.SheetNames.indexOf('Summary')>=0){ var S=gridOf(wb,'Summary'), bmap={'Indonesia':'id','China':'cn','Malaysia':'my'};
+      var seen={}; for(var j=3;j<S.length;j++){ var s=S[j]; var cc=(''+s[1]).trim(); var ctry2=(''+s[0]).trim(); var bk=bmap[ctry2];
+        if(!bk || seen[bk] || /GT/i.test(cc)===false)continue; // use each country's GT row once
+        var bse=DATA.base[bk]; if(!bse)continue; bse.nsar=1; bse.real=true;
+        bse.sm1=Math.abs(gnum(s[5])||0); bse.sm2=Math.abs(gnum(s[6])||0); bse.sm3=Math.abs(gnum(s[7])||0); bse.sm4=Math.abs(gnum(s[8])||0);
+        bse.ga1=Math.abs(gnum(s[10])||0); bse.cogs=1-(gnum(s[4])||0.45); seen[bk]=1; n++; }
+    }
+    return n;
+  }
+  function readWorkbook(file){
     var msg=document.getElementById('msgCogm');
     if(typeof XLSX==='undefined'){ if(msg){msg.textContent=t('upErr');msg.className='note txt-red';} return; }
     var rd=new FileReader(); rd.onload=function(){ try{
-      var wb=XLSX.read(new Uint8Array(rd.result),{type:'array'}), ws=wb.Sheets['Sheet1']||wb.Sheets[wb.SheetNames[0]];
-      function cell(a){var c=ws[a];return c?+c.v:null;}
-      var fullCap=cell('O4'), dbp=cell('L4'); var rowMap={13:'nori',14:'karaage',15:'kari'}, n=0;
-      Object.keys(rowMap).forEach(function(r){ var c=npl(rowMap[r]); if(!c)return; var rm=cell('I'+r);
-        if(rm!=null){ c.cogm={depreF:cell('D'+r),omcF:cell('E'+r),dl:cell('F'+r),listrik:cell('G'+r),gas:cell('H'+r),rm:rm,pm:cell('J'+r)}; if(fullCap)c.fullCap=fullCap; if(dbp)c.dbp=dbp; c.vol=c.fullCap; n++; } });
-      saveData(); if(msg){msg.textContent=t('upOk',{n:n});msg.className='note txt-green';} render();
-    }catch(e){ if(msg){msg.textContent=t('upErr');msg.className='note txt-red';} } };
+      var wb=XLSX.read(new Uint8Array(rd.result),{type:'array'}), kind=detectWb(wb), n=0, label='';
+      if(kind==='cogm'){ n=ingestCogm(wb); label=t('ingCogm',{n:n}); }
+      else if(kind==='nielsen'){ n=ingestNielsen(wb); label=t('ingNielsen'); }
+      else if(kind==='pnl'){ n=ingestPnl(wb); label=t('ingPnl',{n:n}); }
+      else { if(msg){msg.textContent=t('ingUnknown');msg.className='note txt-red';} return; }
+      saveData(); if(msg){msg.textContent=label;msg.className='note txt-green';} render();
+    }catch(e){ if(msg){msg.textContent=t('upErr')+' '+(e&&e.message?('('+e.message+')'):'');msg.className='note txt-red';} } };
     rd.readAsArrayBuffer(file);
   }
 
@@ -1220,6 +1351,10 @@
     var fl1=document.getElementById('feeList'); if(fl1) fl1.addEventListener('change',function(){ curFee().list=+fl1.value||0; saveData(); render(); });
     var ft1=document.getElementById('feeTrade'); if(ft1) ft1.addEventListener('change',function(){ curFee().trade=+ft1.value||0; saveData(); render(); });
     var fp1=document.getElementById('feePpn'); if(fp1) fp1.addEventListener('change',function(){ curFee().ppn=+fp1.value||0; saveData(); render(); });
+    // Reverse-EBT → Nielsen bridge inputs
+    var et=document.getElementById('ebtTgt'); if(et) et.addEventListener('change',function(){ st.ebtTarget=+et.value||0; render(); });
+    var bs2=document.getElementById('brSrp'); if(bs2) bs2.addEventListener('change',function(){ npl(st.sel).srp=+bs2.value||500; saveData(); render(); });
+    var bp2=document.getElementById('brPpc'); if(bp2) bp2.addEventListener('change',function(){ npl(st.sel).ppc=+bp2.value||300; saveData(); render(); });
     // rank
     var opt=document.getElementById('optSeg'); if(opt) opt.querySelectorAll('button').forEach(function(b){ b.addEventListener('click',function(){ st.rankOpt=b.getAttribute('data-o'); st.selRank=-1; render(); }); });
     var rt=document.getElementById('rankT'); if(rt) rt.querySelectorAll('tbody tr.click').forEach(function(tr){ tr.addEventListener('click',function(){ openModal(+tr.getAttribute('data-i')); }); });

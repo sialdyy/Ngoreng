@@ -156,6 +156,36 @@ Where each SKU should launch, scored by the concept-book method.
 
 ---
 
+## Reactive data engine (upload → every tab recomputes)
+
+The **Data** button accepts any of three workbooks; the type is auto-detected from its
+sheet names and ingested into the model, after which **every tab recomputes**:
+
+| Workbook | Detected by | Updates |
+|---|---|---|
+| **COGM** (`COGM_SIIP…xlsx`) | sheet `COGM` | per-SKU cost stacks (Depre/OMC/DL/Listrik/Gas/RM/PM) → Tab 2, 3, 5 |
+| **Nielsen** (`Rekap_Nielsen_Snack.xlsx`) | sheets `FLAVOR` + `BRAND` | flavours, brands, SKUs (with ND/WD), GT price-segments, market total → Tab 4, bridge |
+| **P&L** (`PnL_Rekap…xlsx`) | sheets `Calculator EBT` / `MT Adjustments` / `Summary` | MT account fees (listing/trading/PPN) and per-country cost ratios → Tab 3 |
+
+An uploaded Nielsen workbook is persisted (localStorage) so it survives reload. All tabs
+read from the live model, so a single upload — or any manual adjustment (COGM cell, EBT
+target, fee, SRP) — cascades everywhere.
+
+## Reverse-EBT → Nielsen bridge (Tab 3 "Market Feasibility")
+
+The headline cross-tab logic from the ATOMIC spec connects Tabs 2–4:
+
+1. **Solve** the required monthly cartons that reach the chosen **Target EBT %** —
+   bisection over volume using the **utilization-adjusted COGM** from Tab 2 and the P&L
+   cost structure (so a fixed listing fee and the capacity penalty both bite).
+2. **Physical retail bridge:** `cartons × packs/carton × SRP` → monthly & MAT
+   retail-equivalent. Net Sales is **never** divided directly into Nielsen retail value.
+3. **Required share** vs the uploaded Nielsen denominators: category (market total),
+   price-segment (matched GT tier), and flavour (mapped category).
+4. **Feasibility:** ≤2% = Conservative · ≤5% Reasonable · ≤12% Aggressive · else Not
+   Feasible; a target with no in-capacity solution is Not Feasible, and an unmapped
+   flavour (e.g. curry) shows N/A rather than a fabricated share.
+
 ## Data & technical notes
 
 - **Libraries:** globe.gl (jsDelivr) for the map, SheetJS/xlsx (cdnjs) for workbook
