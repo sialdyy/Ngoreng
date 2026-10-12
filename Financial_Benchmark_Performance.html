@@ -333,7 +333,7 @@
 
   /* ---------- Opportunity Map (3D globe) — full-height executive stage ---------- */
   .map-wrap{position:relative; display:block; margin-top:18px;}
-  .map-globe{position:relative; height:clamp(540px, 80vh, 940px); border-radius:18px; overflow:hidden; border:1px solid rgba(255,255,255,.08);
+  .map-globe{position:relative; height:clamp(400px, 56vh, 600px); border-radius:18px; overflow:hidden; border:1px solid rgba(255,255,255,.08);
     background:
       radial-gradient(1200px 720px at 50% 36%, rgba(42,96,223,.20), transparent 62%),
       radial-gradient(circle at 50% 42%, #0b1d3a 0%, #071127 52%, #03091a 78%, #020611 100%);
@@ -360,7 +360,7 @@
   .map-legend .lg{display:flex; align-items:center; gap:7px; color:#e8eefc; font-size:11px; font-weight:600; font-family:"JetBrains Mono",monospace;}
   .map-legend .dot{width:9px; height:9px; border-radius:50%; flex:none; box-shadow:0 0 8px currentColor;}
   .map-globe-fallback{position:absolute; inset:0; display:flex; align-items:center; justify-content:center; text-align:center; color:#cdd8ee; font-size:13px; padding:30px 30px 70px; line-height:1.7;}
-  @media (max-width:620px){ .map-globe{height:clamp(460px,70vh,620px);} .map-hero-head{max-width:calc(100% - 36px);} .map-hero-badge{display:none;} }
+  @media (max-width:620px){ .map-globe{height:clamp(320px,48vh,440px);} .map-hero-head{max-width:calc(100% - 36px);} .map-hero-badge{display:none;} }
   .globe-marker{transform:translate(-50%,-100%); cursor:pointer; pointer-events:auto; display:flex; flex-direction:column; align-items:center; gap:3px; filter:drop-shadow(0 4px 10px rgba(0,0,0,.5));}
   .globe-marker .gm-pill{display:flex; align-items:center; gap:7px; background:#0d1a2e; border:1px solid rgba(255,255,255,.18); border-radius:999px; padding:5px 11px 5px 6px; color:#fff; white-space:nowrap;}
   .globe-marker .gm-flag{width:22px; height:22px; border-radius:50%; background:#12203a; display:flex; align-items:center; justify-content:center; font-size:12px;}
@@ -898,6 +898,33 @@
   .swx-stat{border:1px solid var(--border); border-left:3px solid var(--sc,var(--border)); border-radius:10px; background:var(--surface-2); padding:9px 12px;}
   .swx-sl{font-size:10px; text-transform:uppercase; letter-spacing:.03em; color:var(--muted); font-weight:700;}
   .swx-sv{font-family:"JetBrains Mono",monospace; font-size:15px; font-weight:700; color:var(--sc,var(--ink)); margin-top:3px;}
+  /* ---- v6: 20:20 feasibility verdict + scenario what-if (Overview) ---- */
+  .vd-badge{flex:none; align-self:flex-start; font-family:"Manrope",sans-serif; font-weight:800; font-size:11px; letter-spacing:.02em; color:#fff; border-radius:999px; padding:5px 13px; white-space:nowrap;}
+  .vd-badge.vd-yes{background:#0E8A54;} .vd-badge.vd-no{background:#C23B4A;} .vd-badge.vd-mid{background:#B7791F;}
+  .vd-proof{display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:12px;}
+  @media (max-width:560px){ .vd-proof{grid-template-columns:1fr;} }
+  .vd-pr{border:1px solid var(--border); border-radius:11px; background:var(--surface-2); padding:11px 13px;}
+  .vd-prn{font-family:"JetBrains Mono",monospace; font-size:22px; font-weight:800; color:var(--ink); line-height:1;}
+  .vd-prl{font-size:11px; color:var(--muted); font-weight:700; margin-top:4px;}
+  .vd-prc{font-size:12px; color:var(--ink-2); margin-top:6px; line-height:1.4;}
+  .vd-lens{list-style:none; margin:14px 0 0; padding:0; display:flex; flex-direction:column; gap:8px;}
+  .vd-lens li{font-size:12.5px; line-height:1.55; color:var(--ink); padding-left:14px; position:relative;}
+  .vd-lens li::before{content:""; position:absolute; left:0; top:7px; width:6px; height:6px; border-radius:50%; background:#1f6feb;}
+  .vd-lens b{color:var(--ink); font-weight:800;}
+  .scn-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-top:12px;}
+  @media (max-width:640px){ .scn-grid{grid-template-columns:1fr;} }
+  .scn-ctrl{display:flex; flex-direction:column; gap:6px; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.03em; color:var(--muted);}
+  .scn-ctrl b{color:#1f6feb; font-family:"JetBrains Mono",monospace; font-size:13px;}
+  .scn-ctrl input[type=range]{width:100%; accent-color:#1f6feb; cursor:pointer;}
+  .scn-out{display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin:14px 0 2px;}
+  @media (max-width:640px){ .scn-out{grid-template-columns:1fr 1fr;} }
+  .scn-bars{margin-top:12px; display:flex; flex-direction:column; gap:8px;}
+  .scn-barrow{display:grid; grid-template-columns:120px 1fr 72px; align-items:center; gap:10px;}
+  @media (max-width:520px){ .scn-barrow{grid-template-columns:84px 1fr 60px;} }
+  .scn-bl{font-size:11px; color:var(--ink-2); font-weight:700;}
+  .scn-track{height:12px; background:var(--surface-2); border:1px solid var(--border); border-radius:999px; overflow:hidden;}
+  .scn-fill{display:block; height:100%; border-radius:999px; transition:width .18s ease;}
+  .scn-bv{font-family:"JetBrains Mono",monospace; font-size:12px; font-weight:700; text-align:right; color:var(--ink);}
   /* ---- v6: simplify — collapsible "Lihat detail" folds ---- */
   .fold{border:1px solid var(--border); border-radius:12px; background:var(--surface-2); margin-top:16px;}
   .fold>summary{cursor:pointer; list-style:none; padding:13px 16px; font-family:"Manrope",sans-serif; font-weight:800; font-size:13px; color:var(--ink); display:flex; align-items:center; gap:8px;}
@@ -963,7 +990,8 @@
     </div>
     <div class="ov-headline" id="ovHeadline"></div>
 
-    <div id="ovConflict"></div>
+    <div class="section card" id="ovVerdict"></div>
+    <div class="section card" id="ovScenario"></div>
 
     <div class="section card ns-card" id="ov102030"></div>
 
@@ -1086,29 +1114,33 @@
       <div><h1 style="font-size:19px;" data-i18n="pb.title">Peer Benchmark</h1><p class="section-sub" id="pbSub">&hellip;</p></div>
     </div>
 
-    <div class="section card ns-sec" id="pb102030Sec">
-      <div class="section-head">
-        <div><h2 style="font-size:15px;" data-i18n="ns.pbTitle">10:20:30 validation — who proves it?</h2>
-        <p class="section-sub" data-i18n="ns.pbSub">Can an FMCG company sustain ≥10% revenue CAGR and a ≥20% pre-tax (EBT) margin? Verdicts computed from primary-sourced filings — not a ranking.</p></div>
-        <div class="ns-filter" id="ns102030Filter" role="group" aria-label="Peer role filter"></div>
-      </div>
-      <div class="table-wrap"><table class="data-table" id="ns102030Table">
-        <thead><tr>
-          <th data-i18n="ns.thCo">Issuer</th>
-          <th class="num" data-i18n="ns.thEbt">EBT margin</th>
-          <th class="num" data-i18n="ns.thCagr">Rev CAGR</th>
-          <th class="num" data-i18n="ns.thDur">20% years</th>
-          <th data-i18n="ns.thVerdict">Verdict</th>
-        </tr></thead>
-        <tbody id="ns102030Body"></tbody>
-      </table></div>
-      <div id="ns102030Cards" class="grid grid-2" style="margin-top:12px;"></div>
-      <p class="mp-note" id="ns102030Note" style="margin-top:8px;"></p>
-    </div>
-
     <div class="section card" id="pbMatrixSec"></div>
     <div class="section" id="pbClusterSec"></div>
     <div class="section card" id="pbSwotSec"></div>
+
+    <details class="fold" id="pb102030Fold">
+      <summary><span data-i18n="ns.pbTitle">10:20:30 validation — who proves it?</span> <span class="fold-hint" id="pb102030Hint"></span></summary>
+      <div class="fold-body">
+        <div class="section card ns-sec" id="pb102030Sec">
+          <div class="section-head">
+            <div><p class="section-sub" data-i18n="ns.pbSub">Can an FMCG company sustain ≥10% revenue CAGR and a ≥20% pre-tax (EBT) margin? Verdicts computed from primary-sourced filings — not a ranking.</p></div>
+            <div class="ns-filter" id="ns102030Filter" role="group" aria-label="Peer role filter"></div>
+          </div>
+          <div class="table-wrap"><table class="data-table" id="ns102030Table">
+            <thead><tr>
+              <th data-i18n="ns.thCo">Issuer</th>
+              <th class="num" data-i18n="ns.thEbt">EBT margin</th>
+              <th class="num" data-i18n="ns.thCagr">Rev CAGR</th>
+              <th class="num" data-i18n="ns.thDur">20% years</th>
+              <th data-i18n="ns.thVerdict">Verdict</th>
+            </tr></thead>
+            <tbody id="ns102030Body"></tbody>
+          </table></div>
+          <div id="ns102030Cards" class="grid grid-2" style="margin-top:12px;"></div>
+          <p class="mp-note" id="ns102030Note" style="margin-top:8px;"></p>
+        </div>
+      </div>
+    </details>
 
     <details class="fold" id="pbDetails">
       <summary><span data-i18n="fold.pbMore">Full peer table &amp; analysis</span> <span class="fold-hint" data-i18n="fold.pbHint">all 13 peers, patterns, global yardstick</span></summary>
@@ -1279,10 +1311,12 @@
       </div>
       <div class="map-panel" id="mapPanel"></div>
     </div>
-    <div class="section exec-summary" id="mapExecSummary"></div>
-    <div class="section commodity-strip" id="mapCommodity"></div>
     <div class="section" id="mapMatrix"></div>
-    <div class="section warn-box" id="mapWarnings"></div>
+    <div class="grid grid-2 section" style="align-items:start;">
+      <div class="exec-summary" id="mapExecSummary"></div>
+      <div class="warn-box" id="mapWarnings"></div>
+    </div>
+    <div class="section commodity-strip" id="mapCommodity"></div>
   </section>
 
 </main>
@@ -1928,6 +1962,7 @@
     'pb.fxNote':'≈FX = non-IDR peer, converted at an illustrative fixed rate (nominal not directly comparable; use margins/growth).','pb.fxTitle':'Converted to IDR at an illustrative fixed FX — nominal is approximate.',
     'ns.pbTitle':'10:20:30 validation — who proves it?',
     'ns.pbSub':'Can an FMCG company sustain ≥10% revenue CAGR and a ≥20% pre-tax (EBT) margin? Verdicts computed from primary-sourced filings — not a ranking.',
+    'ns.pbHint':'{n} of {total} clear it: {names}',
     'ns.thCo':'Issuer','ns.thEbt':'EBT margin','ns.thCagr':'Rev CAGR','ns.thDur':'20% years','ns.thVerdict':'Verdict',
     'ns.exEyebrow':'2030 target validation','ns.exTitle':'Is 10:20:30 realistic?',
     'ns.exSub':'Evidence that an FMCG peer can hold a ≥20% pre-tax margin while growing ≥10% a year — tested, not assumed.',
@@ -1987,7 +2022,6 @@
     'mx2.ksniSingleYr':'single-yr',
     'mx2.ksniRefNote':'KSNI shown as a horizontal line at its verified EBT margin ({v}, FY2025). No growth axis position: the consolidated group figures are single-year, so a 5-yr CAGR cannot be computed without fabricating prior years.',
     'mx2.clTitle':'Four strategic archetypes','mx2.clSub':'Each company classified by the 10:20:30 quadrant it sits in — computed from verified figures.',
-    'sw.title':'SWOT — read from the figures','sw.sub':'Strengths and weaknesses are derived from this company’s verified metrics vs the peer set; opportunities and threats are positioning reads from its quadrant. Each item is tagged by how it was obtained — never a guessed cause.',
     'sw.strengths':'Strengths','sw.weaknesses':'Weaknesses','sw.opps':'Opportunities','sw.threats':'Threats',
     'sw.tag.fact':'fact','sw.tag.derived':'derived','sw.tag.read':'read',
     'sw.none':'Nothing stands out from the figures available this session.',
@@ -2017,6 +2051,21 @@
     'sw.exTitle':'SWOT explorer','sw.exSub':'Pick any company in the benchmark cohort to read its verified snapshot and SWOT. Same figures that drive the matrix above — nothing invented.',
     'sw.exPick':'Company','sw.exYou':'you','sw.exGrowth':'Growth','sw.exCagr5':'5-yr CAGR','sw.exYoY':'YoY','sw.exNoCagr':'N/A (single-yr)',
     'sw.exQuadNa':'Quadrant N/A (no growth axis)',
+    'vd.title':'Can KSNI hit 20:20?','vd.sub':'The stricter question behind the matrix: ≥20% revenue growth AND ≥20% EBT margin at once. Reasoned from verified figures — not the playbook’s unsourced estimates.',
+    'vd.yes':'Clears it now','vd.no':'Not on current structure','vd.awaiting':'Awaiting KSNI actuals — load the P&L in Data & Sources to compute this.','vd.none':'none',
+    'vd.clears102030':'clear 10:20:30 (≥10% CAGR & ≥20% EBT)','vd.clears2020':'clear the stricter 20:20 (≥20% & ≥20%)',
+    'vd.lensGm':'Gross margin','vd.lensOpex':'Operating cost','vd.lensGap':'Where the gap sits',
+    'vd.gmOk':'KSNI’s gross margin is {gm} — already above a 20% threshold — yet EBT margin is only {ebt}. So the shortfall is not price or COGS.',
+    'vd.gmLow':'KSNI’s gross margin is {gm} and EBT margin {ebt}.',
+    'vd.opexTxt':'Selling expense alone is ~{sm} of net sales ({smv}) — the single largest drag between gross profit and EBT.',
+    'vd.gapTxt':'The whole {gap}pp gap to a 20% EBT margin sits below gross profit: the lever is operating-cost efficiency, not raising prices.',
+    'vd.note':'Verdict and figures are computed from KSNI’s verified FY2025 group P&L and the peer set’s filed margins. EBT (reported pre-tax), not EBITDA. A single-year base has no revenue CAGR, so the growth half of 20:20 is not yet measurable for KSNI.',
+    'scn.title':'Scenario what-if','scn.sub':'Drag the sliders to compound KSNI’s verified FY2025 base forward. This is arithmetic illustration, not a forecast — it changes nothing about the actual figures.',
+    'scn.growth':'Annual revenue growth','scn.margin':'EBT margin','scn.years':'Horizon (years)',
+    'scn.projRev':'Projected revenue (+{y}y)','scn.projEbt':'Projected EBT','scn.mult':'EBT vs base','scn.target':'Target reached',
+    'scn.c2020':'20:20','scn.c102030':'10:20:30','scn.cbelow':'below target',
+    'scn.base':'EBT base','scn.scenario':'EBT scenario',
+    'scn.note':'Pure compounding on the verified base (revenue × (1+growth)^years; EBT = revenue × margin). The assumptions are yours to set — the dashboard does not claim any of them is likely. Actual KSNI figures are untouched.',
     'mx2.starsR':'CAGR ≥10% & EBT ≥20% — grows and keeps profit','mx2.moatR':'EBT ≥20%, CAGR <10% — profitable but slow','mx2.engineR':'CAGR ≥10%, EBT <20% — grows but thin margin','mx2.defenderR':'CAGR <10% & EBT <20% — defend scale, fix both','pbf.nabatiBody':'The most useful comparator is a peer near Nabati’s own scale and category — not the biggest name here. Line up Nabati’s own gross-to-net conversion and cash cycle against these before reading any single peer as “better.”',
     'pbf.evidence':'Ratios are Fact (latest filings); the read is interpretation. Scale, product mix and comparability caveats apply, and foreign currencies are shown in IDR at the illustrative rates in Data & Sources.',
     'pbm.sales':'Revenue','pbm.gp':'Gross Profit','pbm.ebit':'EBIT','pbm.np':'Net Profit','pbm.gm':'Gross margin','pbm.opexR':'OPEX / revenue','pbm.ebitm':'EBIT margin','pbm.nm':'Net margin','pbm.ccc':'Cash conversion cycle','pbm.fcfm':'Free cash flow margin',
@@ -2220,6 +2269,7 @@
     'pb.fxNote':'≈FX = peer non-IDR, dikonversi pakai kurs fixed ilustratif (nominal tak langsung sebanding; pakai margin/pertumbuhan).','pb.fxTitle':'Dikonversi ke IDR pakai kurs FX fixed ilustratif — nominal perkiraan.',
     'ns.pbTitle':'Validasi 10:20:30 — siapa yang membuktikan?',
     'ns.pbSub':'Bisakah perusahaan FMCG menjaga CAGR pendapatan ≥10% sekaligus margin sebelum pajak (EBT) ≥20%? Verdict dihitung dari filing sumber primer — bukan ranking.',
+    'ns.pbHint':'{n} dari {total} tembus: {names}',
     'ns.thCo':'Penerbit','ns.thEbt':'Margin EBT','ns.thCagr':'CAGR pendptn','ns.thDur':'Tahun 20%','ns.thVerdict':'Verdict',
     'ns.exEyebrow':'Validasi target 2030','ns.exTitle':'Apakah 10:20:30 realistis?',
     'ns.exSub':'Bukti bahwa peer FMCG bisa menjaga margin sebelum pajak ≥20% sambil tumbuh ≥10% per tahun — diuji, bukan diasumsikan.',
@@ -2279,7 +2329,6 @@
     'mx2.ksniSingleYr':'1-thn',
     'mx2.ksniRefNote':'KSNI ditampilkan sebagai garis horizontal pada margin EBT terverifikasinya ({v}, FY2025). Tidak ada posisi di sumbu growth: angka grup konsolidasi hanya satu tahun, jadi CAGR 5-thn tak bisa dihitung tanpa mengarang tahun-tahun sebelumnya.',
     'mx2.clTitle':'Empat arketipe strategis','mx2.clSub':'Tiap perusahaan diklasifikasi menurut kuadran 10:20:30 tempatnya berada — dihitung dari figur terverifikasi.',
-    'sw.title':'SWOT — dibaca dari angka','sw.sub':'Kekuatan & kelemahan diturunkan dari metrik terverifikasi perusahaan ini vs peer set; peluang & ancaman adalah pembacaan posisi dari kuadrannya. Tiap butir diberi tanda cara perolehannya — bukan tebakan penyebab.',
     'sw.strengths':'Kekuatan','sw.weaknesses':'Kelemahan','sw.opps':'Peluang','sw.threats':'Ancaman',
     'sw.tag.fact':'fakta','sw.tag.derived':'turunan','sw.tag.read':'baca',
     'sw.none':'Tidak ada yang menonjol dari angka yang tersedia sesi ini.',
@@ -2309,6 +2358,21 @@
     'sw.exTitle':'SWOT explorer','sw.exSub':'Pilih perusahaan mana pun di kohort benchmark untuk membaca snapshot terverifikasi dan SWOT-nya. Angka yang sama dengan matriks di atas — tidak ada yang dikarang.',
     'sw.exPick':'Perusahaan','sw.exYou':'kita','sw.exGrowth':'Pertumbuhan','sw.exCagr5':'CAGR 5-thn','sw.exYoY':'YoY','sw.exNoCagr':'N/A (1-thn)',
     'sw.exQuadNa':'Kuadran N/A (tak ada sumbu growth)',
+    'vd.title':'Bisakah KSNI tembus 20:20?','vd.sub':'Pertanyaan lebih ketat di balik matriks: pertumbuhan pendapatan ≥20% DAN margin EBT ≥20% sekaligus. Dinalar dari figur terverifikasi — bukan estimasi playbook yang tak bersumber.',
+    'vd.yes':'Tembus sekarang','vd.no':'Belum, pada struktur saat ini','vd.awaiting':'Menunggu aktual KSNI — muat P&L di Data & Sumber untuk menghitung ini.','vd.none':'tidak ada',
+    'vd.clears102030':'tembus 10:20:30 (CAGR ≥10% & EBT ≥20%)','vd.clears2020':'tembus 20:20 lebih ketat (≥20% & ≥20%)',
+    'vd.lensGm':'Gross margin','vd.lensOpex':'Biaya operasi','vd.lensGap':'Di mana letak jaraknya',
+    'vd.gmOk':'Gross margin KSNI {gm} — sudah di atas ambang 20% — tapi margin EBT hanya {ebt}. Jadi kekurangannya bukan di harga atau COGS.',
+    'vd.gmLow':'Gross margin KSNI {gm} dan margin EBT {ebt}.',
+    'vd.opexTxt':'Beban selling saja ~{sm} dari net sales ({smv}) — penyeret tunggal terbesar antara gross profit dan EBT.',
+    'vd.gapTxt':'Seluruh jarak {gap}pp menuju margin EBT 20% ada DI BAWAH gross profit: levernya efisiensi biaya operasi, bukan menaikkan harga.',
+    'vd.note':'Verdict dan angka dihitung dari P&L grup KSNI FY2025 terverifikasi dan margin filing peer set. EBT (laba sebelum pajak dilaporkan), bukan EBITDA. Basis satu tahun tak punya CAGR, jadi separuh "growth" dari 20:20 belum terukur untuk KSNI.',
+    'scn.title':'Scenario what-if','scn.sub':'Geser slider untuk melipatgandakan basis terverifikasi KSNI FY2025 ke depan. Ini ilustrasi aritmetik, bukan proyeksi — tidak mengubah apa pun pada angka aktual.',
+    'scn.growth':'Pertumbuhan pendapatan tahunan','scn.margin':'Margin EBT','scn.years':'Horizon (tahun)',
+    'scn.projRev':'Proyeksi pendapatan (+{y}th)','scn.projEbt':'Proyeksi EBT','scn.mult':'EBT vs basis','scn.target':'Target tercapai',
+    'scn.c2020':'20:20','scn.c102030':'10:20:30','scn.cbelow':'di bawah target',
+    'scn.base':'EBT basis','scn.scenario':'EBT skenario',
+    'scn.note':'Murni compounding pada basis terverifikasi (pendapatan × (1+growth)^tahun; EBT = pendapatan × margin). Asumsinya kamu yang tentukan — dashboard tidak mengklaim satu pun kemungkinan. Angka aktual KSNI tidak diubah.',
     'mx2.starsR':'CAGR ≥10% & EBT ≥20% — tumbuh dan menjaga laba','mx2.moatR':'EBT ≥20%, CAGR <10% — profitabel tapi lambat','mx2.engineR':'CAGR ≥10%, EBT <20% — tumbuh tapi margin tipis','mx2.defenderR':'CAGR <10% & EBT <20% — jaga skala, benahi keduanya','pbf.nabatiBody':'Pembanding paling berguna adalah peer yang dekat dengan skala dan kategori Nabati sendiri — bukan nama terbesar di sini. Sejajarkan konversi kotor-ke-bersih dan siklus kas Nabati dengan ini sebelum menilai satu peer sebagai “lebih baik.”',
     'pbf.evidence':'Rasio adalah Fakta (laporan terbaru); pembacaan adalah interpretasi. Perhatikan skala, bauran produk, dan keterbandingan; mata uang asing ditampilkan dalam IDR pada kurs ilustratif di Data & Sumber.',
     'pbm.sales':'Pendapatan','pbm.gp':'Laba Kotor','pbm.ebit':'EBIT','pbm.np':'Laba Bersih','pbm.gm':'Margin kotor','pbm.opexR':'OPEX / pendapatan','pbm.ebitm':'Margin EBIT','pbm.nm':'Margin bersih','pbm.ccc':'Siklus konversi kas','pbm.fcfm':'Margin arus kas bebas',
@@ -3350,9 +3414,80 @@
       '<p class="hy-honest">'+t('hy.honest')+'</p>'+
       '<details class="hy-backlog"><summary>'+t('hy.detailTitle',{n:all.length})+'</summary><div class="hy-list">'+detail+'</div></details>';
   }
+  /* ---- v6: KSNI 20:20 feasibility verdict — reasoned from verified figures (never the playbook's unsourced numbers) ---- */
+  function renderKsniVerdict(){
+    var host=document.getElementById('ovVerdict'); if(!host) return;
+    var kp=(typeof ksniAsPeer==='function')?ksniAsPeer():null;
+    if(!kp){ host.innerHTML='<div class="section-head"><div><h2 style="font-size:15px;">'+t('vd.title')+'</h2></div></div><p class="sw-empty">'+t('vd.awaiting')+'</p>'; return; }
+    var ents=(typeof matrixEntities==='function')?matrixEntities().filter(function(e){return e.cagr!=null && e.ebtm!=null && !e.ksni;}):[];
+    var total=ents.length;
+    var c102030=ents.filter(function(e){return e.cagr>=10 && e.ebtm>=20;});
+    var c2020=ents.filter(function(e){return e.cagr>=20 && e.ebtm>=20;});
+    var names=function(arr){ return arr.length?arr.map(function(e){return e.name;}).join(', '):t('vd.none'); };
+    // KSNI gap decomposition from the group P&L
+    var g=(typeof nabatiGroupFY==='function')?nabatiGroupFY():null; var rec=g&&g.rec;
+    var ns=rec?npIDR(rec,'net_sales'):null, smAbs=rec?npIDR(rec,'sm_total'):null, gaAbs=rec?npIDR(rec,'ga_total'):null;
+    var smPct=(smAbs!=null&&ns)?Math.abs(smAbs)/ns*100:null;
+    var gmOK=(kp.gm!=null&&kp.gm>=20);
+    var verdictKey = (kp.ebtm!=null&&kp.ebtm>=20&&kp.growth!=null&&kp.growth>=20)?'vd.yes':'vd.no';
+    var badgeCls=(verdictKey==='vd.yes')?'vd-yes':'vd-no';
+    var lens='';
+    if(kp.ebtm!=null){
+      lens += '<li><b>'+t('vd.lensGm')+':</b> '+t(gmOK?'vd.gmOk':'vd.gmLow',{gm:fmtPct1(kp.gm),ebt:fmtPct1(kp.ebtm)})+'</li>';
+      if(smPct!=null) lens += '<li><b>'+t('vd.lensOpex')+':</b> '+t('vd.opexTxt',{sm:fmtPct1(smPct),smv:rpT(Math.abs(smAbs)/1e12)})+'</li>';
+      lens += '<li><b>'+t('vd.lensGap')+':</b> '+t('vd.gapTxt',{gap:(20-kp.ebtm).toFixed(1)})+'</li>';
+    }
+    host.innerHTML=
+      '<div class="section-head"><div><h2 style="font-size:15px;">'+t('vd.title')+'</h2>'+
+        '<p class="section-sub">'+t('vd.sub')+'</p></div><span class="vd-badge '+badgeCls+'">'+t(verdictKey)+'</span></div>'+
+      '<div class="vd-proof">'+
+        '<div class="vd-pr"><div class="vd-prn">'+c102030.length+'/'+total+'</div><div class="vd-prl">'+t('vd.clears102030')+'</div><div class="vd-prc">'+names(c102030)+'</div></div>'+
+        '<div class="vd-pr"><div class="vd-prn">'+c2020.length+'/'+total+'</div><div class="vd-prl">'+t('vd.clears2020')+'</div><div class="vd-prc">'+names(c2020)+'</div></div>'+
+      '</div>'+
+      '<ul class="vd-lens">'+lens+'</ul>'+
+      '<p class="sw-note">'+t('vd.note')+'</p>';
+  }
+  /* ---- v6: scenario what-if — compounding arithmetic on the verified FY2025 base; explicitly an illustration, not a forecast ---- */
+  var scenState=null;
+  function renderScenario(){
+    var host=document.getElementById('ovScenario'); if(!host) return;
+    var kp=(typeof ksniAsPeer==='function')?ksniAsPeer():null;
+    if(!kp || kp.sales==null){ host.innerHTML='<div class="section-head"><div><h2 style="font-size:15px;">'+t('scn.title')+'</h2></div></div><p class="sw-empty">'+t('vd.awaiting')+'</p>'; return; }
+    if(!scenState) scenState={g:10, m:10, y:3};
+    var baseSales=kp.sales, baseEbtm=(kp.ebtm!=null?kp.ebtm:0);
+    var projSales=baseSales*Math.pow(1+scenState.g/100, scenState.y);
+    var projEbt=projSales*scenState.m/100;
+    var baseEbt=baseSales*baseEbtm/100;
+    var mult=(baseEbt>0)?(projEbt/baseEbt):null;
+    var clears=(scenState.g>=20&&scenState.m>=20)?'scn.c2020':((scenState.g>=10&&scenState.m>=20)?'scn.c102030':'scn.cbelow');
+    var clearsCls=(clears==='scn.c2020')?'vd-yes':(clears==='scn.c102030'?'vd-mid':'vd-no');
+    // tiny comparison bar (base EBT vs scenario EBT), capped scale
+    var maxE=Math.max(projEbt, baseEbt, 0.01); var w1=Math.max(2,baseEbt/maxE*100), w2=Math.max(2,projEbt/maxE*100);
+    host.innerHTML=
+      '<div class="section-head"><div><h2 style="font-size:15px;">'+t('scn.title')+'</h2>'+
+        '<p class="section-sub">'+t('scn.sub')+'</p></div></div>'+
+      '<div class="scn-grid">'+
+        '<label class="scn-ctrl"><span>'+t('scn.growth')+' <b id="scnGv">'+scenState.g+'%</b></span><input type="range" id="scnG" min="0" max="25" step="0.5" value="'+scenState.g+'"></label>'+
+        '<label class="scn-ctrl"><span>'+t('scn.margin')+' <b id="scnMv">'+scenState.m+'%</b></span><input type="range" id="scnM" min="0" max="25" step="0.5" value="'+scenState.m+'"></label>'+
+        '<label class="scn-ctrl"><span>'+t('scn.years')+' <b id="scnYv">'+scenState.y+'</b></span><input type="range" id="scnY" min="1" max="5" step="1" value="'+scenState.y+'"></label>'+
+      '</div>'+
+      '<div class="scn-out">'+
+        '<div class="swx-stat" style="--sc:#2457D6"><div class="swx-sl">'+t('scn.projRev',{y:scenState.y})+'</div><div class="swx-sv">Rp'+projSales.toFixed(2)+'T</div></div>'+
+        '<div class="swx-stat" style="--sc:#0E8A54"><div class="swx-sl">'+t('scn.projEbt')+'</div><div class="swx-sv">Rp'+projEbt.toFixed(2)+'T</div></div>'+
+        '<div class="swx-stat" style="--sc:#B7791F"><div class="swx-sl">'+t('scn.mult')+'</div><div class="swx-sv">'+(mult==null?'N/A':'×'+mult.toFixed(1))+'</div></div>'+
+        '<div class="swx-stat" style="--sc:var(--border)"><div class="swx-sl">'+t('scn.target')+'</div><div class="swx-sv"><span class="vd-badge '+clearsCls+'" style="font-size:11px;">'+t(clears)+'</span></div></div>'+
+      '</div>'+
+      '<div class="scn-bars">'+
+        '<div class="scn-barrow"><span class="scn-bl">'+t('scn.base')+' (FY'+(kp.fy||'2025')+')</span><span class="scn-track"><span class="scn-fill" style="width:'+w1+'%; background:#8A94A6;"></span></span><span class="scn-bv">Rp'+baseEbt.toFixed(2)+'T</span></div>'+
+        '<div class="scn-barrow"><span class="scn-bl">'+t('scn.scenario')+'</span><span class="scn-track"><span class="scn-fill" style="width:'+w2+'%; background:#0E8A54;"></span></span><span class="scn-bv">Rp'+projEbt.toFixed(2)+'T</span></div>'+
+      '</div>'+
+      '<p class="sw-note">'+t('scn.note')+'</p>';
+    ['G','M','Y'].forEach(function(ax){ var el=document.getElementById('scn'+ax); if(el) el.addEventListener('input', function(){ scenState[ax.toLowerCase()]=parseFloat(el.value); renderScenario(); }); });
+  }
   function renderOverview(){
     render102030Exec();
-    var _cf=document.getElementById('ovConflict'); if(_cf) _cf.innerHTML='';
+    renderKsniVerdict();
+    renderScenario();
     renderHypotheses();
     var eyebrow=document.getElementById('ovEyebrow');
     if(eyebrow) eyebrow.textContent = t('ov.eyebrow',{period:periodLabel(),count:peerCount(),latest:latestYear()});
@@ -4239,6 +4374,10 @@
     renderPbMatrix();
     renderPbClusters();
     renderPbSwot();
+    (function(){ var h=document.getElementById('pb102030Hint'); if(!h||typeof matrixEntities!=='function') return;
+      var ents=matrixEntities().filter(function(e){return e.cagr!=null && e.ebtm!=null && !e.ksni;});
+      var cl=ents.filter(function(e){return e.cagr>=10 && e.ebtm>=20;});
+      h.textContent=t('ns.pbHint',{n:cl.length,total:ents.length,names:(cl.length?cl.map(function(e){return e.name;}).join(', '):t('vd.none'))}); })();
     var sub=document.getElementById('pbSub');
     if(sub) sub.textContent = t('pb.sub',{period:periodLabel(),count:peerCount()});
 
@@ -5350,7 +5489,7 @@
     savePeers();
     renderPeerCards(); renderAllDependentViews();
   });
-  var DATA_VERSION = 'asia14-global9-2026-10-v6k';
+  var DATA_VERSION = 'asia14-global9-2026-10-v6l';
   function savePeers(){
     try{ localStorage.setItem('nabati-peers-v1', JSON.stringify(PEERS)); localStorage.setItem('nabati-peers-datav', DATA_VERSION); }catch(e){}
     if(peersDocRef){ peersDocRef.set({ peers: PEERS, dataVersion: DATA_VERSION, updatedAt: new Date().toISOString() }).catch(function(){}); }
