@@ -3332,27 +3332,6 @@
   }
   function nsRoleLabel(role){ return t('ns.role.'+nsRoleBucket(role)); }
 
-  function renderTargetConflict(){
-    var host=document.getElementById('ovConflict'); if(!host) return;
-    if(typeof CEO_V5==='undefined' || !CEO_V5.target_conflict){ host.innerHTML=''; return; }
-    var tc=CEO_V5.target_conflict, wp=tc.current_working_policy, alt=tc.ceo_debrief_note_6;
-    function pct(x){ return Math.round(x*100)+'%'; }
-    host.innerHTML='<div class="section card tcf-card">'+
-      '<div class="tcf-head"><span class="tcf-eyebrow">'+t('tcf.eyebrow')+'</span>'+
-        '<h2 class="tcf-h2">'+t('tcf.title')+'</h2></div>'+
-      '<div class="tcf-grid">'+
-        '<div class="tcf-opt working"><div class="tcf-top"><span class="tcf-label">'+wp.label+'</span>'+
-          '<span class="tcf-badge working">'+t('tcf.working')+'</span></div>'+
-          '<div class="tcf-targets">'+t('tcf.targets',{cagr:pct(wp.cagr),ebt:pct(wp.ebt_margin),yr:wp.year})+'</div>'+
-          '<p class="tcf-note">'+t('tcf.workingNote')+'</p></div>'+
-        '<div class="tcf-vs">vs</div>'+
-        '<div class="tcf-opt alt"><div class="tcf-top"><span class="tcf-label">'+alt.label+'</span>'+
-          '<span class="tcf-badge alt">'+t('tcf.needConfirm')+'</span></div>'+
-          '<div class="tcf-targets">'+t('tcf.targets',{cagr:pct(alt.cagr),ebt:pct(alt.ebt_margin),yr:alt.year})+'</div>'+
-          '<p class="tcf-note">'+t('tcf.altNote')+'</p></div>'+
-      '</div>'+
-      '<p class="tcf-rule">'+t('tcf.rule')+'</p></div>';
-  }
   var ANSOFF_COL={market_penetration:'#0E8A54', penetration:'#0E8A54', product_development:'#2457D6', market_development:'#B7791F', diversification:'#C23B4A'};
   function hyAnsoffLabel(k){ return (''+k).replace(/_/g,' '); }
   function hyChip(h){
@@ -5489,7 +5468,7 @@
     savePeers();
     renderPeerCards(); renderAllDependentViews();
   });
-  var DATA_VERSION = 'asia14-global9-2026-10-v6l';
+  var DATA_VERSION = 'asia14-global9-2026-10-v6m';
   function savePeers(){
     try{ localStorage.setItem('nabati-peers-v1', JSON.stringify(PEERS)); localStorage.setItem('nabati-peers-datav', DATA_VERSION); }catch(e){}
     if(peersDocRef){ peersDocRef.set({ peers: PEERS, dataVersion: DATA_VERSION, updatedAt: new Date().toISOString() }).catch(function(){}); }
