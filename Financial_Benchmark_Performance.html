@@ -886,6 +886,18 @@
   .sw-dev .sw-devl{font-weight:800; color:var(--ink);}
   .sw-dev a{color:var(--blue); text-decoration:none;}
   .sw-note{font-size:10.5px; color:var(--muted); line-height:1.45; margin:10px 0 0;}
+  /* ---- v6: SWOT explorer bar + snapshot (Peer Benchmark) ---- */
+  .swx-bar{display:flex; flex-wrap:wrap; align-items:center; gap:10px; margin-top:12px;}
+  .swx-pick{display:flex; align-items:center; gap:8px; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.03em; color:var(--muted);}
+  .swx-pick select{font-family:"Manrope",sans-serif; font-size:13px; font-weight:800; color:var(--ink); background:var(--surface-2); border:1px solid var(--border); border-radius:9px; padding:7px 30px 7px 12px; cursor:pointer; appearance:none; -webkit-appearance:none; background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%); background-position:calc(100% - 15px) 55%,calc(100% - 10px) 55%; background-size:5px 5px,5px 5px; background-repeat:no-repeat;}
+  .swx-pick select:focus{outline:2px solid #1f6feb; outline-offset:1px;}
+  .swx-quad{margin-left:auto; font-family:"Manrope",sans-serif; font-weight:800; font-size:10.5px; letter-spacing:.03em; color:#fff; border-radius:999px; padding:4px 12px;}
+  .swx-quad.swx-stars{background:#0E8A54;} .swx-quad.swx-moat{background:#2457D6;} .swx-quad.swx-engine{background:#B7791F;} .swx-quad.swx-defender{background:#8A94A6;} .swx-quad.swx-na{background:var(--surface-2); color:var(--muted); border:1px solid var(--border);}
+  .swx-snap{display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin:12px 0 2px;}
+  @media (max-width:640px){ .swx-snap{grid-template-columns:1fr 1fr;} }
+  .swx-stat{border:1px solid var(--border); border-left:3px solid var(--sc,var(--border)); border-radius:10px; background:var(--surface-2); padding:9px 12px;}
+  .swx-sl{font-size:10px; text-transform:uppercase; letter-spacing:.03em; color:var(--muted); font-weight:700;}
+  .swx-sv{font-family:"JetBrains Mono",monospace; font-size:15px; font-weight:700; color:var(--sc,var(--ink)); margin-top:3px;}
   /* ---- v6: simplify — collapsible "Lihat detail" folds ---- */
   .fold{border:1px solid var(--border); border-radius:12px; background:var(--surface-2); margin-top:16px;}
   .fold>summary{cursor:pointer; list-style:none; padding:13px 16px; font-family:"Manrope",sans-serif; font-weight:800; font-size:13px; color:var(--ink); display:flex; align-items:center; gap:8px;}
@@ -1019,11 +1031,6 @@
       <div id="caInsightHost"></div>
     </div>
 
-    <div class="section card" id="caSwotCard">
-      <div class="section-head"><div><h2 style="font-size:15px;" data-i18n="sw.title">SWOT — read from the figures</h2><p class="section-sub" data-i18n="sw.sub">Strengths and weaknesses derived from this company's verified metrics vs the peer set; opportunities and threats are positioning reads from its quadrant. Each item is tagged by how it was obtained — never a guessed cause.</p></div></div>
-      <div id="caSwotHost"></div>
-    </div>
-
     <details class="fold" id="caDetails">
       <summary><span data-i18n="fold.caMore">Detailed financial analysis</span> <span class="fold-hint" data-i18n="fold.caHint">quality lens, engine, balance sheet</span></summary>
       <div class="fold-body">
@@ -1101,6 +1108,7 @@
 
     <div class="section card" id="pbMatrixSec"></div>
     <div class="section" id="pbClusterSec"></div>
+    <div class="section card" id="pbSwotSec"></div>
 
     <details class="fold" id="pbDetails">
       <summary><span data-i18n="fold.pbMore">Full peer table &amp; analysis</span> <span class="fold-hint" data-i18n="fold.pbHint">all 13 peers, patterns, global yardstick</span></summary>
@@ -2006,6 +2014,9 @@
     'sw.tFasterPeers':'High margin but slower than peers — faster rivals can out-invest over time.',
     'sw.devLabel':'Latest filing read','sw.noDev':'No connected filing/source for this company this session — company-specific opportunities and threats would be guesses, so they are left to the positioning reads above.',
     'sw.note':'Strengths/weaknesses come straight from the figures (fact = direct metric, derived = simple arithmetic). Opportunities/threats are positioning reads (read) from the quadrant, not claims about cause. Blank figures are skipped, never read as zero.',
+    'sw.exTitle':'SWOT explorer','sw.exSub':'Pick any company in the benchmark cohort to read its verified snapshot and SWOT. Same figures that drive the matrix above — nothing invented.',
+    'sw.exPick':'Company','sw.exYou':'you','sw.exGrowth':'Growth','sw.exCagr5':'5-yr CAGR','sw.exYoY':'YoY','sw.exNoCagr':'N/A (single-yr)',
+    'sw.exQuadNa':'Quadrant N/A (no growth axis)',
     'mx2.starsR':'CAGR ≥10% & EBT ≥20% — grows and keeps profit','mx2.moatR':'EBT ≥20%, CAGR <10% — profitable but slow','mx2.engineR':'CAGR ≥10%, EBT <20% — grows but thin margin','mx2.defenderR':'CAGR <10% & EBT <20% — defend scale, fix both','pbf.nabatiBody':'The most useful comparator is a peer near Nabati’s own scale and category — not the biggest name here. Line up Nabati’s own gross-to-net conversion and cash cycle against these before reading any single peer as “better.”',
     'pbf.evidence':'Ratios are Fact (latest filings); the read is interpretation. Scale, product mix and comparability caveats apply, and foreign currencies are shown in IDR at the illustrative rates in Data & Sources.',
     'pbm.sales':'Revenue','pbm.gp':'Gross Profit','pbm.ebit':'EBIT','pbm.np':'Net Profit','pbm.gm':'Gross margin','pbm.opexR':'OPEX / revenue','pbm.ebitm':'EBIT margin','pbm.nm':'Net margin','pbm.ccc':'Cash conversion cycle','pbm.fcfm':'Free cash flow margin',
@@ -2295,6 +2306,9 @@
     'sw.tFasterPeers':'Margin tinggi tapi lebih lambat dari peer — pesaing lebih cepat bisa mengungguli investasi seiring waktu.',
     'sw.devLabel':'Bacaan laporan terbaru','sw.noDev':'Tidak ada laporan/sumber terhubung untuk perusahaan ini sesi ini — peluang & ancaman spesifik perusahaan akan jadi tebakan, jadi diserahkan ke pembacaan posisi di atas.',
     'sw.note':'Kekuatan/kelemahan langsung dari angka (fakta = metrik langsung, turunan = aritmetik sederhana). Peluang/ancaman adalah pembacaan posisi (baca) dari kuadran, bukan klaim penyebab. Angka kosong dilewati, tidak dibaca sebagai nol.',
+    'sw.exTitle':'SWOT explorer','sw.exSub':'Pilih perusahaan mana pun di kohort benchmark untuk membaca snapshot terverifikasi dan SWOT-nya. Angka yang sama dengan matriks di atas — tidak ada yang dikarang.',
+    'sw.exPick':'Perusahaan','sw.exYou':'kita','sw.exGrowth':'Pertumbuhan','sw.exCagr5':'CAGR 5-thn','sw.exYoY':'YoY','sw.exNoCagr':'N/A (1-thn)',
+    'sw.exQuadNa':'Kuadran N/A (tak ada sumbu growth)',
     'mx2.starsR':'CAGR ≥10% & EBT ≥20% — tumbuh dan menjaga laba','mx2.moatR':'EBT ≥20%, CAGR <10% — profitabel tapi lambat','mx2.engineR':'CAGR ≥10%, EBT <20% — tumbuh tapi margin tipis','mx2.defenderR':'CAGR <10% & EBT <20% — jaga skala, benahi keduanya','pbf.nabatiBody':'Pembanding paling berguna adalah peer yang dekat dengan skala dan kategori Nabati sendiri — bukan nama terbesar di sini. Sejajarkan konversi kotor-ke-bersih dan siklus kas Nabati dengan ini sebelum menilai satu peer sebagai “lebih baik.”',
     'pbf.evidence':'Rasio adalah Fakta (laporan terbaru); pembacaan adalah interpretasi. Perhatikan skala, bauran produk, dan keterbandingan; mata uang asing ditampilkan dalam IDR pada kurs ilustratif di Data & Sumber.',
     'pbm.sales':'Pendapatan','pbm.gp':'Laba Kotor','pbm.ebit':'EBIT','pbm.np':'Laba Bersih','pbm.gm':'Margin kotor','pbm.opexR':'OPEX / pendapatan','pbm.ebitm':'Margin EBIT','pbm.nm':'Margin bersih','pbm.ccc':'Siklus konversi kas','pbm.fcfm':'Margin arus kas bebas',
@@ -3817,8 +3831,6 @@
       '<div class="ksni-ctry"><div class="mp-l" style="font-size:11px;text-transform:uppercase;letter-spacing:.03em;color:var(--muted);margin:14px 0 6px;">'+t('ca.ksniByCountry')+'</div>'+
         '<div class="table-wrap"><table class="data-table"><thead><tr><th>'+t('pl.country')+'</th><th class="num">'+t('pl.ns')+'</th><th class="num">EBT %</th></tr></thead><tbody>'+ctry+'</tbody></table></div></div>'+
       '<p class="hint" style="margin-top:10px;">'+t('ca.ksniNote')+'</p></div>';
-    var swCard=document.getElementById('caSwotCard'); if(swCard) swCard.hidden=false;
-    renderSwot(document.getElementById('caSwotHost'), p);
   }
   /* ---- v6: SWOT explorer — strengths/weaknesses derived from verified figures; O/T positioning reads; v6 development sourced ---- */
   function peerMedians(){
@@ -3877,6 +3889,50 @@
         ' <a href="'+dv.url+'" target="_blank" rel="noopener">'+dv.src+' ↗</a></div>')
       : ('<div class="sw-dev" style="border-left-color:var(--muted);"><span class="sw-devl">'+t('sw.devLabel')+':</span> '+t('sw.noDev')+'</div>');
     host.innerHTML = grid + dev + '<p class="sw-note">'+t('sw.note')+'</p>';
+  }
+  /* ---- v6: SWOT explorer in Peer Benchmark — pick a company, read its verified snapshot + SWOT ---- */
+  function swotCohort(){
+    var list=[]; var kp=(typeof ksniAsPeer==='function')?ksniAsPeer():null;
+    if(kp) list.push({k:'ksni', name:'KSNI', obj:kp, ksni:true});
+    PEERS.forEach(function(p){ list.push({k:p.k, name:p.name, obj:p}); });
+    return list;
+  }
+  function swotPeerByKey(k){
+    if(k==='ksni') return (typeof ksniAsPeer==='function')?ksniAsPeer():null;
+    return peerOf(k);
+  }
+  function renderPbSwot(){
+    var host=document.getElementById('pbSwotSec'); if(!host) return;
+    var cohort=swotCohort(); if(!cohort.length){ host.innerHTML=''; return; }
+    if(!state.pbSwotK || !cohort.some(function(c){return c.k===state.pbSwotK;})) state.pbSwotK = cohort[0].k;
+    var p=swotPeerByKey(state.pbSwotK); if(!p) return;
+    var opts=cohort.map(function(c){ return '<option value="'+c.k+'"'+(c.k===state.pbSwotK?' selected':'')+'>'+c.name+(c.ksni?' ('+t('sw.exYou')+')':'')+'</option>'; }).join('');
+    // Verified snapshot strip — revenue, CAGR (matrix basis), EBT margin, gross margin. Blank stays N/A.
+    var cg=(typeof peerCagr==='function')?peerCagr(p):{v:(p.growth!=null?p.growth:null),basis:(p.growth!=null?'yoy':null)};
+    var cagrTxt = cg.v==null ? t('sw.exNoCagr') : (fmtSigned(cg.v,1)+'% '+(cg.basis==='cagr'?t('sw.exCagr5'):t('sw.exYoY')));
+    var snap=[
+      {l:t('kpi.revenue'), v:(p.sales==null?'N/A':'Rp'+p.sales.toFixed(2)+'T'), c:'#2457D6'},
+      {l:t('sw.exGrowth'), v:cagrTxt, c:(cg.v==null?'#8A94A6':(cg.v>=10?'#0E8A54':'#B7791F'))},
+      {l:t('kpi.ebtm'), v:(p.ebtm==null?'N/A':fmtPct1(p.ebtm)), c:(p.ebtm==null?'#8A94A6':(p.ebtm>=20?'#0E8A54':'#C23B4A'))},
+      {l:t('kpi.gm'), v:fmtPct1(p.gm), c:'#6E59C7'}
+    ];
+    var snapHtml=snap.map(function(s){ return '<div class="swx-stat" style="--sc:'+s.c+'"><div class="swx-sl">'+s.l+'</div><div class="swx-sv">'+s.v+'</div></div>'; }).join('');
+    // which quadrant it sits in (same 10:20:30 rule as the matrix/clusters)
+    var quad='';
+    if(cg.v!=null && p.ebtm!=null){ var gg=cg.v>=10, mm=p.ebtm>=20; var qk=gg&&mm?'stars':(!gg&&mm?'moat':(gg&&!mm?'engine':'defender')); quad='<span class="swx-quad swx-'+qk+'">'+t('mx2.'+qk)+'</span>'; }
+    else if(p.ebtm!=null){ quad='<span class="swx-quad swx-na">'+t('sw.exQuadNa')+'</span>'; }
+    host.innerHTML=
+      '<div class="section-head"><div><h2 style="font-size:15px;">'+t('sw.exTitle')+'</h2>'+
+        '<p class="section-sub">'+t('sw.exSub')+'</p></div></div>'+
+      '<div class="swx-bar">'+
+        '<label class="swx-pick"><span>'+t('sw.exPick')+'</span><select id="pbSwotSelect">'+opts+'</select></label>'+
+        quad+
+      '</div>'+
+      '<div class="swx-snap">'+snapHtml+'</div>'+
+      '<div id="pbSwotBody"></div>';
+    renderSwot(document.getElementById('pbSwotBody'), p);
+    var sel=document.getElementById('pbSwotSelect');
+    if(sel) sel.addEventListener('change', function(){ state.pbSwotK=sel.value; renderPbSwot(); });
   }
   function renderCompanyAnalysis(){
     var pickerHost=document.getElementById('caCompanyPicker');
@@ -3949,8 +4005,6 @@
     renderEvidenceMatrix(p);
     renderBalanceSheet(p);
     renderWorkingCapital(p);
-    var swCard=document.getElementById('caSwotCard'); if(swCard) swCard.hidden=false;
-    renderSwot(document.getElementById('caSwotHost'), p);
   }
 
   /* ---- Global reference company (native-currency view) ---- */
@@ -4066,9 +4120,6 @@
         '<div class="table-wrap"><table class="data-table"><thead><tr><th>'+t('ca.thYear')+'</th><th class="num">'+t('pbm.sales')+'</th><th class="num">'+t('pbm.gp')+'</th><th class="num">'+t('pbm.ebit')+'</th><th class="num">'+t('pbm.np')+'</th><th class="num">'+t('kpi.gm')+'</th><th class="num">'+t('kpi.ebitm')+'</th><th class="num">'+t('kpi.nm')+'</th></tr></thead><tbody>'+rows+'</tbody></table></div>'+
         '<p class="mp-note" style="margin-top:8px;">'+stmtNote+'</p></div>';
     }
-    // SWOT for the reference company — EBT margin is not in the global dataset, so EBT items are skipped (shown as N/A), growth = Rp-CAGR, margins vs peer set as a cross-set yardstick.
-    var swCard=document.getElementById('caSwotCard'); if(swCard) swCard.hidden=false;
-    renderSwot(document.getElementById('caSwotHost'), {k:state.company, name:g.name, region:g.region, ebtm:null, growth:revCagr, gm:last.gm, om:last.om, nm:last.nm, sales:revN, fcf:null, cash:null, totalDebt:null});
   }
 
   /* ================= PEER BENCHMARK ================= */
@@ -4187,6 +4238,7 @@
     render102030Validation();
     renderPbMatrix();
     renderPbClusters();
+    renderPbSwot();
     var sub=document.getElementById('pbSub');
     if(sub) sub.textContent = t('pb.sub',{period:periodLabel(),count:peerCount()});
 
@@ -5298,7 +5350,7 @@
     savePeers();
     renderPeerCards(); renderAllDependentViews();
   });
-  var DATA_VERSION = 'asia14-global9-2026-10-v6j';
+  var DATA_VERSION = 'asia14-global9-2026-10-v6k';
   function savePeers(){
     try{ localStorage.setItem('nabati-peers-v1', JSON.stringify(PEERS)); localStorage.setItem('nabati-peers-datav', DATA_VERSION); }catch(e){}
     if(peersDocRef){ peersDocRef.set({ peers: PEERS, dataVersion: DATA_VERSION, updatedAt: new Date().toISOString() }).catch(function(){}); }
