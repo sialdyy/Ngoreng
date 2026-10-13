@@ -333,7 +333,7 @@
 
   /* ---------- Opportunity Map (3D globe) — full-height executive stage ---------- */
   .map-wrap{position:relative; display:block; margin-top:18px;}
-  .map-globe{position:relative; height:clamp(400px, 56vh, 600px); border-radius:18px; overflow:hidden; border:1px solid rgba(255,255,255,.08);
+  .map-globe{position:relative; width:100%; height:clamp(620px, 88vh, 1040px); border-radius:18px; overflow:hidden; border:1px solid rgba(255,255,255,.08);
     background:
       radial-gradient(1200px 720px at 50% 36%, rgba(42,96,223,.20), transparent 62%),
       radial-gradient(circle at 50% 42%, #0b1d3a 0%, #071127 52%, #03091a 78%, #020611 100%);
@@ -360,7 +360,7 @@
   .map-legend .lg{display:flex; align-items:center; gap:7px; color:#e8eefc; font-size:11px; font-weight:600; font-family:"JetBrains Mono",monospace;}
   .map-legend .dot{width:9px; height:9px; border-radius:50%; flex:none; box-shadow:0 0 8px currentColor;}
   .map-globe-fallback{position:absolute; inset:0; display:flex; align-items:center; justify-content:center; text-align:center; color:#cdd8ee; font-size:13px; padding:30px 30px 70px; line-height:1.7;}
-  @media (max-width:620px){ .map-globe{height:clamp(320px,48vh,440px);} .map-hero-head{max-width:calc(100% - 36px);} .map-hero-badge{display:none;} }
+  @media (max-width:620px){ .map-globe{height:clamp(460px,66vh,640px);} .map-hero-head{max-width:calc(100% - 36px);} .map-hero-badge{display:none;} }
   .globe-marker{transform:translate(-50%,-100%); cursor:pointer; pointer-events:auto; display:flex; flex-direction:column; align-items:center; gap:3px; filter:drop-shadow(0 4px 10px rgba(0,0,0,.5));}
   .globe-marker .gm-pill{display:flex; align-items:center; gap:7px; background:#0d1a2e; border:1px solid rgba(255,255,255,.18); border-radius:999px; padding:5px 11px 5px 6px; color:#fff; white-space:nowrap;}
   .globe-marker .gm-flag{width:22px; height:22px; border-radius:50%; background:#12203a; display:flex; align-items:center; justify-content:center; font-size:12px;}
@@ -5475,7 +5475,7 @@
     savePeers();
     renderPeerCards(); renderAllDependentViews();
   });
-  var DATA_VERSION = 'asia14-global9-2026-10-v6n';
+  var DATA_VERSION = 'asia14-global9-2026-10-v6o';
   function savePeers(){
     try{ localStorage.setItem('nabati-peers-v1', JSON.stringify(PEERS)); localStorage.setItem('nabati-peers-datav', DATA_VERSION); }catch(e){}
     if(peersDocRef){ peersDocRef.set({ peers: PEERS, dataVersion: DATA_VERSION, updatedAt: new Date().toISOString() }).catch(function(){}); }
