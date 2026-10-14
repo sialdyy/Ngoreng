@@ -1,0 +1,17 @@
+﻿dimension,category,count,share_pct,companies
+Financial Bracket,Transformation Seeker,26,65.0,"PepsiCo, Inc., Mondelēz International, Danone S.A., Associated British Foods (Grocery & Ingred.), The Campbell's Company, Conagra Brands, Inc., Meiji Holdings Co., Ltd., Morinaga & Co., Ltd., CJ CheilJedang Corp., Daesang Corporation, Universal Robina Corp., San Miguel Food and Beverage, Fraser and Neave, Ltd., Nestlé (Malaysia) Berhad, PT Mayora Indah Tbk, PT Garudafood Putra Putri Jaya Tbk, PT Diamond Food Indonesia Tbk, PT FKS Food Sejahtera Tbk, Inner Mongolia Yili Industrial Group, China Mengniu Dairy Co. Ltd., Tingyi (Master Kong) Holding Corp., Uni-President China Holdings Ltd., Bright Dairy & Food Co., Ltd., Three Squirrels Inc., Bestore Co., Ltd., Vitasoy International Holdings Ltd."
+Financial Bracket,Margin Defender,10,25.0,"Nestlé S.A., The Kraft Heinz Co., General Mills, Inc., Unilever PLC (Nutrition & Ice Cream), Thai President Foods PCL, PT Indofood Sukses Makmur Tbk, PT Ultrajaya Milk Industry & Trading Co. Tbk, PT Siantar Top Tbk, PT Nippon Indosari Corpindo Tbk, Want Want China Holdings Ltd."
+Financial Bracket,Apex Performer,3,7.5,"PT Indofood CBP Sukses Makmur Tbk, PT Cisarua Mountain Dairy Tbk (Cimory), Weilong Delicious Global Holdings Ltd."
+Financial Bracket,Volume Driver,1,2.5,"Lotte Wellfood Co., Ltd."
+Consumer Archetype,Frequency Defender,11,27.5,"General Mills, Inc., Associated British Foods (Grocery & Ingred.), Meiji Holdings Co., Ltd., Universal Robina Corp., Fraser and Neave, Ltd., Nestlé (Malaysia) Berhad, PT Garudafood Putra Putri Jaya Tbk, PT Siantar Top Tbk, Inner Mongolia Yili Industrial Group, Tingyi (Master Kong) Holding Corp., Uni-President China Holdings Ltd."
+Consumer Archetype,Margin Defender,8,20.0,"Unilever PLC (Nutrition & Ice Cream), Conagra Brands, Inc., San Miguel Food and Beverage, Thai President Foods PCL, PT Indofood Sukses Makmur Tbk, PT Ultrajaya Milk Industry & Trading Co. Tbk, PT Nippon Indosari Corpindo Tbk, Want Want China Holdings Ltd."
+Consumer Archetype,Basket Expander,6,15.0,"Nestlé S.A., PepsiCo, Inc., Mondelēz International, Danone S.A., The Campbell's Company, Morinaga & Co., Ltd."
+Consumer Archetype,Penetration Apex,6,15.0,"CJ CheilJedang Corp., Lotte Wellfood Co., Ltd., Daesang Corporation, PT Indofood CBP Sukses Makmur Tbk, PT Cisarua Mountain Dairy Tbk (Cimory), Weilong Delicious Global Holdings Ltd."
+Consumer Archetype,Stagnating Staple,4,10.0,"The Kraft Heinz Co., China Mengniu Dairy Co. Ltd., Bright Dairy & Food Co., Ltd., Bestore Co., Ltd."
+Consumer Archetype,Transformation Seeker,3,7.5,"PT FKS Food Sejahtera Tbk, Three Squirrels Inc., Vitasoy International Holdings Ltd."
+Consumer Archetype,Volume Driver,2,5.0,"PT Mayora Indah Tbk, PT Diamond Food Indonesia Tbk"
+Milestone Outcome Status (240 cycles),Accomplished,221,92.1,
+Milestone Outcome Status (240 cycles),Partially Accomplished,9,3.8,
+Milestone Outcome Status (240 cycles),Missed,7,2.9,
+Milestone Outcome Status (240 cycles),On Track,2,0.8,
+Milestone Outcome Status (240 cycles),Delayed,1,0.4,
