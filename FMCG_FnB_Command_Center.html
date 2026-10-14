@@ -1345,12 +1345,12 @@
       const scatterCtx = document.getElementById("scatterMatrixChart").getContext("2d");
       if (scatterChartInstance) scatterChartInstance.destroy();
 
-      // Strategic Bracket filter (toggled via the bracket cards below the matrix):
-      // show only entities matching the pressed bracket's criteria.
-      const scatterList = state.scatterBracket === "ALL"
-        ? cohortList
-        : cohortList.filter(c => c.finBracket === state.scatterBracket);
+      // Strategic Bracket filter (toggled via the bracket cards below the matrix).
+      // All cohort points stay in the dataset; non-matching points are merely
+      // hidden (radius 0, non-hoverable) so the X/Y axes never rescale and the
+      // remaining points never shift position.
       applyBracketCardStates();
+      const bracketVisible = c => state.scatterBracket === "ALL" || c.finBracket === state.scatterBracket;
 
       const groupKeys = state.scatterColorBy === "cohort"
         ? ["Global", "Regional APAC", "Indonesia", "Greater China"]
@@ -1360,7 +1360,7 @@
 
       const datasets = groupKeys
         .map(key => {
-          const items = scatterList.filter(c => c[state.scatterColorBy] === key);
+          const items = cohortList.filter(c => c[state.scatterColorBy] === key);
           return {
             label: state.scatterColorBy === "cohort" ? tCohort(key) : tBracket(key),
             data: items.map(c => ({
@@ -1371,8 +1371,9 @@
             backgroundColor: palette[key]?.bg || "#6366f1",
             borderColor: palette[key]?.border || "#818cf8",
             borderWidth: 1.5,
-            pointRadius: items.map(c => (c.id === state.selectedCompanyId ? 10 : 6.5)),
-            pointHoverRadius: 11
+            pointRadius: items.map(c => (!bracketVisible(c) ? 0 : (c.id === state.selectedCompanyId ? 10 : 6.5))),
+            pointHoverRadius: items.map(c => (bracketVisible(c) ? 11 : 0)),
+            pointHitRadius: items.map(c => (bracketVisible(c) ? 5 : 0))
           };
         })
         .filter(ds => ds.data.length > 0);
@@ -1428,6 +1429,7 @@
               bodyColor: ct.tooltipBody,
               borderWidth: 1,
               padding: 10,
+              filter: item => bracketVisible(item.raw.company),
               callbacks: {
                 label: ctx => {
                   const c = ctx.raw.company;
