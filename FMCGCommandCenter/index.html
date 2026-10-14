@@ -79,21 +79,48 @@
     .custom-scrollbar::-webkit-scrollbar-thumb { background: var(--bar-thumb); border-radius: 3px; }
     .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: var(--bar-thumb-hover); }
 
-    /* ---- Floating corner controls: fixed, so the original layout is untouched ---- */
+    /* ---- Floating corner controls -------------------------------------
+       At rest this is a single small button tucked into the top-right
+       corner, so it covers no card text. Clicking it reveals the two
+       groups; they overlay content only while the user has them open. */
     #floatingControls {
       position: fixed;
       right: 14px;
-      bottom: 14px;
+      /* --ctl-top tracks the sticky header's real height (set in JS), so the
+         cluster clears the header at every viewport width. */
+      top: var(--ctl-top, 92px);
       z-index: 60;
       display: flex;
       flex-direction: column;
       align-items: flex-end;
       gap: 8px;
-      opacity: .85;
-      transition: opacity .15s ease;
     }
-    #floatingControls:hover,
-    #floatingControls:focus-within { opacity: 1; }
+    #ctlToggle {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      border-radius: 10px;
+      background: var(--ctl-bg);
+      border: 1px solid var(--ctl-border);
+      color: var(--ctl-fg);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 4px 14px -6px rgba(15, 23, 42, .45);
+      cursor: pointer;
+      opacity: .75;
+      transition: opacity .15s ease, color .15s ease;
+    }
+    #ctlToggle:hover,
+    #ctlToggle[aria-expanded="true"] { opacity: 1; color: var(--page-fg); }
+    #ctlToggle svg { width: 16px; height: 16px; }
+    #ctlPanel {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 8px;
+    }
+    #ctlPanel[hidden] { display: none; }
     .seg-group {
       display: inline-flex;
       align-items: center;
@@ -103,7 +130,7 @@
       background: var(--ctl-bg);
       border: 1px solid var(--ctl-border);
       backdrop-filter: blur(10px);
-      box-shadow: 0 4px 14px -6px rgba(15, 23, 42, .45);
+      box-shadow: 0 6px 18px -8px rgba(15, 23, 42, .55);
     }
     .seg-btn {
       display: inline-flex;
@@ -124,9 +151,7 @@
     .seg-btn[aria-pressed="true"] { background: #4f46e5; color: #fff; }
     .seg-btn svg { width: 13px; height: 13px; }
     @media (max-width: 640px) {
-      #floatingControls { right: 8px; bottom: 8px; }
-      .seg-btn { padding: 5px 7px; }
-      .seg-btn .seg-label { display: none; }   /* icons only on narrow screens */
+      #floatingControls { right: 8px; }
     }
     @media print { #floatingControls { display: none !important; } }
   </style>
@@ -549,6 +574,14 @@
   <!-- Fixed to the viewport corner; deliberately NOT part of the header flow. -->
   <!-- ====================================================================== -->
   <div id="floatingControls">
+    <button type="button" id="ctlToggle" aria-expanded="false" aria-controls="ctlPanel"
+            title="Appearance & language" data-i18n-title="ctl.toggle" aria-label="Appearance and language settings">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+        <path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2.2"/><circle cx="10" cy="17" r="2.2"/>
+      </svg>
+    </button>
+
+    <div id="ctlPanel" hidden>
     <div class="seg-group" id="themeSwitcher" role="group" aria-label="Color theme">
       <button type="button" class="seg-btn" data-theme-choice="light" aria-pressed="false" title="Light" data-i18n-title="theme.light">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true">
@@ -573,6 +606,7 @@
     <div class="seg-group" id="langSwitcher" role="group" aria-label="Language">
       <button type="button" class="seg-btn font-mono" data-lang-choice="en" aria-pressed="false" title="English">EN</button>
       <button type="button" class="seg-btn font-mono" data-lang-choice="id" aria-pressed="false" title="Bahasa Indonesia">ID</button>
+    </div>
     </div>
   </div>
 
@@ -650,6 +684,10 @@
             "doc.title": {
                   "en": "Global & APAC FMCG F&B Empirical Command Center (FY2019–FY2026)",
                   "id": "Pusat Kendali Empiris FMCG F&B Global & APAC (TA2019–TA2026)"
+            },
+            "ctl.toggle": {
+                  "en": "Appearance & language",
+                  "id": "Tampilan & bahasa"
             },
             "theme.light": {
                   "en": "Light",
@@ -1298,6 +1336,14 @@
       renderInspector();
     }
 
+    // The sticky header's height changes as its rows wrap, so measure it rather
+    // than hard-coding an offset for the corner controls.
+    function syncControlOffset() {
+      const header = document.querySelector("header");
+      if (!header) return;
+      document.documentElement.style.setProperty("--ctl-top", (header.offsetHeight + 10) + "px");
+    }
+
     function chartColors() {
       return isDark()
         ? { grid: "rgba(51, 65, 85, 0.35)", tick: "#94a3b8", tickStrong: "#e2e8f0",
@@ -1864,9 +1910,31 @@
     };
 
     function bindEvents() {
+      const ctlToggle = document.getElementById("ctlToggle");
+      const ctlPanel = document.getElementById("ctlPanel");
+      const setPanel = open => {
+        ctlPanel.hidden = !open;
+        ctlToggle.setAttribute("aria-expanded", String(open));
+      };
+      ctlToggle.addEventListener("click", e => {
+        e.stopPropagation();
+        setPanel(ctlPanel.hidden);
+      });
+      // Dismiss on outside click or Escape so the panel never sits over the cards.
+      document.addEventListener("click", e => {
+        if (!ctlPanel.hidden && !document.getElementById("floatingControls").contains(e.target)) setPanel(false);
+      });
+      document.addEventListener("keydown", e => {
+        if (e.key === "Escape" && !ctlPanel.hidden) { setPanel(false); ctlToggle.focus(); }
+      });
+
       document.querySelectorAll("#themeSwitcher [data-theme-choice]").forEach(btn => {
         btn.addEventListener("click", () => setTheme(btn.dataset.themeChoice));
       });
+
+      const header = document.querySelector("header");
+      if (header && window.ResizeObserver) new ResizeObserver(syncControlOffset).observe(header);
+      window.addEventListener("resize", syncControlOffset);
 
       document.querySelectorAll("#langSwitcher [data-lang-choice]").forEach(btn => {
         btn.addEventListener("click", () => setLang(btn.dataset.langChoice));
@@ -1970,6 +2038,7 @@
     document.addEventListener("DOMContentLoaded", () => {
       applyThemeClasses(document.documentElement.dataset.themePref || "dark");
       applyI18n();
+      syncControlOffset();
       populateCompanyDropdown();
       bindEvents();
       renderKPIs();
