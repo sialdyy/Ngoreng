@@ -167,6 +167,21 @@
       font-family: 'JetBrains Mono', monospace;
     }
     :root.light .switch-label { color: #64748b; }
+
+    /* Clickable Strategic Bracket filter cards (Section 1 scatter matrix) */
+    .bracket-filter-card {
+      transition: transform .15s ease, box-shadow .15s ease, opacity .15s ease;
+    }
+    .bracket-filter-card:hover { transform: translateY(-1px); }
+    .bracket-filter-card:focus-visible {
+      outline: none;
+      box-shadow: 0 0 0 2px var(--bracket-accent, #6366f1);
+    }
+    .bracket-filter-card.is-active {
+      box-shadow: 0 0 0 1px var(--bracket-accent, #6366f1), 0 10px 22px -12px var(--bracket-accent, #6366f1);
+    }
+    .bracket-filter-card.is-muted { opacity: 0.4; }
+    .bracket-filter-card.is-muted:hover { opacity: 0.75; }
   </style>
 </head>
 <body class="antialiased selection:bg-indigo-500 selection:text-white min-h-screen flex flex-col">
@@ -324,19 +339,19 @@
         </div>
 
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-3.5 mt-2 border-t border-slate-800/80 text-[11px]">
-          <div class="bg-slate-900/75 rounded-lg p-2 border border-amber-500/30">
+          <div class="bracket-filter-card cursor-pointer select-none bg-slate-900/75 rounded-lg p-2 border border-amber-500/30" data-bracket="Apex Performer" style="--bracket-accent: #fbbf24;" role="button" tabindex="0" aria-pressed="false">
             <span class="font-bold text-amber-400" data-i18n="s1.b1.title">Bracket 1: Apex Performer</span>
             <p class="text-slate-400 mt-0.5" data-i18n="s1.b1.rule">≥10% CAGR &amp; ≥20% EBITDA</p>
           </div>
-          <div class="bg-slate-900/75 rounded-lg p-2 border border-sky-500/30">
+          <div class="bracket-filter-card cursor-pointer select-none bg-slate-900/75 rounded-lg p-2 border border-sky-500/30" data-bracket="Margin Defender" style="--bracket-accent: #38bdf8;" role="button" tabindex="0" aria-pressed="false">
             <span class="font-bold text-sky-400" data-i18n="s1.b2.title">Bracket 2: Margin Defender</span>
             <p class="text-slate-400 mt-0.5" data-i18n="s1.b2.rule">&lt;10% CAGR &amp; ≥20% EBITDA</p>
           </div>
-          <div class="bg-slate-900/75 rounded-lg p-2 border border-emerald-500/30">
+          <div class="bracket-filter-card cursor-pointer select-none bg-slate-900/75 rounded-lg p-2 border border-emerald-500/30" data-bracket="Volume Driver" style="--bracket-accent: #34d399;" role="button" tabindex="0" aria-pressed="false">
             <span class="font-bold text-emerald-400" data-i18n="s1.b3.title">Bracket 3: Volume Driver</span>
             <p class="text-slate-400 mt-0.5" data-i18n="s1.b3.rule">≥10% CAGR &amp; &lt;20% EBITDA</p>
           </div>
-          <div class="bg-slate-900/75 rounded-lg p-2 border border-slate-700">
+          <div class="bracket-filter-card cursor-pointer select-none bg-slate-900/75 rounded-lg p-2 border border-slate-700" data-bracket="Transformation Seeker" style="--bracket-accent: #94a3b8;" role="button" tabindex="0" aria-pressed="false">
             <span class="font-bold text-slate-300" data-i18n="s1.b4.title">Bracket 4: Transformation</span>
             <p class="text-slate-400 mt-0.5" data-i18n="s1.b4.rule">&lt;10% CAGR &amp; &lt;20% EBITDA</p>
           </div>
@@ -1164,6 +1179,7 @@
       selectedAuditYear: "ALL",
       scatterXField: "cagr5y",
       scatterColorBy: "cohort",
+      scatterBracket: "ALL",
       barMetricField: "cagr5y",
       searchQuery: "",
       finBracket: "ALL",
@@ -1299,6 +1315,26 @@
     }
 
     // ============================================================================
+    // STRATEGIC BRACKET FILTER (clickable cards below the scatter matrix)
+    // ============================================================================
+    // Reflect the active bracket selection on the four cards: the pressed card
+    // glows (is-active); the others dim (is-muted). "ALL" clears both states.
+    function applyBracketCardStates() {
+      document.querySelectorAll(".bracket-filter-card").forEach(card => {
+        const isActive = state.scatterBracket === card.dataset.bracket;
+        card.classList.toggle("is-active", isActive);
+        card.classList.toggle("is-muted", state.scatterBracket !== "ALL" && !isActive);
+        card.setAttribute("aria-pressed", isActive ? "true" : "false");
+      });
+    }
+
+    // Toggle filter: press a bracket to show only its entities; press again to show all.
+    window.toggleScatterBracket = function(bracket) {
+      state.scatterBracket = (state.scatterBracket === bracket) ? "ALL" : bracket;
+      renderCharts();
+    };
+
+    // ============================================================================
     // 2. RENDER SCATTER MATRIX & RANKING BAR CHARTS
     // ============================================================================
     function renderCharts() {
@@ -1309,6 +1345,13 @@
       const scatterCtx = document.getElementById("scatterMatrixChart").getContext("2d");
       if (scatterChartInstance) scatterChartInstance.destroy();
 
+      // Strategic Bracket filter (toggled via the bracket cards below the matrix):
+      // show only entities matching the pressed bracket's criteria.
+      const scatterList = state.scatterBracket === "ALL"
+        ? cohortList
+        : cohortList.filter(c => c.finBracket === state.scatterBracket);
+      applyBracketCardStates();
+
       const groupKeys = state.scatterColorBy === "cohort"
         ? ["Global", "Regional APAC", "Indonesia", "Greater China"]
         : Object.keys(ARCHETYPE_COLORS);
@@ -1317,7 +1360,7 @@
 
       const datasets = groupKeys
         .map(key => {
-          const items = cohortList.filter(c => c[state.scatterColorBy] === key);
+          const items = scatterList.filter(c => c[state.scatterColorBy] === key);
           return {
             label: state.scatterColorBy === "cohort" ? tCohort(key) : tBracket(key),
             data: items.map(c => ({
@@ -1711,6 +1754,16 @@
     };
 
     function bindEvents() {
+      document.querySelectorAll(".bracket-filter-card").forEach(card => {
+        card.addEventListener("click", () => toggleScatterBracket(card.dataset.bracket));
+        card.addEventListener("keydown", e => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            toggleScatterBracket(card.dataset.bracket);
+          }
+        });
+      });
+
       document.querySelectorAll(".cohort-btn").forEach(btn => {
         btn.addEventListener("click", () => {
           state.cohort = btn.dataset.cohort;
