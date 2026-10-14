@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FMCG Building Blocks &amp; Nabati Benchmark</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --surface:#0F172A; --surface-2:#1E293B; --line:rgba(255,255,255,.08);
+  --ink:#F8FAFC; --ink-2:#CBD5E1; --ink-3:#94A3B8;
+  --s-base:#475569;           /* 2019 anchor — neutral, not a categorical series */
+  --s-price:#3987e5; --s-vol:#199e70; --s-ma:#9085e9; --s-fx:#e66767;
+  --ok:#199e70; --warn:#c98500; --bad:#e66767;
+}
+*{box-sizing:border-box}
+body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--surface);color:var(--ink);margin:0}
+.glass{background:rgba(30,41,59,.75);border:1px solid var(--line)}
+.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-variant-numeric:tabular-nums}
+.scroll::-webkit-scrollbar{width:7px;height:7px}
+.scroll::-webkit-scrollbar-track{background:#1E293B;border-radius:4px}
+.scroll::-webkit-scrollbar-thumb{background:#3987e5;border-radius:4px}
+
+/* ---------- ranked bridge rows ---------- */
+.bridge-row{display:grid;grid-template-columns:200px 92px 1fr 104px;gap:10px;align-items:center;
+  padding:7px 10px;border-radius:9px;transition:background .15s}
+.bridge-row:hover{background:rgba(57,135,229,.08)}
+.bridge-name{font-size:12px;font-weight:600;color:var(--ink-2);line-height:1.25}
+.bridge-sub{font-size:10px;color:var(--ink-3);font-weight:500}
+.track{position:relative;height:30px}
+.bar{position:absolute;left:0;width:100%;height:13px;display:flex;align-items:stretch}
+.bar.y19{top:0}
+.bar.y24{top:16px}
+.seg{height:100%;margin-right:2px;border-radius:2px}
+.seg:first-child{border-radius:3px 2px 2px 3px}
+.seg:last-child{margin-right:0;border-radius:2px 3px 3px 2px}
+.seg.loss{background:repeating-linear-gradient(135deg,var(--s-fx),var(--s-fx) 4px,rgba(15,23,42,.55) 4px,rgba(15,23,42,.55) 7px)}
+.tick{position:absolute;z-index:5;top:13px;width:2px;height:19px;background:#F8FAFC;border-radius:1px;box-shadow:0 0 0 2px var(--surface)}
+.gapval{text-align:right;font-size:13px;font-weight:800}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:5px 11px;border-radius:999px;
+  border:1px solid var(--line);background:rgba(30,41,59,.6);font-size:11px;font-weight:700;
+  color:var(--ink-2);cursor:pointer;transition:.15s;white-space:nowrap}
+.chip:hover{border-color:rgba(57,135,229,.5);color:var(--ink)}
+.chip.on{background:rgba(57,135,229,.16);border-color:#3987e5;color:#fff}
+.chip .dot{width:8px;height:8px;border-radius:50%}
+.chip .ccy{font-size:9px;color:var(--ink-3);background:rgba(255,255,255,.06);padding:1px 5px;border-radius:4px}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:11px;color:var(--ink-2);font-weight:600}
+.legend i{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+
+/* ---------- scatter ---------- */
+.scatter{position:relative;width:100%;height:420px;margin:0 0 22px 34px;border:1px solid var(--line);border-radius:12px;
+  background:linear-gradient(rgba(255,255,255,.02),rgba(255,255,255,0))}
+.pt{position:absolute;width:13px;height:13px;border-radius:50%;transform:translate(-50%,50%);
+  cursor:pointer;transition:.18s;box-shadow:0 0 0 2px var(--surface)}
+.pt:hover{width:19px;height:19px;z-index:20}
+.pt.dim{opacity:.13}
+.gl{position:absolute;background:rgba(255,255,255,.055)}
+
+/* ---------- P&L ---------- */
+.pnl{width:100%;border-collapse:collapse;font-size:12px}
+.pnl td,.pnl th{padding:6px 10px;border-bottom:1px solid rgba(255,255,255,.055)}
+.pnl th{font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-3);text-align:left}
+.pnl td.n{text-align:right;font-variant-numeric:tabular-nums}
+.pnl tr.head td{background:rgba(57,135,229,.11);font-weight:800;color:#fff}
+.pnl tr.sub td:first-child{padding-left:24px;color:var(--ink-3)}
+.na{color:#64748B;font-style:italic;font-size:10.5px}
+.tip{position:fixed;z-index:999;pointer-events:none;background:#0b1220;border:1px solid rgba(255,255,255,.14);
+  border-radius:9px;padding:9px 11px;font-size:11.5px;color:var(--ink);box-shadow:0 10px 30px rgba(0,0,0,.6);
+  max-width:300px;display:none;line-height:1.45}
+.badge{font-size:9.5px;font-weight:800;padding:2px 7px;border-radius:999px;letter-spacing:.04em}
+h2{font-size:19px;font-weight:800;letter-spacing:-.01em;margin:0}
+.sub{font-size:12px;color:var(--ink-3);margin-top:3px}
+.eyebrow{font-size:10px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:#3987e5}
+
+/* ---- self-contained utilities (replaces Tailwind CDN so the page works offline) ---- */
+.sticky{position:sticky}.top-0{top:0}.z-50{z-index:50}
+.max-w-\[1400px\]{max-width:1400px}.mx-auto{margin-left:auto;margin-right:auto}
+.px-4{padding-left:16px;padding-right:16px}.py-8{padding-top:32px;padding-bottom:32px}
+.h-14{height:56px}.flex{display:flex}.hidden{display:none}
+.items-center{align-items:center}.items-start{align-items:flex-start}.items-baseline{align-items:baseline}
+.justify-between{justify-content:space-between}.justify-end{justify-content:flex-end}
+.flex-wrap{flex-wrap:wrap}.min-w-0{min-width:0}.shrink-0{flex-shrink:0}
+.truncate{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gap-1\.5{gap:6px}.gap-2{gap:8px}.gap-2\.5{gap:10px}.gap-3{gap:12px}.gap-3\.5{gap:14px}
+.gap-4{gap:16px}.gap-5{gap:20px}.gap-6{gap:24px}
+.grid{display:grid}
+.rounded-lg{border-radius:8px}.rounded-xl{border-radius:12px}.rounded-2xl{border-radius:16px}
+.p-3{padding:12px}.p-3\.5{padding:14px}.p-4{padding:16px}.p-5{padding:20px}
+.px-2\.5{padding-left:10px;padding-right:10px}.py-1\.5{padding-top:6px;padding-bottom:6px}
+.pt-2{padding-top:8px}.pt-7{padding-top:28px}
+.mb-1{margin-bottom:4px}.mb-2{margin-bottom:8px}.mb-2\.5{margin-bottom:10px}.mb-3{margin-bottom:12px}
+.mb-4{margin-bottom:16px}.mb-5{margin-bottom:20px}.mb-6{margin-bottom:24px}
+.mt-0\.5{margin-top:2px}.mt-1{margin-top:4px}.mt-2{margin-top:8px}.mt-2\.5{margin-top:10px}
+.mt-3\.5{margin-top:14px}.mt-5{margin-top:20px}.mt-6{margin-top:24px}.mt-9{margin-top:36px}
+.text-center{text-align:center}.cursor-pointer{cursor:pointer}
+.font-semibold{font-weight:600}.font-bold{font-weight:700}.font-extrabold{font-weight:800}
+.italic{font-style:italic}
+.text-xs{font-size:12px}.text-sm{font-size:14px}.text-base{font-size:16px}
+.max-h-\[300px\]{max-height:300px}.overflow-y-auto{overflow-y:auto}
+.space-y-0\.5>*+*{margin-top:2px}.space-y-1>*+*{margin-top:4px}.space-y-1\.5>*+*{margin-top:6px}
+.space-y-2>*+*{margin-top:8px}.space-y-2\.5>*+*{margin-top:10px}.space-y-3>*+*{margin-top:12px}
+.space-y-10>*+*{margin-top:40px}
+@media(min-width:768px){
+  .md\:px-7{padding-left:28px;padding-right:28px}
+  .md\:p-7{padding:28px}
+  .md\:grid-cols-2{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .md\:grid-cols-3{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .md\:text-base{font-size:16px}
+}
+@media(min-width:1024px){
+  .lg\:flex{display:flex}
+  .lg\:grid-cols-2{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .lg\:grid-cols-\[1fr_300px\]{grid-template-columns:1fr 300px}
+}
+@media(max-width:860px){
+  .bridge-row{grid-template-columns:128px 1fr 74px}
+  .bridge-row .hide-sm{display:none}
+}
+</style>
+</head>
+<body>
+<div class="tip" id="tip"></div>
+
+<header class="sticky top-0 z-50" style="background:rgba(15,23,42,.93);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)">
+ <div class="max-w-[1400px] mx-auto px-4 md:px-7 h-14 flex items-center justify-between gap-4">
+  <div class="flex items-center gap-3 min-w-0">
+   <span class="badge" style="background:#3987e5;color:#fff">REV 2</span>
+   <span class="font-extrabold text-sm md:text-base truncate">FMCG Building Blocks &amp; Nabati Benchmark</span>
+  </div>
+  <nav class="hidden lg:flex gap-5 text-[11px] font-bold uppercase tracking-wide">
+   <a href="#bridge" class="text-slate-400 hover:text-white">Bridge Ranking</a>
+   <a href="#matrix" class="text-slate-400 hover:text-white">Bracket Matrix</a>
+   <a href="#npl" class="text-slate-400 hover:text-white">NPL &amp; Innovation</a>
+   <a href="#pnl" class="text-slate-400 hover:text-white">P&amp;L vs Nabati</a>
+  </nav>
+ </div>
+</header>
+
+<main class="max-w-[1400px] mx-auto px-4 md:px-7 py-8 space-y-10">
+
+ <!-- ============ 1. BRIDGE RANKING ============ -->
+ <section id="bridge" class="glass rounded-2xl p-5 md:p-7">
+  <div class="flex flex-wrap items-start justify-between gap-4 mb-5">
+   <div>
+    <p class="eyebrow">Revisi 1</p>
+    <h2>Financial Building Block Simulations — 34 Entitas</h2>
+    <p class="sub">2019 base vs 2024 result. Bar 2024 dipecah ke Price/Mix, Volume, M&amp;A, dan FX. Diurutkan dari gap terbesar.</p>
+   </div>
+   <div class="flex gap-2">
+    <button class="chip on" data-scale="idx" onclick="setScale('idx')">Indexed (2019=100)</button>
+    <button class="chip" data-scale="abs" onclick="setScale('abs')">Native currency</button>
+   </div>
+  </div>
+
+  <div class="rounded-xl p-3.5 mb-5" style="background:rgba(201,133,0,.09);border:1px solid rgba(201,133,0,.3)">
+   <p class="text-[11.5px] leading-relaxed" style="color:#fbbf24">
+    <b>Kenapa default-nya indexed.</b> Ke-34 entitas melapor dalam 8 mata uang berbeda (IDR T, RMB B, USD B, CHF B, TWD B, PHP B, KRW T, HK$ B).
+    Menaruhnya pada satu sumbu absolut akan membandingkan Rp 42,3 T dengan TWD 447,5 B seolah setara — itu tidak bermakna.
+    Mode indexed menyetel setiap 2019 base = 100, sehingga panjang bar membaca pertumbuhan riil. Mode native tetap tersedia, tapi hanya
+    valid dibaca <i>per baris</i>, bukan antar baris.
+   </p>
+  </div>
+
+  <div class="flex flex-wrap items-center gap-4 mb-3">
+   <div class="legend">
+    <span><i style="background:var(--s-base)"></i>2019 Base</span>
+    <span><i style="background:var(--s-price)"></i>Price/Mix</span>
+    <span><i style="background:var(--s-vol)"></i>Volume Growth</span>
+    <span><i style="background:var(--s-ma)"></i>M&amp;A / Divest</span>
+    <span><i class="seg loss" style="width:11px;height:11px;display:inline-block"></i>FX / Headwinds (deduksi)</span>
+    <span><i style="background:#F8FAFC;width:3px;border-radius:1px"></i>Posisi 2024 final</span>
+   </div>
+  </div>
+  <p class="text-[11px] mb-4" style="color:var(--ink-3)">
+   Dalam mode indexed, blok abu-abu 2019 berlebar tetap karena nilainya memang konstan 100 untuk semua entitas; seluruh sisa lebar dipakai komponen delta agar terbaca. Bar 2024 digambar sebagai <b>gross</b> (base + seluruh kontribusi positif). Segmen bergaris di ujung kanan adalah bagian yang
+   hilang karena FX/headwinds atau divestasi; garis putih menandai di mana angka 2024 <b>sebenarnya</b> mendarat.
+  </p>
+
+  <div id="bridgeList" class="space-y-0.5"></div>
+
+  <!-- driver similarity -->
+  <div class="mt-9 pt-7" style="border-top:1px solid var(--line)">
+   <h3 class="text-base font-extrabold mb-1">Ranking Key Operational Driver / Main Hindrance</h3>
+   <p class="sub mb-5">Dikelompokkan berdasarkan kemiripan kalimat. Dihitung dari field <code class="mono text-[11px]">driver</code> pada audit rolling.</p>
+
+   <div class="grid md:grid-cols-2 gap-5">
+    <div>
+     <p class="eyebrow mb-2.5">A · Frekuensi kalimat persis (dari 240 snapshot)</p>
+     <div id="exactRank" class="space-y-2"></div>
+    </div>
+    <div>
+     <p class="eyebrow mb-2.5">B · Klaster tematik (hanya 30 snapshot riil)</p>
+     <div id="themeRank" class="space-y-2"></div>
+    </div>
+   </div>
+
+   <div class="mt-6">
+    <p class="eyebrow mb-2.5">C · Pasangan paling mirip (Jaccard, antar snapshot riil)</p>
+    <div id="pairRank" class="space-y-2"></div>
+   </div>
+  </div>
+ </section>
+
+ <!-- ============ 2. BRACKET MATRIX ============ -->
+ <section id="matrix" class="glass rounded-2xl p-5 md:p-7">
+  <p class="eyebrow">Revisi 2</p>
+  <h2>Strategic Performance Bracket Matrix</h2>
+  <p class="sub mb-5">Revenue CAGR 5 tahun vs rata-rata EBITDA margin. Klik bracket untuk memfilter.</p>
+
+  <div class="flex flex-wrap gap-2 mb-5" id="bracketChips"></div>
+
+  <div class="grid lg:grid-cols-[1fr_300px] gap-6">
+   <div>
+    <div class="scatter" id="scatter"></div>
+    <div class="flex justify-between text-[10px] mt-2" style="color:var(--ink-3)">
+     <span>← Revenue CAGR 2019–2024 (%) →</span><span id="scatterCount"></span>
+    </div>
+   </div>
+   <div id="bracketInfo" class="space-y-3"></div>
+  </div>
+ </section>
+
+ <!-- ============ 3. NPL & INNOVATION ============ -->
+ <section id="npl" class="glass rounded-2xl p-5 md:p-7">
+  <p class="eyebrow">Revisi 3</p>
+  <h2>New Product Launch &amp; Innovation Pipeline Architecture</h2>
+  <p class="sub mb-5">Histori peluncuran produk hasil riset sumber publik, diklasifikasi ke tiga tier Nabati Innovation Pipeline.</p>
+
+  <div class="grid md:grid-cols-3 gap-3.5 mb-6" id="tierCards"></div>
+
+  <div class="rounded-xl p-3.5 mb-5" style="background:rgba(230,103,103,.08);border:1px solid rgba(230,103,103,.28)">
+   <p class="text-[11.5px] leading-relaxed" style="color:#fca5a5">
+    <b>Cakupan riset.</b> Dari 34 entitas, <b id="nplCount">10</b> berhasil diriset dengan sumber yang dapat diverifikasi.
+    Sisanya tidak dimuat di sini — bukan karena tidak berinovasi, melainkan karena jejak publiknya tidak cukup untuk
+    menyusun histori NPL yang jujur. Setiap entri di bawah membawa tautan sumber dan tingkat keyakinannya. Tidak ada entri yang dikarang.
+   </p>
+  </div>
+
+  <div class="flex flex-wrap gap-2 mb-5" id="nplChips"></div>
+  <div id="nplDetail"></div>
+ </section>
+
+ <!-- ============ 4. P&L ============ -->
+ <section id="pnl" class="glass rounded-2xl p-5 md:p-7">
+  <p class="eyebrow">Revisi 4</p>
+  <h2>Model P&amp;L — Nabati (KSNI) vs Kompetitor</h2>
+  <p class="sub mb-5">Baseline Nabati di kiri, kompetitor terpilih di kanan. Semua dibandingkan sebagai % dari net sales (netral kurs).</p>
+
+  <div class="flex flex-wrap gap-2 mb-4" id="pnlChips"></div>
+  <div class="flex flex-wrap items-center gap-2 mb-5">
+   <span class="text-[10px] font-bold uppercase tracking-wider" style="color:var(--ink-3)">Tahun fiskal</span>
+   <div class="flex flex-wrap gap-1.5" id="pnlYears"></div>
+  </div>
+
+  <div class="grid lg:grid-cols-2 gap-5">
+   <div class="rounded-xl p-4" style="background:rgba(57,135,229,.07);border:1px solid rgba(57,135,229,.28)">
+    <div class="flex items-center justify-between mb-3">
+     <div>
+      <p class="text-[10px] font-extrabold uppercase tracking-widest" style="color:#3987e5">Baseline</p>
+      <h3 class="text-base font-extrabold">KSNI — Nabati Group</h3>
+      <p class="text-[10px]" style="color:var(--ink-3)">ID + MY + CN · FY2025 · Rp bn</p>
+     </div>
+     <span class="badge" style="background:rgba(201,133,0,.2);color:#fbbf24">INTERNAL</span>
+    </div>
+    <table class="pnl" id="nabPnl"></table>
+   </div>
+
+   <div class="rounded-xl p-4" style="background:rgba(255,255,255,.028);border:1px solid var(--line)">
+    <p id="globNote" class="text-[10.5px] leading-relaxed mb-3" style="color:#c4b5fd;display:none">
+     ⚠ Peer global hanya membawa gross margin per tahun pada dataset sumber; GP2 dan EBT tidak dimuat, sehingga baris itu kosong.
+     Penanggalan tahun fiskal diturunkan dari <code class="mono">revLastYr</code> + panjang deret — P&amp;G dan General Mills memakai
+     tahun fiskal non-kalender, jadi perlakukan label tahunnya sebagai perkiraan.
+    </p>
+    <div class="flex items-center justify-between mb-3">
+     <div>
+      <p class="text-[10px] font-extrabold uppercase tracking-widest" style="color:var(--ink-3)">Kompetitor</p>
+      <h3 class="text-base font-extrabold" id="cmpName">—</h3>
+      <p class="text-[10px]" id="cmpMeta" style="color:var(--ink-3)">—</p>
+     </div>
+     <span class="badge" id="cmpBadge" style="background:rgba(255,255,255,.08);color:var(--ink-3)">—</span>
+    </div>
+    <table class="pnl" id="cmpPnl"></table>
+   </div>
+  </div>
+
+  <div class="mt-5 rounded-xl p-4" style="background:rgba(201,133,0,.08);border:1px solid rgba(201,133,0,.28)">
+   <p class="text-[11.5px] leading-relaxed mb-2.5" style="color:#fbbf24">
+    <b>Kenapa SM1–SM4 dan GA1–GA3 kosong untuk semua kompetitor.</b>
+    Pemecahan sales force / distribusi / trade spending / overhead adalah struktur pelaporan <i>manajemen internal</i> Nabati.
+    Emiten publik tidak mengungkapkannya — laporan keuangan hanya memberi Selling expense dan G&amp;A secara gabungan, dan pada
+    dataset benchmark bahkan pemisahan itu pun tercatat <code class="mono">null</code> untuk seluruh 14 peer.
+    Mengisinya butuh data yang tidak ada di ranah publik.
+   </p>
+   <p class="text-[11.5px] leading-relaxed" style="color:#fbbf24">
+    Baris-baris itu tetap ditampilkan dan siap diisi. Gunakan tombol di bawah untuk memuat data Excel/CSV kamu sendiri.
+   </p>
+   <div class="flex flex-wrap items-center gap-3 mt-3.5">
+    <label class="chip" style="cursor:pointer">
+     <input type="file" id="pnlFile" accept=".csv,.json" style="display:none">
+     ⬆ Import CSV / JSON
+    </label>
+    <button class="chip" onclick="dlTemplate()">⬇ Unduh template CSV</button>
+    <span class="text-[10.5px]" id="importMsg" style="color:var(--ink-3)"></span>
+   </div>
+  </div>
+ </section>
+
+ <footer class="text-center py-8 text-[11px]" style="color:var(--ink-3);border-top:1px solid var(--line)">
+  34 entitas unik · 14 dengan P&amp;L terverifikasi · 10 dengan histori NPL bersumber · 30 audit snapshot riil dari 240 yang diklaim sumber aslinya.
+ </footer>
+</main>
+
+<script>
+const D = {"uni": [{"id": "cmry", "name": "Cimory (CMRY)", "cagr": 24.5, "ebitda": 21.2, "bracket": "b1", "bBase": 2.1, "bPrice": 1.8, "bVol": 4.2, "bMA": 0.8, "bFX": 0.0, "bFinal": 8.9, "unit": "IDR T", "cohort": "Indonesia", "cohorts": ["Indonesia"], "ids": ["cmry"], "gross": 8.9, "loss": 0.0, "gapPct": 323.81, "idxGross": 423.81, "idxFinal": 423.81, "i_bPrice": 85.71, "i_bVol": 200.0, "i_bMA": 38.1, "i_bFX": 0.0}, {"id": "ades", "name": "ADES (Akasha F&B)", "cagr": 12.2, "ebitda": 18.5, "bracket": "b2", "bBase": 0.8, "bPrice": 0.4, "bVol": 0.3, "bMA": 0.0, "bFX": 0.0, "bFinal": 1.5, "unit": "IDR T", "cohort": "Indonesia", "cohorts": ["Indonesia"], "ids": ["ades"], "gross": 1.5, "loss": 0.0, "gapPct": 87.5, "idxGross": 187.5, "idxFinal": 187.5, "i_bPrice": 50.0, "i_bVol": 37.5, "i_bMA": 0.0, "i_bFX": 0.0}, {"id": "cjcheil", "name": "CJ CheilJedang (F&B)", "region": "North Asia", "cagr": 6.9, "ebitda": 9.8, "bracket": "b3", "bracketName": "Volume Driver", "bBase": 8.0, "bPrice": 1.9, "bVol": 2.8, "bMA": 1.2, "bFX": 0.0, "bFinal": 13.9, "unit": "KRW T", "cohort": "Global/Regional", "cohorts": ["Global/Regional"], "ids": ["cjcheil"], "gross": 13.9, "loss": 0.0, "gapPct": 73.75, "idxGross": 173.75, "idxFinal": 173.75, "i_bPrice": 23.75, "i_bVol": 35.0, "i_bMA": 15.0, "i_bFX": 0.0}, {"id": "indofood", "name": "Indofood CBP (ICBP)", "region": "SEA", "cagr": 11.4, "ebitda": 23.0, "bracket": "b1", "bracketName": "Apex Performer", "bBase": 42.3, "bPrice": 7.2, "bVol": 8.5, "bMA": 16.1, "bFX": -1.5, "bFinal": 72.6, "unit": "IDR T", "cohort": "Global/Regional", "cohorts": ["Global/Regional", "Indonesia"], "ids": ["indofood", "icbp"], "gross": 74.1, "loss": 1.5, "gapPct": 71.63, "idxGross": 175.18, "idxFinal": 171.63, "i_bPrice": 17.02, "i_bVol": 20.09, "i_bMA": 38.06, "i_bFX": -3.55}, {"id": "sttp", "name": "Siantar Top (STTP)", "cagr": 10.1, "ebitda": 22.4, "bracket": "b1", "bBase": 3.5, "bPrice": 1.2, "bVol": 1.1, "bMA": 0.0, "bFX": 0.0, "bFinal": 5.8, "unit": "IDR T", "cohort": "Indonesia", "cohorts": ["Indonesia"], "ids": ["sttp"], "gross": 5.8, "loss": 0.0, "gapPct": 65.71, "idxGross": 165.71, "idxFinal": 165.71, "i_bPrice": 34.29, "i_bVol": 31.43, "i_bMA": 0.0, "i_bFX": 0.0}, {"id": "good", "name": "Garudafood (GOOD)", "cagr": 8.5, "ebitda": 12.8, "bracket": "b3", "bBase": 8.4, "bPrice": 1.2, "bVol": 1.8, "bMA": 0.8, "bFX": 0.0, "bFinal": 12.2, "unit": "IDR T", "cohort": "Indonesia", "cohorts": ["Indonesia"], "ids": ["good"], "gross": 12.2, "loss": 0.0, "gapPct": 45.24, "idxGross": 145.24, "idxFinal": 145.24, "i_bPrice": 14.29, "i_bVol": 21.43, "i_bMA": 9.52, "i_bFX": 0.0}, {"id": "ultj", "name": "Ultrajaya Milk (ULTJ)", "cagr": 6.8, "ebitda": 20.5, "bracket": "b2", "bBase": 6.2, "bPrice": 1.5, "bVol": 1.2, "bMA": 0.0, "bFX": 0.0, "bFinal": 8.9, "unit": "IDR T", "cohort": "Indonesia", "cohorts": ["Indonesia"], "ids": ["ultj"], "gross": 8.9, "loss": 0.0, "gapPct": 43.55, "idxGross": 143.55, "idxFinal": 143.55, "i_bPrice": 24.19, "i_bVol": 19.35, "i_bMA": 0.0, "i_bFX": 0.0}, {"id": "mayora", "name": "Mayora Indah (MYOR)", "region": "SEA", "cagr": 7.2, "ebitda": 13.8, "bracket": "b3", "bracketName": "Volume Driver", "bBase": 25.0, "bPrice": 5.8, "bVol": 4.8, "bMA": 0.0, "bFX": -0.4, "bFinal": 35.2, "unit": "IDR T", "cohort": "Global/Regional", "cohorts": ["Global/Regional", "Indonesia"], "ids": ["mayora", "myor"], "gross": 35.6, "loss": 0.4, "gapPct": 40.8, "idxGross": 142.4, "idxFinal": 140.8, "i_bPrice": 23.2, "i_bVol": 19.2, "i_bMA": 0.0, "i_bFX": -1.6}, {"id": "yili", "name": "Yili Group", "region": "North Asia", "cagr": 7.2, "ebitda": 10.8, "bracket": "b3", "bracketName": "Volume Driver", "bBase": 90.2, "bPrice": 12.0, "bVol": 18.5, "bMA": 6.5, "bFX": -1.0, "bFinal": 126.2, "unit": "RMB B", "cohort": "Global/Regional", "cohorts": ["Global/Regional", "Greater China"], "ids": ["yili", "yili_cn"], "gross": 127.2, "loss": 1.0, "gapPct": 39.91, "idxGross": 141.02, "idxFinal": 139.91, "i_bPrice": 13.3, "i_bVol": 20.51, "i_bMA": 7.21, "i_bFX": -1.11}, {"id": "mondelez", "name": "Mondelēz International", "region": "Global", "cagr": 5.1, "ebitda": 18.5, "bracket": "b2", "bracketName": "Margin Defender", "bBase": 25.9, "bPrice": 7.8, "bVol": 1.2, "bMA": 2.2, "bFX": -1.1, "bFinal": 36.0, "unit": "$ B", "cohort": "Global/Regional", "cohorts": ["Global/Regional"], "ids": ["mondelez"], "gross": 37.1, "loss": 1.1, "gapPct": 39.0, "idxGross": 143.24, "idxFinal": 139.0, "i_bPrice": 30.12, "i_bVol": 4.63, "i_bMA": 8.49, "i_bFX": -4.25}, {"id": "sklt", "name": "Sekar Laut (SKLT)", "cagr": 6.1, "ebitda": 9.5, "bracket": "b3", "bBase": 1.3, "bPrice": 0.3, "bVol": 0.2, "bMA": 0.0, "bFX": 0.0, "bFinal": 1.8, "unit": "IDR T", "cohort": "Indonesia", "cohorts": ["Indonesia"], "ids": ["sklt"], "gross": 1.8, "loss": 0.0, "gapPct": 38.46, "idxGross": 138.46, "idxFinal": 138.46, "i_bPrice": 23.08, "i_bVol": 15.38, "i_bMA": 0.0, "i_bFX": 0.0}, {"id": "pepsico", "name": "PepsiCo, Inc.", "region": "Global", "cagr": 6.5, "ebitda": 18.0, "bracket": "b2", "bracketName": "Margin Defender", "bBase": 67.2, "bPrice": 18.2, "bVol": 4.5, "bMA": 3.5, "bFX": -1.5, "bFinal": 91.9, "unit": "$ B", "cohort": "Global/Regional", "cohorts": ["Global/Regional"], "ids": ["pepsico"], "gross": 93.4, "loss": 1.5, "gapPct": 36.76, "idxGross": 138.99, "idxFinal": 136.76, "i_bPrice": 27.08, "i_bVol": 6.7, "i_bMA": 5.21, "i_bFX": -2.23}, {"id": "wilmar", "name": "Wilmar Intl (Consumer F&B)", "region": "SEA", "cagr": 5.5, "ebitda": 6.2, "bracket": "b3", "bracketName": "Volume Driver", "bBase": 21.8, "bPrice": 2.8, "bVol": 4.2, "bMA": 0.0, "bFX": -0.3, "bFinal": 28.5, "unit": "$ B", "cohort": "Global/Regional", "cohorts": ["Global/Regional"], "ids": ["wilmar"], "gross": 28.8, "loss": 0.3, "gapPct": 30.73, "idxGross": 132.11, "idxFinal": 130.73, "i_bPrice": 12.84, "i_bVol": 19.27, "i_bMA": 0.0, "i_bFX": -1.38}, {"id": "unipresident", "name": "Uni-President Enterprises", "region": "North Asia", "cagr": 6.2, "ebitda": 11.5, "bracket": "b3", "bracketName": "Volume Driver", "bBase": 447.5, "bPrice": 62.0, "bVol": 45.0, "bMA": 30.5, "bFX": -5.0, "bFinal": 580.0, "unit": "TWD B", "cohort": "Global/Regional", "cohorts": ["Global/Regional"], "ids": ["unipresident"], "gross": 585.0, "loss": 5.0, "gapPct": 29.61, "idxGross": 130.73, "idxFinal": 129.61, "i_bPrice": 13.85, "i_bVol": 10.06, "i_bMA": 6.82, "i_bFX": -1.12}, {"id": "squirrels_cn", "name": "Three Squirrels", "cagr": 8.2, "ebitda": 8.5, "bracket": "b3", "bBase": 10.1, "bPrice": -0.8, "bVol": 1.5, "bMA": 2.2, "bFX": 0.0, "bFinal": 13.0, "unit": "RMB B", "cohort": "Greater China", "cohorts": ["Greater China"], "ids": ["squirrels_cn"], "gross": 13.8, "loss": 0.8, "gapPct": 28.71, "idxGross": 136.63, "idxFinal": 128.71, "i_bPrice": -7.92, "i_bVol": 14.85, "i_bMA": 21.78, "i_bFX": 0.0}, {"id": "hhgroup_cn", "name": "H&H Group (1112.HK)", "cagr": 4.5, "ebitda": 15.2, "bracket": "b2", "bBase": 10.9, "bPrice": 1.8, "bVol": 0.5, "bMA": 1.6, "bFX": 0.0, "bFinal": 13.9, "unit": "RMB B", "cohort": "Greater China", "cohorts": ["Greater China"], "ids": ["hhgroup_cn"], "gross": 14.8, "loss": 0.0, "gapPct": 27.52, "idxGross": 135.78, "idxFinal": 127.52, "i_bPrice": 16.51, "i_bVol": 4.59, "i_bMA": 14.68, "i_bFX": 0.0}, {"id": "unipres_cn", "name": "Uni-President China", "cagr": 4.8, "ebitda": 12.1, "bracket": "b3", "bBase": 22.0, "bPrice": 4.2, "bVol": 1.8, "bMA": 0.0, "bFX": -0.2, "bFinal": 27.8, "unit": "RMB B", "cohort": "Greater China", "cohorts": ["Greater China"], "ids": ["unipres_cn"], "gross": 28.0, "loss": 0.2, "gapPct": 26.36, "idxGross": 127.27, "idxFinal": 126.36, "i_bPrice": 19.09, "i_bVol": 8.18, "i_bMA": 0.0, "i_bFX": -0.91}, {"id": "abf", "name": "Associated British Foods (Food)", "region": "Global", "cagr": 4.0, "ebitda": 11.7, "bracket": "b3", "bracketName": "Volume Driver", "bBase": 8.3, "bPrice": 1.8, "bVol": 0.3, "bMA": -0.1, "bFX": -0.1, "bFinal": 10.2, "unit": "£ B", "cohort": "Global/Regional", "cohorts": ["Global/Regional"], "ids": ["abf"], "gross": 10.4, "loss": 0.2, "gapPct": 22.89, "idxGross": 125.3, "idxFinal": 122.89, "i_bPrice": 21.69, "i_bVol": 3.61, "i_bMA": -1.2, "i_bFX": -1.2}, {"id": "tingyi", "name": "Master Kong (Tingyi)", "region": "North Asia", "cagr": 4.1, "ebitda": 11.2, "bracket": "b3", "bracketName": "Volume Driver", "bBase": 65.6, "bPrice": 12.2, "bVol": 3.2, "bMA": 0.0, "bFX": -0.6, "bFinal": 80.4, "unit": "RMB B", "cohort": "Global/Regional", "cohorts": ["Global/Regional", "Greater China"], "ids": ["tingyi", "tingyi_cn"], "gross": 81.0, "loss": 0.6, "gapPct": 22.56, "idxGross": 123.48, "idxFinal": 122.56, "i_bPrice": 18.6, "i_bVol": 4.88, "i_bMA": 0.0, "i_bFX": -0.91}, {"id": "campbell", "name": "Campbell Soup Co.", "region": "Global", "cagr": 2.8, "ebitda": 16.5, "bracket": "b2", "bracketName": "Margin Defender", "bBase": 8.1, "bPrice": 1.1, "bVol": -0.3, "bMA": 0.9, "bFX": -0.2, "bFinal": 9.6, "unit": "$ B", "cohort": "Global/Regional", "cohorts": ["Global/Regional"], "ids": ["campbell"], "gross": 10.1, "loss": 0.5, "gapPct": 18.52, "idxGross": 124.69, "idxFinal": 118.52, "i_bPrice": 13.58, "i_bVol": -3.7, "i_bMA": 11.11, "i_bFX": -2.47}, {"id": "roti", "name": "Sari Roti (ROTI)", "cagr": 4.2, "ebitda": 17.5, "bracket": "b2", "bBase": 3.3, "bPrice": 0.7, "bVol": 0.2, "bMA": -0.3, "bFX": 0.0, "bFinal": 3.9, "unit": "IDR T", "cohort": "Indonesia", "cohorts": ["Indonesia"], "ids": ["roti"], "gross": 4.2, "loss": 0.3, "gapPct": 18.18, "idxGross": 127.27, "idxFinal": 118.18, "i_bPrice": 21.21, "i_bVol": 6.06, "i_bMA": -9.09, "i_bFX": 0.0}, {"id": "urc", "name": "Universal Robina Corp", "region": "SEA", "cagr": 5.8, "ebitda": 14.1, "bracket": "b3", "bracketName": "Volume Driver", "bBase": 134.2, "bPrice": 12.4, "bVol": 6.5, "bMA": 8.1, "bFX": -2.8, "bFinal": 158.4, "unit": "PHP B", "cohort": "Global/Regional", "cohorts": ["Global/Regional"], "ids": ["urc"], "gross": 161.2, "loss": 2.8, "gapPct": 18.03, "idxGross": 120.12, "idxFinal": 118.03, "i_bPrice": 9.24, "i_bVol": 4.84, "i_bMA": 6.04, "i_bFX": -2.09}, {"id": "genmills", "name": "General Mills", "region": "Global", "cagr": 3.4, "ebitda": 18.2, "bracket": "b2", "bracketName": "Margin Defender", "bBase": 16.9, "bPrice": 2.8, "bVol": 0.2, "bMA": 0.5, "bFX": -0.5, "bFinal": 19.9, "unit": "$ B", "cohort": "Global/Regional", "cohorts": ["Global/Regional"], "ids": ["genmills"], "gross": 20.4, "loss": 0.5, "gapPct": 17.75, "idxGross": 120.71, "idxFinal": 117.75, "i_bPrice": 16.57, "i_bVol": 1.18, "i_bMA": 2.96, "i_bFX": -2.96}, {"id": "unilever", "name": "Unilever plc (F&B)", "region": "Global", "cagr": 3.8, "ebitda": 16.8, "bracket": "b2", "bracketName": "Margin Defender", "bBase": 19.3, "bPrice": 3.8, "bVol": 0.4, "bMA": -0.8, "bFX": -0.6, "bFinal": 22.1, "unit": "€ B", "cohort": "Global/Regional", "cohorts": ["Global/Regional"], "ids": ["unilever"], "gross": 23.5, "loss": 1.4, "gapPct": 14.51, "idxGross": 121.76, "idxFinal": 114.51, "i_bPrice": 19.69, "i_bVol": 2.07, "i_bMA": -4.15, "i_bFX": -3.11}, {"id": "mengniu", "name": "China Mengniu Dairy", "region": "North Asia", "cagr": 2.5, "ebitda": 10.1, "bracket": "b4", "bracketName": "Transformation Seeker", "bBase": 79.0, "bPrice": 9.2, "bVol": 2.1, "bMA": -1.7, "bFX": 0.0, "bFinal": 88.6, "unit": "RMB B", "cohort": "Global/Regional", "cohorts": ["Global/Regional", "Greater China"], "ids": ["mengniu", "mengniu_cn"], "gross": 90.3, "loss": 1.7, "gapPct": 12.15, "idxGross": 114.3, "idxFinal": 112.15, "i_bPrice": 11.65, "i_bVol": 2.66, "i_bMA": -2.15, "i_bFX": 0.0}, {"id": "whgroup_cn", "name": "WH Group (Shuanghui)", "cagr": 3.2, "ebitda": 11.5, "bracket": "b3", "bBase": 24.1, "bPrice": 2.2, "bVol": 0.8, "bMA": 0.0, "bFX": -0.5, "bFinal": 26.6, "unit": "$ B", "cohort": "Greater China", "cohorts": ["Greater China"], "ids": ["whgroup_cn"], "gross": 27.1, "loss": 0.5, "gapPct": 10.37, "idxGross": 112.45, "idxFinal": 110.37, "i_bPrice": 9.13, "i_bVol": 3.32, "i_bMA": 0.0, "i_bFX": -2.07}, {"id": "wantwant", "name": "Want Want China", "region": "North Asia", "cagr": 2.0, "ebitda": 24.0, "bracket": "b2", "bracketName": "Margin Defender", "bBase": 21.5, "bPrice": 2.1, "bVol": 0.2, "bMA": 0.0, "bFX": -0.2, "bFinal": 23.6, "unit": "RMB B", "cohort": "Global/Regional", "cohorts": ["Global/Regional", "Greater China"], "ids": ["wantwant", "wantwant_cn"], "gross": 23.8, "loss": 0.2, "gapPct": 9.77, "idxGross": 110.7, "idxFinal": 109.77, "i_bPrice": 9.77, "i_bVol": 0.93, "i_bMA": 0.0, "i_bFX": -0.93}, {"id": "kraftheinz", "name": "Kraft Heinz Co.", "region": "Global", "cagr": 1.2, "ebitda": 20.1, "bracket": "b2", "bracketName": "Margin Defender", "bBase": 25.0, "bPrice": 3.8, "bVol": -1.4, "bMA": -0.5, "bFX": -0.3, "bFinal": 26.6, "unit": "$ B", "cohort": "Global/Regional", "cohorts": ["Global/Regional"], "ids": ["kraftheinz"], "gross": 28.8, "loss": 2.2, "gapPct": 6.4, "idxGross": 115.2, "idxFinal": 106.4, "i_bPrice": 15.2, "i_bVol": -5.6, "i_bMA": -2.0, "i_bFX": -1.2}, {"id": "dali_cn", "name": "Dali Foods Group", "cagr": 1.5, "ebitda": 21.5, "bracket": "b2", "bBase": 21.4, "bPrice": 1.2, "bVol": -0.8, "bMA": 0.0, "bFX": 0.0, "bFinal": 21.8, "unit": "RMB B", "cohort": "Greater China", "cohorts": ["Greater China"], "ids": ["dali_cn"], "gross": 22.6, "loss": 0.8, "gapPct": 1.87, "idxGross": 105.61, "idxFinal": 101.87, "i_bPrice": 5.61, "i_bVol": -3.74, "i_bMA": 0.0, "i_bFX": 0.0}, {"id": "nestle", "name": "Nestlé S.A.", "region": "Global", "cagr": 2.2, "ebitda": 17.2, "bracket": "b2", "bracketName": "Margin Defender", "bBase": 92.6, "bPrice": 11.5, "bVol": -1.2, "bMA": -5.8, "bFX": -5.7, "bFinal": 91.4, "unit": "CHF B", "cohort": "Global/Regional", "cohorts": ["Global/Regional"], "ids": ["nestle"], "gross": 104.1, "loss": 12.7, "gapPct": -1.3, "idxGross": 112.42, "idxFinal": 98.7, "i_bPrice": 12.42, "i_bVol": -1.3, "i_bMA": -6.26, "i_bFX": -6.16}, {"id": "vitasoy_cn", "name": "Vitasoy International", "cagr": 1.2, "ebitda": 12.8, "bracket": "b4", "bBase": 7.5, "bPrice": 0.4, "bVol": -0.3, "bMA": 0.0, "bFX": -0.2, "bFinal": 7.4, "unit": "HK$ B", "cohort": "Greater China", "cohorts": ["Greater China"], "ids": ["vitasoy_cn"], "gross": 7.9, "loss": 0.5, "gapPct": -1.33, "idxGross": 105.33, "idxFinal": 98.67, "i_bPrice": 5.33, "i_bVol": -4.0, "i_bMA": 0.0, "i_bFX": -2.67}, {"id": "danone", "name": "Danone S.A.", "region": "Global", "cagr": 1.8, "ebitda": 13.0, "bracket": "b4", "bracketName": "Transformation Seeker", "bBase": 25.3, "bPrice": 3.5, "bVol": -0.8, "bMA": -2.2, "bFX": -1.2, "bFinal": 24.6, "unit": "€ B", "cohort": "Global/Regional", "cohorts": ["Global/Regional"], "ids": ["danone"], "gross": 28.8, "loss": 4.2, "gapPct": -2.77, "idxGross": 113.83, "idxFinal": 97.23, "i_bPrice": 13.83, "i_bVol": -3.16, "i_bMA": -8.7, "i_bFX": -4.74}, {"id": "kellanova", "name": "Kellanova (ex-Kellogg)", "region": "Global", "cagr": -1.5, "ebitda": 14.2, "bracket": "b4", "bracketName": "Transformation Seeker", "bBase": 13.6, "bPrice": 2.2, "bVol": -0.4, "bMA": -2.1, "bFX": -0.3, "bFinal": 13.0, "unit": "$ B", "cohort": "Global/Regional", "cohorts": ["Global/Regional"], "ids": ["kellanova"], "gross": 15.8, "loss": 2.8, "gapPct": -4.41, "idxGross": 116.18, "idxFinal": 95.59, "i_bPrice": 16.18, "i_bVol": -2.94, "i_bMA": -15.44, "i_bFX": -2.21}, {"id": "hoki", "name": "HOKI (Buyung Poetra)", "cagr": -2.1, "ebitda": 6.8, "bracket": "b4", "bBase": 1.6, "bPrice": 0.1, "bVol": -0.3, "bMA": 0.0, "bFX": 0.0, "bFinal": 1.4, "unit": "IDR T", "cohort": "Indonesia", "cohorts": ["Indonesia"], "ids": ["hoki"], "gross": 1.7, "loss": 0.3, "gapPct": -12.5, "idxGross": 106.25, "idxFinal": 87.5, "i_bPrice": 6.25, "i_bVol": -18.75, "i_bMA": 0.0, "i_bFX": 0.0}], "themeRank": [{"theme": "Distribution & Route-to-Market", "count": 8, "pct": 26.7}, {"theme": "Demographics & Consumer Shift", "count": 6, "pct": 20.0}, {"theme": "Pricing Power & Brand Equity", "count": 5, "pct": 16.7}, {"theme": "Product & Format Innovation", "count": 5, "pct": 16.7}, {"theme": "Capital Deployment & Capex", "count": 5, "pct": 16.7}, {"theme": "Cost Productivity & Supply Chain", "count": 5, "pct": 16.7}, {"theme": "M&A & Portfolio Action", "count": 4, "pct": 13.3}, {"theme": "Digital & E-commerce", "count": 3, "pct": 10.0}], "exactRank": [{"sentence": "Effective route-to-market execution, cost productivity savings, and category brand resilience.", "count": 210, "real": false}, {"sentence": "Purina PetCare premiumization & Starbucks at-home coffee licensing success.", "count": 1, "real": true}, {"sentence": "Rapid e-commerce expansion and plant-based packaging innovation.", "count": 1, "real": true}, {"sentence": "Consumer price elasticity in Europe offset double-digit pricing gains.", "count": 1, "real": true}, {"sentence": "Decisive portfolio pruning and capital reallocation into high-margin PetCare.", "count": 1, "real": true}, {"sentence": "Targeted promotional spending and automated supply chain cost productivity.", "count": 1, "real": true}], "topPairs": [{"sim": 0.231, "a": "cmry 2023", "b": "yili_cn 2022", "ta": "Brand momentum and rapid modern trade penetration across ASEAN.", "tb": "Lower-tier city distribution penetration and modern trade efficiency."}, {"sim": 0.2, "a": "nestle 2021", "b": "yili_cn 2023", "ta": "Consumer price elasticity in Europe offset double-digit pricing gains.", "tb": "Raw milk oversupply price deflation in North China offset efficiency gains."}, {"sim": 0.188, "a": "indofood 2021", "b": "cmry 2023", "ta": "Indomie brand equity allowing near-zero price elasticity across ASEAN and Africa.", "tb": "Brand momentum and rapid modern trade penetration across ASEAN."}, {"sim": 0.182, "a": "cmry 2024", "b": "yili_cn 2021", "ta": "High-margin product innovation and specialized channel scale.", "tb": "Targeted product innovation for aging population demographics."}, {"sim": 0.167, "a": "nestle 2023", "b": "yili_cn 2020", "ta": "Targeted promotional spending and automated supply chain cost productivity.", "tb": "Strategic cross-border M&A and supply chain resilience."}, {"sim": 0.167, "a": "pepsico 2020", "b": "yili_cn 2022", "ta": "Proprietary RGM software and digital trade distribution density.", "tb": "Lower-tier city distribution penetration and modern trade efficiency."}, {"sim": 0.143, "a": "nestle 2022", "b": "cmry 2024", "ta": "Decisive portfolio pruning and capital reallocation into high-margin PetCare.", "tb": "High-margin product innovation and specialized channel scale."}, {"sim": 0.133, "a": "nestle 2022", "b": "cmry 2022", "ta": "Decisive portfolio pruning and capital reallocation into high-margin PetCare.", "tb": "Prompt capital deployment post-IPO into automation and cold storage."}], "driverRows": [{"co": "nestle", "year": 2019, "driver": "Purina PetCare premiumization & Starbucks at-home coffee licensing success.", "status": "Achieved", "score": 88, "kind": "DRIVER", "themes": ["Pricing Power & Brand Equity"]}, {"co": "nestle", "year": 2020, "driver": "Rapid e-commerce expansion and plant-based packaging innovation.", "status": "Achieved", "score": 92, "kind": "DRIVER", "themes": ["Product & Format Innovation", "Digital & E-commerce", "Demographics & Consumer Shift"]}, {"co": "nestle", "year": 2021, "driver": "Consumer price elasticity in Europe offset double-digit pricing gains.", "status": "Partial", "score": 78, "kind": "HINDRANCE", "themes": ["Pricing Power & Brand Equity", "Demographics & Consumer Shift"]}, {"co": "nestle", "year": 2022, "driver": "Decisive portfolio pruning and capital reallocation into high-margin PetCare.", "status": "Achieved", "score": 95, "kind": "DRIVER", "themes": ["M&A & Portfolio Action", "Capital Deployment & Capex"]}, {"co": "nestle", "year": 2023, "driver": "Targeted promotional spending and automated supply chain cost productivity.", "status": "Achieved", "score": 85, "kind": "DRIVER", "themes": ["Cost Productivity & Supply Chain"]}, {"co": "nestle", "year": 2024, "driver": "Capital expenditure prioritization toward structural tailwind categories.", "status": "Achieved", "score": 85, "kind": "DRIVER", "themes": ["Capital Deployment & Capex", "Demographics & Consumer Shift"]}, {"co": "pepsico", "year": 2019, "driver": "FLNA (Frito-Lay North America) unprecedented pricing power & snack market expansion.", "status": "Over-Achieved", "score": 110, "kind": "DRIVER", "themes": ["Pricing Power & Brand Equity"]}, {"co": "pepsico", "year": 2020, "driver": "Proprietary RGM software and digital trade distribution density.", "status": "Achieved", "score": 98, "kind": "DRIVER", "themes": ["Distribution & Route-to-Market", "Digital & E-commerce"]}, {"co": "pepsico", "year": 2021, "driver": "Pack-size architecture innovation (smaller multi-packs yielding higher margin per gram).", "status": "Over-Achieved", "score": 108, "kind": "DRIVER", "themes": ["Product & Format Innovation"]}, {"co": "pepsico", "year": 2022, "driver": "Consumer health migration toward zero-calorie hydrators and guilt-free snacking.", "status": "Achieved", "score": 92, "kind": "DRIVER", "themes": ["Demographics & Consumer Shift"]}, {"co": "pepsico", "year": 2023, "driver": "Local flavor customization and micro-distribution capillary coverage.", "status": "Achieved", "score": 95, "kind": "DRIVER", "themes": ["Distribution & Route-to-Market"]}, {"co": "pepsico", "year": 2024, "driver": "Capital investment in AI-driven factory operations.", "status": "Achieved", "score": 90, "kind": "DRIVER", "themes": ["Capital Deployment & Capex"]}, {"co": "indofood", "year": 2019, "driver": "Pinehill consolidation in Middle East & Africa instantly doubling international footprint.", "status": "Over-Achieved", "score": 115, "kind": "DRIVER", "themes": ["M&A & Portfolio Action"]}, {"co": "indofood", "year": 2020, "driver": "Vertical integration in flour/seasoning and strong pricing dominance in MENA region.", "status": "Over-Achieved", "score": 105, "kind": "DRIVER", "themes": ["Pricing Power & Brand Equity", "Cost Productivity & Supply Chain"]}, {"co": "indofood", "year": 2021, "driver": "Indomie brand equity allowing near-zero price elasticity across ASEAN and Africa.", "status": "Achieved", "score": 95, "kind": "DRIVER", "themes": ["Pricing Power & Brand Equity"]}, {"co": "indofood", "year": 2022, "driver": "Direct distribution network expansion in Sumatra, Sulawesi, and East Indonesia.", "status": "Achieved", "score": 88, "kind": "DRIVER", "themes": ["Distribution & Route-to-Market"]}, {"co": "indofood", "year": 2023, "driver": "Robust cash flow generation from international noodle subsidiaries.", "status": "Over-Achieved", "score": 102, "kind": "DRIVER", "themes": []}, {"co": "indofood", "year": 2024, "driver": "Demographic tailwinds and rising urban noodle consumption in Africa.", "status": "Achieved", "score": 90, "kind": "DRIVER", "themes": ["Demographics & Consumer Shift"]}, {"co": "cmry", "year": 2019, "driver": "First-mover advantage in squeeze-pouch portable yoghurt format.", "status": "Over-Achieved", "score": 120, "kind": "DRIVER", "themes": ["Product & Format Innovation"]}, {"co": "cmry", "year": 2020, "driver": "Unique direct channel bypasses traditional supermarket slotting fee barriers.", "status": "Over-Achieved", "score": 110, "kind": "DRIVER", "themes": ["Distribution & Route-to-Market"]}, {"co": "cmry", "year": 2021, "driver": "Viral social media marketing (TikTok) and high-protein snacking positioning.", "status": "Over-Achieved", "score": 115, "kind": "DRIVER", "themes": ["Digital & E-commerce"]}, {"co": "cmry", "year": 2022, "driver": "Prompt capital deployment post-IPO into automation and cold storage.", "status": "Achieved", "score": 100, "kind": "DRIVER", "themes": ["Capital Deployment & Capex"]}, {"co": "cmry", "year": 2023, "driver": "Brand momentum and rapid modern trade penetration across ASEAN.", "status": "Over-Achieved", "score": 105, "kind": "DRIVER", "themes": ["Distribution & Route-to-Market"]}, {"co": "cmry", "year": 2024, "driver": "High-margin product innovation and specialized channel scale.", "status": "Achieved", "score": 92, "kind": "DRIVER", "themes": ["Distribution & Route-to-Market", "Product & Format Innovation"]}, {"co": "yili_cn", "year": 2019, "driver": "Satine organic liquid milk scaling to RMB 20B+ flagship brand.", "status": "Over-Achieved", "score": 105, "kind": "DRIVER", "themes": []}, {"co": "yili_cn", "year": 2020, "driver": "Strategic cross-border M&A and supply chain resilience.", "status": "Achieved", "score": 100, "kind": "DRIVER", "themes": ["M&A & Portfolio Action", "Cost Productivity & Supply Chain"]}, {"co": "yili_cn", "year": 2021, "driver": "Targeted product innovation for aging population demographics.", "status": "Achieved", "score": 88, "kind": "DRIVER", "themes": ["Product & Format Innovation", "Demographics & Consumer Shift"]}, {"co": "yili_cn", "year": 2022, "driver": "Lower-tier city distribution penetration and modern trade efficiency.", "status": "Achieved", "score": 92, "kind": "DRIVER", "themes": ["Distribution & Route-to-Market", "Cost Productivity & Supply Chain"]}, {"co": "yili_cn", "year": 2023, "driver": "Raw milk oversupply price deflation in North China offset efficiency gains.", "status": "Partial", "score": 82, "kind": "HINDRANCE", "themes": ["Cost Productivity & Supply Chain"]}, {"co": "yili_cn", "year": 2024, "driver": "Overseas greenfield investments and localized distribution.", "status": "Achieved", "score": 88, "kind": "DRIVER", "themes": ["Distribution & Route-to-Market", "M&A & Portfolio Action", "Capital Deployment & Capex"]}], "npl": {"icbp": {"name": "Indofood CBP (ICBP)", "cohort": "Indonesia / Regional", "coverage": "partial", "items": [{"year": 2020, "product": "Pinehill Company acquisition (USD 2.99B)", "tier": "Complex", "why": "New-geography scale via M&A vehicle — matches Complex tier 'Strategic M&A: instant scale & moat'.", "src": "https://investortrust.id/indepth/86/icbp-mesin-uang-indofood-indf-yang-merajai-pasar-global", "conf": "high"}, {"year": 2021, "product": "Indomie Hype Abis Mieghetti Bolognese", "tier": "Simple", "why": "Flavour extension on existing Indomie line, owned noodle capacity, zero new capex.", "src": "https://kbvalbury.com/article/icbp-luncurkan-produk-baru-mieghetti-bolognese", "conf": "high"}]}, "myor": {"name": "Mayora Indah (MYOR)", "cohort": "Indonesia", "coverage": "thin", "items": [{"year": 2023, "product": "Dark Wonder dark chocolate (market test, Jakarta, Rp29,900)", "tier": "Simple", "why": "Flavour/variant extension in an existing confectionery category; limited retail test, no new line.", "src": "https://investasi.kontan.co.id/news/mayora-indah-myor-meluncurkan-produk-cokelat-baru-simak-rekomendasi-sahamnya", "conf": "high"}, {"year": 2023, "product": "Jayanti 3 plant — wafer & biscuit capacity (trial Aug 2023)", "tier": "Medium", "why": "Capacity/packaging line addition supporting value-up formats — capital adjustment, not a new category.", "src": "https://market.bisnis.com/read/20230720/192/1676678/napas-mayora-myor-makin-panjang-usai-rampungkan-pabrik-baru", "conf": "high"}]}, "cmry": {"name": "Cimory (CMRY)", "cohort": "Indonesia", "coverage": "good", "items": [{"year": 2019, "product": "Kanzler Singles — single-serve RTE sausage", "tier": "Complex", "why": "Entry into ambient/chilled protein snacking — the exact playbook the Nabati PDF cites as Complex Horizon A.", "src": "https://cimory.com/our-history?lang=en", "conf": "medium"}, {"year": 2020, "product": "Cimory Yogurt Squeeze — Indonesia's first yogurt pouch (6 flavours)", "tier": "Medium", "why": "Value-up pack format re-architecture; PDF names 'Cimory Squeeze Architecture' as the Medium-tier format exemplar.", "src": "https://www.cimory.com/news-detail.php?news_id=2", "conf": "high"}, {"year": 2021, "product": "Yogurt Squeeze national launch event (19 Mar 2021)", "tier": "Medium", "why": "Format rollout and scale-up of the pouch architecture.", "src": "https://timesindonesia.co.id/news-commerce/335173/menjadi-yang-pertama-cimory-indonesia-luncurkan-cimory-yogurt-squeeze-kemasan-pouch", "conf": "high"}, {"year": 2025, "product": "Three new variants incl. Eat Milk (protein dessert alternative)", "tier": "Medium", "why": "Functional fortification into a protein-dessert adjacency on existing dairy assets.", "src": "https://industri.kontan.co.id/news/genjot-pertumbuhan-cimory-luncurkan-tiga-varian-produk-baru-pada-kuartal-ii-2025", "conf": "high"}]}, "sttp": {"name": "Siantar Top (STTP)", "cohort": "Indonesia", "coverage": "thin", "items": [{"year": 2021, "product": "Tic Tic snack (1 launch; 5 were planned, 4 cancelled due to pandemic)", "tier": "Simple", "why": "Single snack extension on owned lines. The cancellation of 4 of 5 planned launches is itself the NPL signal.", "src": "https://industri.kontan.co.id/news/siantar-top-sttp-berencana-merilis-produk-baru-di-tahun-ini", "conf": "medium"}]}, "ultj": {"name": "Ultrajaya Milk (ULTJ)", "cohort": "Indonesia", "coverage": "partial", "items": [{"year": 2024, "product": "First local organic milk in Indonesia", "tier": "Complex", "why": "New category entry (organic dairy) requiring separate certified supply chain.", "src": "https://www.emitennews.com/news/ultj-masuk-segmen-susu-organik-targetkan-pertumbuhan-dua-digit", "conf": "high"}, {"year": 2024, "product": "Ultra Core — Ultraman character collaboration", "tier": "Medium", "why": "Co-branded pack/format play commanding a premium on existing UHT lines.", "src": "https://www.emitennews.com/news/ultj-masuk-segmen-susu-organik-targetkan-pertumbuhan-dua-digit", "conf": "medium"}]}, "0151": {"name": "Want Want China", "cohort": "Greater China", "coverage": "good", "items": [{"year": 2022, "product": "Organic rice crackers (Hong Kong)", "tier": "Simple", "why": "Ingredient/positioning tweak on the core rice-cracker line.", "src": "https://dcf-analysis.com/products/0151hk-marketing-mix", "conf": "low"}, {"year": 2024, "product": "AD Calcium Milk + Fruit & Vegetable Juice — >40% of beverage revenue from new products", "tier": "Medium", "why": "Functional fortification plus new beverage formats on existing dairy/beverage assets.", "src": "https://www1.hkexnews.hk/listedco/listconews/sehk/2026/0630/2026063000673.pdf", "conf": "high"}, {"year": 2025, "product": "High-end glutinous rice cracker (planned)", "tier": "Medium", "why": "Texture re-engineering for premiumization within the core category.", "src": "https://www1.hkexnews.hk/listedco/listconews/sehk/2026/0630/2026063000673.pdf", "conf": "high"}]}, "yili_cn": {"name": "Yili Group", "cohort": "Greater China", "coverage": "good", "items": [{"year": 2023, "product": "SATINE Active Lactoferrin organic milk — world's first ambient organic milk with active lactoferrin", "tier": "Medium", "why": "Functional fortification on existing ambient lines; won IDF World Dairy Summit New Product Development Innovation Award (Oct 2024).", "src": "https://regional.chinadaily.com.cn/hohhot/2025-07/28/c_1112874.htm", "conf": "high"}, {"year": 2023, "product": "Ambpomial AMX probiotic yogurt", "tier": "Medium", "why": "Probiotic fortification extension in chilled dairy.", "src": "https://dairynews.today/kz/news/yili-group-reports-record-growth-and-strategic-innovation-in-2023-financial-results.html", "conf": "medium"}, {"year": 2025, "product": "Natural cheese capacity — 150,000 t Phase III", "tier": "Complex", "why": "New category at scale requiring dedicated greenfield capacity.", "src": "https://regional.chinadaily.com.cn/hohhot/2025-07/28/c_1112874.htm", "conf": "medium"}]}, "squirrels_cn": {"name": "Three Squirrels", "cohort": "Greater China", "coverage": "partial", "items": [{"year": 2024, "product": "Affordable mass-market product line", "tier": "Simple", "why": "Price-point repositioning on existing SKUs — consistent with the negative Price/Mix (-0.8 RMB B) in its own revenue bridge.", "src": "https://foodnavigator-asia.com/Article/2024/08/06/china-s-three-squirrels-opts-to-concentrate-efforts-on-domestic-expansion-amid-snacking-boom", "conf": "high"}, {"year": 2024, "product": "Acquisition of community discount supermarket operators (Oct 2024) — bulk snacks entry", "tier": "Complex", "why": "M&A vehicle into a new channel-plus-format category; corroborates the +2.2 RMB B M&A block in its bridge.", "src": "https://news.qq.com/rain/a/20241204A06BTX00", "conf": "high"}]}, "pepsico": {"name": "PepsiCo, Inc.", "cohort": "Global", "coverage": "out-of-window", "items": [{"year": 2025, "product": "NKD line — Doritos & Cheetos with no artificial flavours/colours", "tier": "Simple", "why": "Ingredient micro-tweak / clean-label reformulation on owned lines.", "src": "https://www.foodmanufacturing.com/consumer-trends/news/22952286/pepsico-says-new-products-will-soon-boost-customer-demand", "conf": "high"}, {"year": 2025, "product": "Low-sugar Gatorade", "tier": "Medium", "why": "Functional reformulation targeting a premium health position.", "src": "https://www.foodmanufacturing.com/consumer-trends/news/22952286/pepsico-says-new-products-will-soon-boost-customer-demand", "conf": "high"}, {"year": 2025, "product": "Protein-infused Starbucks coffee (RTD)", "tier": "Complex", "why": "RTD protein adjacency executed under the Starbucks licence — a partnership vehicle.", "src": "https://www.foodmanufacturing.com/consumer-trends/news/22952286/pepsico-says-new-products-will-soon-boost-customer-demand", "conf": "high"}]}, "nestle": {"name": "Nestlé S.A.", "cohort": "Global", "coverage": "out-of-window", "items": [{"year": 2025, "product": "Purina Gourmet Perle relaunch across ~30 European markets + fish range", "tier": "Medium", "why": "Premiumization relaunch and range extension on existing wet-petfood assets.", "src": "https://de.marketscreener.com/boerse-nachrichten/nestle-baut-premium-katzenfutter-in-europa-aus-ce7f5ddcdc88f521", "conf": "medium"}, {"year": 2025, "product": "Purina Beyond Nature's Protein — black soldier fly larvae & plant protein recipes (Switzerland first)", "tier": "Complex", "why": "Novel protein base requiring a new supply chain — category breakthrough.", "src": "https://www.wmar2news.com/news/national/nestle-purina-launching-pet-food-with-plant-insect-proteins", "conf": "medium"}]}}, "tiers": {"Simple": {"label": "Simple Innovation", "tag": "Fast Velocity & Defense", "gp1": "+100–150 bps", "traits": ["Flavor extensions", "Ingredient micro-tweaks", "Localized profile shifts", "Owned lines (0 new capex)"], "color": "#3987e5"}, "Medium": {"label": "Medium Innovation", "tag": "Margin Premiumization", "gp1": "+300–450 bps", "traits": ["Texture re-engineering", "Functional fortification", "Value-up pack formats", "Packaging line upgrades"], "color": "#199e70"}, "Complex": {"label": "Complex Innovation", "tag": "Category Breakthrough", "gp1": "Target EBITDA ≥22–25%", "traits": ["Ambient protein snacks", "RTD dairy-alternative", "Culinary snack pastes", "Model: OEM / JV / M&A"], "color": "#9085e9"}}, "pnl": {"Cimory (CMRY)": {"src": "peerLatest", "key": "cmry", "years": {"FY2025": {"gm": 45.26, "opexR": 24.11, "gp2": 21.15, "ebtm": 23.88, "sales": 10.724}}}, "ADES (Akasha F&B)": {"src": null, "years": {}}, "CJ CheilJedang (F&B)": {"src": null, "years": {}}, "Indofood CBP (ICBP)": {"src": "peer", "key": "icbp", "years": {"FY2021": {"gm": 35.71, "opexR": 15.02, "gp2": 20.69, "ebtm": 17.58, "sales": 56.804}, "FY2022": {"gm": 33.63, "opexR": 14.13, "gp2": 19.5, "ebtm": 11.67, "sales": 64.798}, "FY2023": {"gm": 37, "opexR": 15.21, "gp2": 21.79, "ebtm": 16.99, "sales": 67.91}, "FY2024": {"gm": 37.04, "opexR": 14.57, "gp2": 22.48, "ebtm": 16.03, "sales": 72.597}, "FY2025": {"gm": 35.22, "opexR": 14.009999999999998, "gp2": 21.21, "ebtm": 18.48, "sales": 74.851}}}, "Siantar Top (STTP)": {"src": "peer", "key": "sttp", "years": {"FY2021": {"gm": 24.22, "opexR": 9.5, "gp2": 14.71, "ebtm": 18.03, "sales": 4.242}, "FY2022": {"gm": 20.32, "opexR": 9.02, "gp2": 11.3, "ebtm": 15.35, "sales": 4.932}, "FY2023": {"gm": 30.53, "opexR": 9.95, "gp2": 20.58, "ebtm": 23.14, "sales": 4.767}, "FY2024": {"gm": 31.41, "opexR": 10.18, "gp2": 21.23, "ebtm": 30.42, "sales": 4.96}, "FY2025": {"gm": 31.56, "opexR": 10.399999999999999, "gp2": 21.16, "ebtm": 27.14, "sales": 5.236}}}, "Garudafood (GOOD)": {"src": "peer", "key": "good", "years": {"FY2021": {"gm": 27.07, "opexR": 19.01, "gp2": 8.07, "ebtm": 7.19, "sales": 8.8}, "FY2022": {"gm": 24.9, "opexR": 18.12, "gp2": 6.78, "ebtm": 6.41, "sales": 10.511}, "FY2023": {"gm": 26.87, "opexR": 18.39, "gp2": 8.48, "ebtm": 7.43, "sales": 10.544}, "FY2024": {"gm": 28.17, "opexR": 20.68, "gp2": 7.49, "ebtm": 7.02, "sales": 12.235}, "FY2025": {"gm": 27.42, "opexR": 19.62, "gp2": 7.8, "ebtm": 7.27, "sales": 13.12}}}, "Ultrajaya Milk (ULTJ)": {"src": null, "years": {}}, "Mayora Indah (MYOR)": {"src": "peer", "key": "myor", "years": {"FY2021": {"gm": 24.79, "opexR": 18.43, "gp2": 6.35, "ebtm": 5.55, "sales": 27.905}, "FY2022": {"gm": 22.27, "opexR": 14.34, "gp2": 7.93, "ebtm": 8.17, "sales": 30.669}, "FY2023": {"gm": 26.68, "opexR": 13.02, "gp2": 13.66, "ebtm": 13, "sales": 31.485}, "FY2024": {"gm": 22.99, "opexR": 12.14, "gp2": 10.85, "ebtm": 10.76, "sales": 36.073}, "FY2025": {"gm": 21.93, "opexR": 12.299999999999999, "gp2": 9.63, "ebtm": 9.35, "sales": 38.682}}}, "Yili Group": {"src": null, "years": {}}, "Mondelēz International": {"src": "glob", "key": "MDLZ", "years": {"FY2020": {"gm": 39.2, "opexR": null, "gp2": null, "ebtm": null, "nm": 15.0}, "FY2021": {"gm": 35.9, "opexR": null, "gp2": null, "ebtm": null, "nm": 8.6}, "FY2022": {"gm": 38.2, "opexR": null, "gp2": null, "ebtm": null, "nm": 13.8}, "FY2023": {"gm": 39.1, "opexR": null, "gp2": null, "ebtm": null, "nm": 12.7}, "FY2024": {"gm": 28.4, "opexR": null, "gp2": null, "ebtm": null, "nm": 6.4}, "FY2025": {"gm": null, "opexR": null, "gp2": null, "ebtm": null, "nm": null}}}, "Sekar Laut (SKLT)": {"src": "peer", "key": "sklt", "years": {"FY2021": {"gm": 27.36, "opexR": 19.75, "gp2": 7.61, "ebtm": 7.52, "sales": 1.357}, "FY2022": {"gm": 26.02, "opexR": 20.19, "gp2": 5.83, "ebtm": 5.98, "sales": 1.539}, "FY2023": {"gm": 25.74, "opexR": 20.02, "gp2": 5.72, "ebtm": 5.41, "sales": 1.794}, "FY2024": {"gm": 24.98, "opexR": 18.92, "gp2": 6.05, "ebtm": 6.59, "sales": 2.293}, "FY2025": {"gm": 25.35, "opexR": 19.18, "gp2": 6.17, "ebtm": 6.11, "sales": 2.651}}}, "PepsiCo, Inc.": {"src": "glob", "key": "PEP", "years": {"FY2020": {"gm": 53.4, "opexR": null, "gp2": null, "ebtm": null, "nm": 9.6}, "FY2021": {"gm": 53.3, "opexR": null, "gp2": null, "ebtm": null, "nm": 10.3}, "FY2022": {"gm": 54.4, "opexR": null, "gp2": null, "ebtm": null, "nm": 9.9}, "FY2023": {"gm": 54.9, "opexR": null, "gp2": null, "ebtm": null, "nm": 10.4}, "FY2024": {"gm": 54.5, "opexR": null, "gp2": null, "ebtm": null, "nm": 8.8}, "FY2025": {"gm": null, "opexR": null, "gp2": null, "ebtm": null, "nm": null}}}, "Wilmar Intl (Consumer F&B)": {"src": null, "years": {}}, "Uni-President Enterprises": {"src": null, "years": {}}, "Three Squirrels": {"src": null, "years": {}}, "H&H Group (1112.HK)": {"src": null, "years": {}}, "Uni-President China": {"src": null, "years": {}}, "Associated British Foods (Food)": {"src": null, "years": {}}, "Master Kong (Tingyi)": {"src": null, "years": {}}, "Campbell Soup Co.": {"src": null, "years": {}}, "Sari Roti (ROTI)": {"src": null, "years": {}}, "Universal Robina Corp": {"src": "peer", "key": "urc", "years": {"FY2021": {"gm": 28.31, "opexR": 17.39, "gp2": 10.92, "ebtm": 12.55, "sales": 32.439}, "FY2022": {"gm": 25.88, "opexR": 15.58, "gp2": 10.3, "ebtm": 11.82, "sales": 41.335}, "FY2023": {"gm": 27.25, "opexR": 16.3, "gp2": 10.95, "ebtm": 10.05, "sales": 43.751}, "FY2024": {"gm": 27.33, "opexR": 17.1, "gp2": 10.23, "ebtm": 9.86, "sales": 44.903}, "FY2025": {"gm": 26.53, "opexR": 17.3, "gp2": 9.23, "ebtm": 8.1, "sales": 46.567}}}, "General Mills": {"src": "glob", "key": "GIS", "years": {"FY2021": {"gm": 35.6, "opexR": null, "gp2": null, "ebtm": null, "nm": 12.9}, "FY2022": {"gm": 33.7, "opexR": null, "gp2": null, "ebtm": null, "nm": 14.3}, "FY2023": {"gm": 32.6, "opexR": null, "gp2": null, "ebtm": null, "nm": 12.9}, "FY2024": {"gm": 35.0, "opexR": null, "gp2": null, "ebtm": null, "nm": 12.6}, "FY2025": {"gm": 34.6, "opexR": null, "gp2": null, "ebtm": null, "nm": 11.7}, "FY2026": {"gm": 33.7, "opexR": null, "gp2": null, "ebtm": null, "nm": -0.5}}}, "Unilever plc (F&B)": {"src": null, "years": {}}, "China Mengniu Dairy": {"src": null, "years": {}}, "WH Group (Shuanghui)": {"src": null, "years": {}}, "Want Want China": {"src": "peer", "key": "0151", "years": {"FY2021": {"gm": 48.21, "opexR": null, "gp2": null, "ebtm": null, "sales": 49.496}, "FY2022": {"gm": 44.81, "opexR": 22.63, "gp2": 22.18, "ebtm": 23.91, "sales": 53.966}, "FY2023": {"gm": 43.92, "opexR": 23.96, "gp2": 19.97, "ebtm": 20.85, "sales": 51.588}, "FY2024": {"gm": 46.6, "opexR": 24.34, "gp2": 22.25, "ebtm": 22.92, "sales": 53.069}, "FY2025": {"gm": 47.59, "opexR": 24.430000000000003, "gp2": 23.16, "ebtm": 24.41, "sales": 52.9}}}, "Kraft Heinz Co.": {"src": "glob", "key": "KHC", "years": {"FY2020": {"gm": 33.4, "opexR": null, "gp2": null, "ebtm": null, "nm": 3.9}, "FY2021": {"gm": 31.1, "opexR": null, "gp2": null, "ebtm": null, "nm": 8.9}, "FY2022": {"gm": 33.7, "opexR": null, "gp2": null, "ebtm": null, "nm": 10.7}, "FY2023": {"gm": 34.7, "opexR": null, "gp2": null, "ebtm": null, "nm": 10.6}, "FY2024": {"gm": 33.3, "opexR": null, "gp2": null, "ebtm": null, "nm": -23.4}, "FY2025": {"gm": null, "opexR": null, "gp2": null, "ebtm": null, "nm": null}}}, "Dali Foods Group": {"src": null, "years": {}}, "Nestlé S.A.": {"src": "glob", "key": "NESN", "years": {"FY2020": {"gm": 48.0, "opexR": null, "gp2": null, "ebtm": null, "nm": 19.3}, "FY2021": {"gm": 45.4, "opexR": null, "gp2": null, "ebtm": null, "nm": 9.8}, "FY2022": {"gm": 46.1, "opexR": null, "gp2": null, "ebtm": null, "nm": 12.0}, "FY2023": {"gm": 46.9, "opexR": null, "gp2": null, "ebtm": null, "nm": 11.9}, "FY2024": {"gm": 45.8, "opexR": null, "gp2": null, "ebtm": null, "nm": 10.0}, "FY2025": {"gm": null, "opexR": null, "gp2": null, "ebtm": null, "nm": null}}}, "Vitasoy International": {"src": null, "years": {}}, "Danone S.A.": {"src": null, "years": {}}, "Kellanova (ex-Kellogg)": {"src": "glob", "key": "K", "years": {"FY2019": {"gm": 32.6, "opexR": null, "gp2": null, "ebtm": null, "nm": 12.7}, "FY2020": {"gm": 30.2, "opexR": null, "gp2": null, "ebtm": null, "nm": 7.6}, "FY2021": {"gm": 32.7, "opexR": null, "gp2": null, "ebtm": null, "nm": 7.2}, "FY2022": {"gm": 36.9, "opexR": null, "gp2": null, "ebtm": null, "nm": 10.5}, "FY2023": {"gm": null, "opexR": null, "gp2": null, "ebtm": null, "nm": null}, "FY2024": {"gm": null, "opexR": null, "gp2": null, "ebtm": null, "nm": null}}}, "HOKI (Buyung Poetra)": {"src": null, "years": {}}}, "nab": {"net_sales": 2422.006, "cogs": -1344.501, "gross_profit": 1077.505, "sm1": -122.549, "sm2": -275.292, "sm3": -454.394, "sm4": -104.816, "sm_total": -957.051, "gp2": 120.454, "ga1": -76.331, "ga2": -36.805, "ga3": 10.574, "ga_total": -102.563, "ebt": 17.891}};
+const TIPEL = document.getElementById('tip');
+function showTip(e,h){TIPEL.innerHTML=h;TIPEL.style.display='block';moveTip(e);}
+function moveTip(e){const p=12,w=TIPEL.offsetWidth,h=TIPEL.offsetHeight;
+  let x=e.clientX+p,y=e.clientY+p;
+  if(x+w>innerWidth-8)x=e.clientX-w-p; if(y+h>innerHeight-8)y=e.clientY-h-p;
+  TIPEL.style.left=x+'px';TIPEL.style.top=y+'px';}
+function hideTip(){TIPEL.style.display='none';}
+const f1=v=>v==null?'—':(Math.round(v*10)/10).toFixed(1);
+const f2=v=>v==null?'—':(Math.round(v*100)/100).toFixed(2);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+/* ---------------- 1. BRIDGE ---------------- */
+let SCALE='idx';
+function setScale(s){SCALE=s;document.querySelectorAll('[data-scale]').forEach(b=>b.classList.toggle('on',b.dataset.scale===s));drawBridge();}
+function drawBridge(){
+  const host=document.getElementById('bridgeList');
+  const idx = SCALE==='idx';
+  // Indexed: base is constant 100 for every row, so it gets a FIXED anchor width and the
+  // delta area takes the rest — otherwise 34 identical base blocks squash the only varying part.
+  const BASEW = idx ? 22 : 0;                       // % of track reserved for the 2019 anchor
+  const maxDelta = Math.max(...D.uni.map(u=>u.idxGross-100));
+  const maxGrossAbs = Math.max(...D.uni.map(u=>u.gross/u.bBase*100));
+  const w = (u,val) => {                            // val in native units -> % of track
+    const pct = val/u.bBase*100;
+    return idx ? pct/maxDelta*(100-BASEW) : pct/maxGrossAbs*100;
+  };
+  const baseW = u => idx ? BASEW : w(u,u.bBase);
+  host.innerHTML = D.uni.map((u,i)=>{
+    const pos = k => Math.max(u[k],0), neg = k => Math.abs(Math.min(u[k],0));
+    const segs = [['price',pos('bPrice'),'var(--s-price)'],['vol',pos('bVol'),'var(--s-vol)'],
+                  ['ma',pos('bMA'),'var(--s-ma)']].filter(s=>s[1]>0);
+    const lossTot = neg('bPrice')+neg('bVol')+neg('bMA')+neg('bFX');
+    const finalW = baseW(u) + w(u, u.bFinal - u.bBase);
+    const gapCol = u.gapPct>=50?'var(--s-vol)':u.gapPct>=15?'var(--s-price)':u.gapPct>=0?'var(--ink-2)':'var(--s-fx)';
+    const tipRows=[['2019 Base',u.bBase,'var(--s-base)'],['Price/Mix',u.bPrice,'var(--s-price)'],
+      ['Volume Growth',u.bVol,'var(--s-vol)'],['M&A / Divest',u.bMA,'var(--s-ma)'],
+      ['FX / Headwinds',u.bFX,'var(--s-fx)']].map(r=>
+      `<div style="display:flex;justify-content:space-between;gap:16px">
+        <span style="color:#94A3B8"><i style="display:inline-block;width:8px;height:8px;border-radius:2px;background:${r[2]};margin-right:6px"></i>${r[0]}</span>
+        <b class="mono">${r[1]>0&&r[0]!=='2019 Base'?'+':''}${f1(r[1])}</b></div>`).join('');
+    const tip=`<div style="font-weight:800;margin-bottom:6px">${esc(u.name)}</div>
+      <div style="font-size:10px;color:#94A3B8;margin-bottom:7px">${esc(u.cohorts.join(' · '))} · ${esc(u.unit)}</div>
+      ${tipRows}
+      <div style="border-top:1px solid rgba(255,255,255,.14);margin-top:7px;padding-top:6px;display:flex;justify-content:space-between;gap:16px">
+        <span>2024 Final</span><b class="mono" style="color:#3987e5">${f1(u.bFinal)}</b></div>
+      <div style="display:flex;justify-content:space-between;gap:16px"><span>Gap</span><b class="mono">${u.gapPct>0?'+':''}${f1(u.gapPct)}%</b></div>`;
+    return `<div class="bridge-row" onmousemove='showTip(event,${JSON.stringify(tip).replace(/'/g,"&#39;")})' onmouseleave="hideTip()">
+      <div>
+        <div class="bridge-name">${i+1}. ${esc(u.name)}</div>
+        <div class="bridge-sub">${esc(u.cohorts[0])}${u.cohorts.length>1?' +'+(u.cohorts.length-1):''} · ${esc(u.unit)}</div>
+      </div>
+      <div class="hide-sm mono text-[10.5px]" style="color:var(--ink-3);text-align:right">
+        <span style="color:#64748B">19</span> ${f1(u.bBase)}<br><span style="color:#64748B">24</span> <span style="color:var(--ink-2);font-weight:700">${f1(u.bFinal)}</span>
+      </div>
+      <div class="track">
+        <div class="bar y19"><div class="seg" style="width:${baseW(u)}%;background:var(--s-base);opacity:.5"></div></div>
+        <div class="bar y24">
+          <div class="seg" style="width:${baseW(u)}%;background:var(--s-base)"></div>
+          ${segs.map(sg=>`<div class="seg" style="width:${w(u,sg[1])}%;background:${sg[2]}"></div>`).join('')}
+          ${lossTot>0?`<div class="seg loss" style="width:${w(u,lossTot)}%"></div>`:''}
+        </div>
+        ${lossTot>0?`<div class="tick" style="left:calc(${finalW}% - 1px)"></div>`:''}
+      </div>
+      <div class="gapval mono" style="color:${gapCol}">${u.gapPct>0?'+':''}${f1(u.gapPct)}%</div>
+    </div>`;
+  }).join('');
+}
+
+function drawDrivers(){
+  const mx=Math.max(...D.exactRank.map(r=>r.count));
+  document.getElementById('exactRank').innerHTML = D.exactRank.map(r=>{
+    const c = r.real?'var(--s-price)':'var(--s-fx)';
+    return `<div>
+      <div style="display:flex;justify-content:space-between;gap:10px;align-items:baseline">
+        <span class="text-[11px]" style="color:var(--ink-2);line-height:1.35">${esc(r.sentence.slice(0,92))}${r.sentence.length>92?'…':''}</span>
+        <b class="mono text-[12px]" style="color:${c}">${r.count}×</b>
+      </div>
+      <div style="height:5px;background:rgba(255,255,255,.06);border-radius:3px;margin-top:4px">
+        <div style="height:100%;width:${r.count/mx*100}%;background:${c};border-radius:3px"></div></div>
+      ${!r.real?`<p class="text-[10px] mt-1" style="color:#fca5a5">⚠ Kalimat template fallback — bukan temuan audit. Muncul untuk 35 entitas tanpa data riil.</p>`:''}
+    </div>`;}).join('');
+
+  const tm=Math.max(...D.themeRank.map(r=>r.count));
+  document.getElementById('themeRank').innerHTML = D.themeRank.map(r=>`
+    <div>
+      <div style="display:flex;justify-content:space-between;gap:10px;align-items:baseline">
+        <span class="text-[11.5px] font-semibold" style="color:var(--ink-2)">${esc(r.theme)}</span>
+        <b class="mono text-[12px]" style="color:var(--s-vol)">${r.count} <span style="color:var(--ink-3);font-weight:500">(${f1(r.pct)}%)</span></b>
+      </div>
+      <div style="height:5px;background:rgba(255,255,255,.06);border-radius:3px;margin-top:4px">
+        <div style="height:100%;width:${r.count/tm*100}%;background:var(--s-vol);border-radius:3px"></div></div>
+    </div>`).join('');
+
+  document.getElementById('pairRank').innerHTML = D.topPairs.slice(0,4).map(p=>`
+    <div class="rounded-lg p-3" style="background:rgba(255,255,255,.03);border:1px solid var(--line)">
+      <div style="display:flex;justify-content:space-between;gap:10px;margin-bottom:5px">
+        <b class="text-[11px]" style="color:var(--s-ma)">${esc(p.a)} ↔ ${esc(p.b)}</b>
+        <span class="mono text-[11px]" style="color:var(--ink-3)">sim ${f2(p.sim)}</span>
+      </div>
+      <p class="text-[10.5px] leading-relaxed" style="color:var(--ink-3)">${esc(p.ta)}</p>
+      <p class="text-[10.5px] leading-relaxed mt-1" style="color:var(--ink-3)">${esc(p.tb)}</p>
+    </div>`).join('');
+}
+
+/* ---------------- 2. BRACKET MATRIX ---------------- */
+const BR={b1:{n:'Bracket 1 · Apex Performers',d:'>10% CAGR & >20% EBITDA',c:'#199e70',k:'Pricing power & volume scale'},
+          b2:{n:'Bracket 2 · Margin Defenders',d:'2–7% CAGR & >15% EBITDA',c:'#3987e5',k:'Cash flow focus & premiumization'},
+          b3:{n:'Bracket 3 · Volume Drivers',d:'>4% CAGR & <15% EBITDA',c:'#c98500',k:'Share expansion in emerging markets'},
+          b4:{n:'Bracket 4 · Transformation Seekers',d:'<3% CAGR & <15% EBITDA',c:'#e66767',k:'Turnaround or cost headwinds'}};
+let BSEL=null;
+function drawMatrix(){
+  document.getElementById('bracketChips').innerHTML =
+    `<button class="chip ${BSEL===null?'on':''}" onclick="selBracket(null)">Semua (${D.uni.length})</button>`+
+    Object.entries(BR).map(([k,v])=>{
+      const n=D.uni.filter(u=>u.bracket===k).length;
+      return `<button class="chip ${BSEL===k?'on':''}" onclick="selBracket('${k}')">
+        <span class="dot" style="background:${v.c}"></span>${esc(v.n.split(' · ')[1])} (${n})</button>`;}).join('');
+
+  const xs=D.uni.map(u=>u.cagr), ys=D.uni.map(u=>u.ebitda);
+  const x0=Math.min(...xs)-2,x1=Math.max(...xs)+2,y0=0,y1=Math.max(...ys)+3;
+  const px=v=>(v-x0)/(x1-x0)*100, py=v=>(v-y0)/(y1-y0)*100;
+  let grid='';
+  for(let i=0;i<=4;i++){grid+=`<div class="gl" style="left:0;right:0;bottom:${i*25}%;height:1px"></div>`;
+                        grid+=`<div class="gl" style="top:0;bottom:0;left:${i*25}%;width:1px"></div>`;}
+  grid+=`<div class="gl" style="left:0;right:0;bottom:${py(20)}%;height:1px;background:rgba(25,158,112,.35)"></div>`;
+  grid+=`<div class="gl" style="top:0;bottom:0;left:${px(10)}%;width:1px;background:rgba(25,158,112,.35)"></div>`;
+  const pts=D.uni.map(u=>{
+    const dim=BSEL&&u.bracket!==BSEL;
+    const tip=`<div style="font-weight:800;margin-bottom:4px">${esc(u.name)}</div>
+      <div style="font-size:10px;color:#94A3B8;margin-bottom:6px">${esc(BR[u.bracket].n)}</div>
+      <div style="display:flex;justify-content:space-between;gap:16px"><span style="color:#94A3B8">CAGR</span><b class="mono">${f1(u.cagr)}%</b></div>
+      <div style="display:flex;justify-content:space-between;gap:16px"><span style="color:#94A3B8">EBITDA</span><b class="mono">${f1(u.ebitda)}%</b></div>`;
+    return `<div class="pt ${dim?'dim':''}" style="left:${px(u.cagr)}%;bottom:${py(u.ebitda)}%;background:${BR[u.bracket].c}"
+      onmousemove='showTip(event,${JSON.stringify(tip).replace(/'/g,"&#39;")})' onmouseleave="hideTip()"></div>`;}).join('');
+  let ticks='';
+  for(let i=0;i<=4;i++){
+    const xv=x0+(x1-x0)*i/4, yv=y0+(y1-y0)*i/4;
+    const tx = i===0?'translateX(0)':(i===4?'translateX(-100%)':'translateX(-50%)');
+    ticks+=`<div style="position:absolute;left:${i*25}%;bottom:-17px;transform:${tx};font-size:9.5px;color:#64748B" class="mono">${f1(xv)}</div>`;
+    ticks+=`<div style="position:absolute;bottom:${i*25}%;left:-30px;transform:translateY(50%);font-size:9.5px;color:#64748B" class="mono">${f1(yv)}</div>`;
+  }
+  document.getElementById('scatter').innerHTML=grid+pts+ticks+
+    `<div style="position:absolute;left:8px;top:6px;font-size:9.5px;color:#64748B;font-weight:700">EBITDA margin (%) ↑</div>`;
+  document.getElementById('scatterCount').textContent =
+    BSEL? `${D.uni.filter(u=>u.bracket===BSEL).length} dari ${D.uni.length} ditampilkan` : `${D.uni.length} entitas`;
+
+  const list = BSEL? D.uni.filter(u=>u.bracket===BSEL) : [];
+  document.getElementById('bracketInfo').innerHTML = BSEL ? `
+    <div class="rounded-xl p-3.5" style="background:${BR[BSEL].c}14;border:1px solid ${BR[BSEL].c}55">
+      <h4 class="font-extrabold text-[13px]" style="color:${BR[BSEL].c}">${esc(BR[BSEL].n)}</h4>
+      <p class="text-[10.5px] mt-1" style="color:var(--ink-3)">${esc(BR[BSEL].d)}</p>
+      <p class="text-[11px] mt-2" style="color:var(--ink-2)">${esc(BR[BSEL].k)}</p>
+    </div>
+    <div class="space-y-1.5 max-h-[300px] overflow-y-auto scroll">
+    ${list.sort((a,b)=>b.cagr-a.cagr).map(u=>`
+      <div class="flex justify-between items-baseline gap-2 px-2.5 py-1.5 rounded-lg" style="background:rgba(255,255,255,.03)">
+        <span class="text-[11px] font-semibold" style="color:var(--ink-2)">${esc(u.name)}</span>
+        <span class="mono text-[10.5px]" style="color:var(--ink-3)">${f1(u.cagr)}% / ${f1(u.ebitda)}%</span>
+      </div>`).join('')}</div>`
+    : Object.entries(BR).map(([k,v])=>`
+      <div class="rounded-xl p-3 cursor-pointer" style="background:${v.c}0f;border:1px solid ${v.c}3a" onclick="selBracket('${k}')">
+        <h4 class="font-extrabold text-[12px]" style="color:${v.c}">${esc(v.n)}</h4>
+        <p class="text-[10px] mt-0.5" style="color:var(--ink-3)">${esc(v.d)}</p>
+      </div>`).join('');
+}
+function selBracket(k){BSEL=(BSEL===k?null:k);drawMatrix();}
+
+/* ---------------- 3. NPL ---------------- */
+let NSEL=Object.keys(D.npl)[0];
+function drawNplStatic(){
+  document.getElementById('tierCards').innerHTML=Object.entries(D.tiers).map(([k,v])=>`
+    <div class="rounded-xl p-4" style="background:${v.color}12;border:1px solid ${v.color}45">
+      <div class="flex items-center gap-2 mb-1">
+        <span class="dot" style="width:9px;height:9px;border-radius:50%;background:${v.color};display:inline-block"></span>
+        <h4 class="font-extrabold text-[13px]" style="color:${v.color}">${esc(v.label)}</h4>
+      </div>
+      <p class="text-[10.5px] italic mb-2.5" style="color:var(--ink-3)">"${esc(v.tag)}"</p>
+      <ul class="text-[10.5px] space-y-1" style="color:var(--ink-2);list-style:none;padding:0;margin:0">
+        ${v.traits.map(t=>`<li>• ${esc(t)}</li>`).join('')}</ul>
+      <p class="mono text-[10px] mt-2.5 pt-2" style="color:${v.color};border-top:1px solid ${v.color}33">${esc(v.gp1)}</p>
+    </div>`).join('');
+  document.getElementById('nplCount').textContent=Object.keys(D.npl).length;
+  document.getElementById('nplChips').innerHTML=Object.entries(D.npl).map(([k,v])=>
+    `<button class="chip ${k===NSEL?'on':''}" onclick="selNpl('${k}')">${esc(v.name)}
+      <span class="ccy">${v.items.length}</span></button>`).join('');
+}
+function selNpl(k){NSEL=k;drawNplStatic();drawNplDetail();}
+function drawNplDetail(){
+  const c=D.npl[NSEL];
+  const COV={good:['Baik','#199e70'],partial:['Parsial','#c98500'],thin:['Tipis','#e66767'],'out-of-window':['Di luar 2019–2024','#e66767']};
+  const cv=COV[c.coverage]||['—','#94A3B8'];
+  const byTier={Simple:0,Medium:0,Complex:0};c.items.forEach(i=>byTier[i.tier]++);
+  document.getElementById('nplDetail').innerHTML=`
+   <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+     <div><h3 class="font-extrabold text-base">${esc(c.name)}</h3>
+       <p class="text-[10.5px]" style="color:var(--ink-3)">${esc(c.cohort)}</p></div>
+     <div class="flex gap-2 items-center">
+       ${Object.entries(byTier).filter(([,n])=>n>0).map(([t,n])=>
+         `<span class="badge" style="background:${D.tiers[t].color}22;color:${D.tiers[t].color}">${n}× ${t}</span>`).join('')}
+       <span class="badge" style="background:${cv[1]}22;color:${cv[1]}">Cakupan: ${cv[0]}</span>
+     </div>
+   </div>
+   <div class="space-y-2.5">
+   ${c.items.sort((a,b)=>a.year-b.year).map(it=>{
+     const T=D.tiers[it.tier];
+     const CF={high:['Tinggi','#199e70'],medium:['Sedang','#c98500'],low:['Rendah','#e66767']}[it.conf];
+     return `<div class="rounded-xl p-4" style="background:rgba(255,255,255,.03);border-left:3px solid ${T.color};border-top:1px solid var(--line);border-right:1px solid var(--line);border-bottom:1px solid var(--line)">
+       <div class="flex flex-wrap items-start justify-between gap-3 mb-2">
+         <div class="flex items-center gap-2.5">
+           <span class="mono font-extrabold text-[13px]" style="color:var(--ink-3)">${it.year}</span>
+           <span class="font-bold text-[13px]">${esc(it.product)}</span>
+         </div>
+         <div class="flex gap-1.5 shrink-0">
+           <span class="badge" style="background:${T.color}22;color:${T.color}">${esc(it.tier)}</span>
+           <span class="badge" style="background:${CF[1]}1e;color:${CF[1]}">Keyakinan ${CF[0]}</span>
+         </div>
+       </div>
+       <p class="text-[11px] leading-relaxed mb-2" style="color:var(--ink-2)">${esc(it.why)}</p>
+       <a href="${esc(it.src)}" target="_blank" rel="noopener"
+          class="text-[10px] mono" style="color:#3987e5;word-break:break-all">↗ ${esc(it.src.slice(0,86))}${it.src.length>86?'…':''}</a>
+     </div>`;}).join('')}
+   </div>`;
+}
+
+/* ---------------- 4. P&L ---------------- */
+const PLINES=[
+ ['net_sales','Net sales','head'],['cogs','COGS',''],['gross_profit','GP1 — Gross profit','head'],
+ ['sm1','SM1 Sales force','sub'],['sm2','SM2 Distribution','sub'],['sm3','SM3 Trade spending','sub'],
+ ['sm4','SM4 Overhead','sub'],['sm_total','SM total',''],['gp2','GP2 — Operating profit','head'],
+ ['ga1','GA1 General & admin','sub'],['ga2','GA2 Finance','sub'],['ga3','GA3 Other','sub'],
+ ['ga_total','GA total',''],['ebt','EBT (pre-tax profit)','head']];
+let PSEL=null,PYEAR=null,IMPORTED={};
+function pnlCompanies(){return D.uni.filter(u=>D.pnl[u.name]&&Object.keys(D.pnl[u.name].years).length);}
+function drawNab(){
+  const ns=D.nab.net_sales;
+  document.getElementById('nabPnl').innerHTML=
+   `<tr><th>Line</th><th class="n" style="text-align:right">Rp bn</th><th class="n" style="text-align:right">% sales</th></tr>`+
+   PLINES.map(([k,lab,cls])=>{
+     const v=D.nab[k];
+     return `<tr class="${cls}"><td>${esc(lab)}</td>
+       <td class="n mono">${v==null?'—':f1(v)}</td>
+       <td class="n mono" style="color:${v<0?'var(--s-fx)':'var(--ink-2)'}">${v==null?'—':f1(v/ns*100)+'%'}</td></tr>`;}).join('');
+}
+function drawPnlChips(){
+  const list=pnlCompanies();
+  if(!PSEL)PSEL=list[0].name;
+  document.getElementById('pnlChips').innerHTML=list.map(u=>{
+    const p=D.pnl[u.name];const g=p.src==='glob';
+    return `<button class="chip ${u.name===PSEL?'on':''}" onclick="selPnl(${JSON.stringify(u.name).replace(/"/g,'&quot;')})">
+      <span class="dot" style="background:${g?'#9085e9':'#3987e5'}"></span>${esc(u.name)}
+      ${g?`<span class="ccy">${esc(u.unit.replace(' B','').replace(' T',''))}</span>`:''}</button>`;}).join('');
+}
+function selPnl(n){PSEL=n;PYEAR=null;drawPnlChips();drawCmp();}
+function drawCmp(){
+  const u=D.uni.find(x=>x.name===PSEL), p=D.pnl[PSEL];
+  const yrs=Object.keys(p.years).filter(y=>p.years[y].gm!=null).sort();
+  if(!PYEAR||!p.years[PYEAR])PYEAR=yrs[yrs.length-1];
+  document.getElementById('pnlYears').innerHTML=yrs.map(y=>
+    `<button class="chip ${y===PYEAR?'on':''}" style="padding:3px 9px;font-size:10px" onclick="PYEAR='${y}';drawCmp()">${y}</button>`).join('');
+  const Y=p.years[PYEAR]||{};
+  const imp=IMPORTED[PSEL+'|'+PYEAR]||{};
+  document.getElementById('cmpName').textContent=PSEL;
+  document.getElementById('cmpMeta').textContent=
+    `${u.cohorts.join(' · ')} · ${u.unit} · sumber: ${p.src==='glob'?'GLOBAL_V5 dataset':'benchmark peer history'}`;
+  const bd=document.getElementById('cmpBadge');
+  bd.textContent=p.src==='glob'?'GLOBAL REF':'PEER';
+  bd.style.background=p.src==='glob'?'rgba(144,133,233,.2)':'rgba(57,135,229,.2)';
+  bd.style.color=p.src==='glob'?'#9085e9':'#3987e5';
+  document.getElementById('globNote').style.display = p.src==='glob'?'block':'none';
+
+  const map={gross_profit:Y.gm,gp2:Y.gp2,ebt:Y.ebtm};
+  const smTotal = (Y.gm!=null&&Y.gp2!=null)?-(Y.gm-Y.gp2):null;
+  document.getElementById('cmpPnl').innerHTML=
+   `<tr><th>Line</th><th class="n" style="text-align:right">% sales</th><th class="n" style="text-align:right">Status</th></tr>`+
+   PLINES.map(([k,lab,cls])=>{
+     let v=null,st='',stc='var(--ink-3)';
+     if(imp[k]!=null){v=imp[k];st='imported';stc='#c98500';}
+     else if(k==='net_sales'){v=100;st='reported';stc='var(--ok)';}
+     else if(k==='cogs'&&Y.gm!=null){v=-(100-Y.gm);st='derived';stc='#3987e5';}
+     else if(map[k]!=null){v=map[k];st='reported';stc='var(--ok)';}
+     else if(k==='sm_total'&&smTotal!=null){v=smTotal;st='derived (SM+GA)';stc='#3987e5';}
+     else {st='not disclosed';stc='#64748B';}
+     return `<tr class="${cls}"><td>${esc(lab)}</td>
+       <td class="n mono" style="color:${v==null?'#64748B':(v<0?'var(--s-fx)':'var(--ink-2)')}">${v==null?'<span class="na">DATA NOT AVAILABLE</span>':f1(v)+'%'}</td>
+       <td class="n text-[9.5px]" style="color:${stc}">${esc(st)}</td></tr>`;}).join('');
+}
+function dlTemplate(){
+  const rows=[['company','fiscal_year','line','value_pct_of_sales']];
+  pnlCompanies().forEach(u=>PLINES.forEach(([k])=>rows.push([u.name,'FY2024',k,''])));
+  const csv=rows.map(r=>r.map(c=>`"${c}"`).join(',')).join('\n');
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+  a.download='nabati_pnl_template.csv';a.click();
+}
+document.getElementById('pnlFile').addEventListener('change',function(e){
+  const f=e.target.files[0];if(!f)return;const r=new FileReader();
+  r.onload=function(){
+    const msg=document.getElementById('importMsg');
+    try{
+      let n=0;
+      if(f.name.endsWith('.json')){
+        const j=JSON.parse(r.result);
+        Object.entries(j).forEach(([key,obj])=>{IMPORTED[key]=obj;n++;});
+      }else{
+        const lines=r.result.split(/\r?\n/).filter(Boolean);
+        lines.slice(1).forEach(ln=>{
+          const c=ln.match(/("([^"]*)"|[^,]+)/g)||[];
+          const cl=c.map(x=>x.replace(/^"|"$/g,'').trim());
+          if(cl.length<4||cl[3]==='')return;
+          const key=cl[0]+'|'+cl[1];
+          IMPORTED[key]=IMPORTED[key]||{};
+          IMPORTED[key][cl[2]]=parseFloat(cl[3]);n++;});
+      }
+      msg.textContent=`✓ ${n} nilai dimuat. Baris yang terisi kini bertanda "imported".`;
+      msg.style.color='#199e70';drawCmp();
+    }catch(err){msg.textContent='✗ Gagal membaca: '+err.message;msg.style.color='#e66767';}
+  };r.readAsText(f);
+});
+
+/* ---------------- init ---------------- */
+drawBridge();drawDrivers();drawMatrix();drawNplStatic();drawNplDetail();drawNab();drawPnlChips();drawCmp();
+</script>
+</body>
+</html>
