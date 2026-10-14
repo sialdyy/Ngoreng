@@ -11,6 +11,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script>
     tailwind.config = {
+      darkMode: 'class',
       theme: {
         extend: {
           fontFamily: {
@@ -21,53 +22,146 @@
       }
     };
   </script>
+  <script>
+    // Resolve the stored theme BEFORE first paint so the page never flashes the wrong mode.
+    (function () {
+      var pref = "system";
+      try { pref = localStorage.getItem("fmcgThemePref") || "system"; } catch (e) {}
+      var dark = pref === "dark" ||
+        (pref === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches);
+      document.documentElement.classList.toggle("dark", dark);
+      document.documentElement.dataset.themePref = pref;
+      try {
+        var lang = localStorage.getItem("fmcgLangPref") || "en";
+        document.documentElement.lang = lang;
+        document.documentElement.dataset.langPref = lang;
+      } catch (e) {}
+    })();
+  </script>
   <style>
-    body { background-color: #070b14; color: #f1f5f9; }
+    :root {
+      --page-bg: #f8fafc;
+      --page-fg: #0f172a;
+      --card-bg: rgba(255, 255, 255, 0.92);
+      --card-border: rgba(203, 213, 225, 0.9);
+      --card-shadow: 0 1px 2px rgba(15, 23, 42, 0.06), 0 8px 24px -16px rgba(15, 23, 42, 0.18);
+      --bar-track: #e2e8f0;
+      --bar-thumb: #cbd5e1;
+      --bar-thumb-hover: #94a3b8;
+    }
+    :root.dark {
+      --page-bg: #070b14;
+      --page-fg: #f1f5f9;
+      --card-bg: rgba(15, 23, 42, 0.88);
+      --card-border: rgba(51, 65, 85, 0.65);
+      --card-shadow: none;
+      --bar-track: #0f172a;
+      --bar-thumb: #334155;
+      --bar-thumb-hover: #475569;
+    }
+    body {
+      background-color: var(--page-bg);
+      color: var(--page-fg);
+      transition: background-color .2s ease, color .2s ease;
+    }
     .glass-card {
-      background: rgba(15, 23, 42, 0.88);
+      background: var(--card-bg);
       backdrop-filter: blur(12px);
-      border: 1px solid rgba(51, 65, 85, 0.65);
+      border: 1px solid var(--card-border);
+      box-shadow: var(--card-shadow);
+      transition: background-color .2s ease, border-color .2s ease;
     }
     .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
-    .custom-scrollbar::-webkit-scrollbar-track { background: #0f172a; }
-    .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
-    .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #475569; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: var(--bar-track); }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: var(--bar-thumb); border-radius: 3px; }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: var(--bar-thumb-hover); }
+
+    /* Segmented switchers (theme + language) */
+    .seg-group {
+      display: inline-flex; align-items: center; gap: 2px; padding: 2px;
+      border-radius: 10px; background: var(--bar-track); border: 1px solid var(--card-border);
+    }
+    .seg-btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 4px;
+      padding: 5px 8px; border-radius: 8px; font-size: 11px; font-weight: 600;
+      line-height: 1; color: #64748b; cursor: pointer; transition: all .15s ease;
+      white-space: nowrap;
+    }
+    .seg-btn:hover { color: var(--page-fg); }
+    .seg-btn[aria-pressed="true"] {
+      background: #4f46e5; color: #fff;
+      box-shadow: 0 1px 2px rgba(79, 70, 229, .4);
+    }
+    .seg-btn svg { width: 13px; height: 13px; }
+    :root.dark .seg-btn { color: #94a3b8; }
+    @media print { .no-print { display: none !important; } }
   </style>
 </head>
 <body class="antialiased selection:bg-indigo-500 selection:text-white min-h-screen flex flex-col">
 
   <!-- STICKY HEADER & COHORT FILTER BAR -->
-  <header class="sticky top-0 z-50 bg-slate-950/95 backdrop-blur-md border-b border-slate-800">
+  <header class="sticky top-0 z-50 bg-white/95 dark:bg-slate-950/95 backdrop-blur-md border-b border-slate-200 dark:border-slate-800">
     <div class="max-w-[1640px] mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex flex-col xl:flex-row xl:items-center xl:justify-between gap-3">
       <div>
         <div class="flex flex-wrap items-center gap-2">
-          <span class="px-2 py-0.5 text-[11px] font-mono uppercase tracking-wider font-semibold bg-indigo-500/20 text-indigo-300 border border-indigo-500/40 rounded">
+          <span class="px-2 py-0.5 text-[11px] font-mono uppercase tracking-wider font-semibold bg-indigo-100 dark:bg-indigo-500/20 text-indigo-700 dark:text-indigo-300 border border-indigo-300 dark:border-indigo-500/40 rounded" data-i18n="hdr.badge">
             100% Audited Filings + Kantar CRP Telemetry
           </span>
-          <span class="text-xs text-slate-400 font-mono">40 Mixed F&amp;B Issuers • FY2019–FY2024 Empirical Dataset</span>
+          <span class="text-xs text-slate-500 dark:text-slate-400 font-mono" data-i18n="hdr.scope">40 Mixed F&amp;B Issuers • FY2019–FY2024 Empirical Dataset</span>
         </div>
-        <h1 class="text-lg sm:text-xl font-extrabold tracking-tight text-white mt-0.5">
+        <h1 class="text-lg sm:text-xl font-extrabold tracking-tight text-slate-900 dark:text-white mt-0.5" data-i18n="hdr.title">
           FMCG F&amp;B Financial Performance, Consumer Reach &amp; Rolling Milestone Command Center
         </h1>
       </div>
 
-      <!-- Cohort Filter Buttons -->
-      <div class="flex flex-wrap items-center gap-1.5" id="cohortFilterContainer">
-        <button data-cohort="ALL" class="cohort-btn px-3 py-1.5 rounded-lg text-xs font-semibold transition-all bg-indigo-600 text-white shadow-sm">
+      <div class="flex flex-wrap items-center gap-3">
+        <!-- Appearance & Language Switchers -->
+        <div class="flex flex-wrap items-center gap-2 no-print">
+          <div class="seg-group" id="themeSwitcher" role="group" aria-label="Color theme">
+            <button type="button" class="seg-btn" data-theme-choice="light" aria-pressed="false" title="Light">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true">
+                <circle cx="12" cy="12" r="4.2"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M19.1 4.9l-1.4 1.4M6.3 17.7l-1.4 1.4"/>
+              </svg>
+              <span data-i18n="theme.light">Light</span>
+            </button>
+            <button type="button" class="seg-btn" data-theme-choice="dark" aria-pressed="false" title="Dark">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true">
+                <path d="M21 12.8A8.5 8.5 0 1 1 11.2 3a6.6 6.6 0 0 0 9.8 9.8z"/>
+              </svg>
+              <span data-i18n="theme.dark">Dark</span>
+            </button>
+            <button type="button" class="seg-btn" data-theme-choice="system" aria-pressed="false" title="System">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true">
+                <rect x="2.5" y="4" width="19" height="12.5" rx="2"/><path d="M8.5 20.5h7M12 16.5v4"/>
+              </svg>
+              <span data-i18n="theme.system">System</span>
+            </button>
+          </div>
+
+          <div class="seg-group" id="langSwitcher" role="group" aria-label="Language">
+            <button type="button" class="seg-btn font-mono" data-lang-choice="en" aria-pressed="false" title="English">EN</button>
+            <button type="button" class="seg-btn font-mono" data-lang-choice="id" aria-pressed="false" title="Bahasa Indonesia">ID</button>
+          </div>
+        </div>
+
+        <!-- Cohort Filter Buttons -->
+        <div class="flex flex-wrap items-center gap-1.5" id="cohortFilterContainer">
+        <button data-cohort="ALL" class="cohort-btn px-3 py-1.5 rounded-lg text-xs font-semibold transition-all bg-indigo-600 text-slate-900 dark:text-white shadow-sm" data-i18n="cohort.all">
           All Cohorts (40)
         </button>
-        <button data-cohort="Global" class="cohort-btn px-3 py-1.5 rounded-lg text-xs font-semibold transition-all bg-slate-800/90 text-slate-300 hover:bg-slate-700">
+        <button data-cohort="Global" class="cohort-btn px-3 py-1.5 rounded-lg text-xs font-semibold transition-all bg-slate-200/80 dark:bg-slate-800/90 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700" data-i18n="cohort.global">
           Global Top 10
         </button>
-        <button data-cohort="Regional APAC" class="cohort-btn px-3 py-1.5 rounded-lg text-xs font-semibold transition-all bg-slate-800/90 text-slate-300 hover:bg-slate-700">
+        <button data-cohort="Regional APAC" class="cohort-btn px-3 py-1.5 rounded-lg text-xs font-semibold transition-all bg-slate-200/80 dark:bg-slate-800/90 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700" data-i18n="cohort.apac">
           Regional APAC (10)
         </button>
-        <button data-cohort="Indonesia" class="cohort-btn px-3 py-1.5 rounded-lg text-xs font-semibold transition-all bg-slate-800/90 text-slate-300 hover:bg-slate-700">
+        <button data-cohort="Indonesia" class="cohort-btn px-3 py-1.5 rounded-lg text-xs font-semibold transition-all bg-slate-200/80 dark:bg-slate-800/90 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700" data-i18n="cohort.idn">
           Indonesia Local (10)
         </button>
-        <button data-cohort="Greater China" class="cohort-btn px-3 py-1.5 rounded-lg text-xs font-semibold transition-all bg-slate-800/90 text-slate-300 hover:bg-slate-700">
+        <button data-cohort="Greater China" class="cohort-btn px-3 py-1.5 rounded-lg text-xs font-semibold transition-all bg-slate-200/80 dark:bg-slate-800/90 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700" data-i18n="cohort.cn">
           Greater China (10)
         </button>
+        </div>
       </div>
     </div>
   </header>
@@ -78,57 +172,57 @@
     <!-- EXECUTIVE KPI SUMMARY RIBBON -->
     <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3.5">
       <div class="glass-card rounded-xl p-4">
-        <p class="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Active Cohort Scope</p>
+        <p class="text-[11px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider" data-i18n="kpi.scope.label">Active Cohort Scope</p>
         <div class="mt-1.5 flex items-baseline justify-between">
-          <p class="text-2xl font-extrabold font-mono text-white" id="kpiCount">40</p>
-          <span class="text-xs text-indigo-400 font-semibold" id="kpiCohortLabel">All 4 Layers</span>
+          <p class="text-2xl font-extrabold font-mono text-slate-900 dark:text-white" id="kpiCount">40</p>
+          <span class="text-xs text-indigo-600 dark:text-indigo-400 font-semibold" id="kpiCohortLabel">All 4 Layers</span>
         </div>
-        <p class="text-[11px] text-slate-400 mt-1">Listed Food &amp; Beverage Peers</p>
+        <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1" data-i18n="kpi.scope.foot">Listed Food &amp; Beverage Peers</p>
       </div>
 
       <div class="glass-card rounded-xl p-4">
-        <p class="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Avg 5Y Revenue CAGR</p>
+        <p class="text-[11px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider" data-i18n="kpi.cagr.label">Avg 5Y Revenue CAGR</p>
         <div class="mt-1.5 flex items-baseline justify-between">
-          <p class="text-2xl font-extrabold font-mono text-emerald-400" id="kpiAvgCagr">+0.00%</p>
-          <span class="text-xs font-mono text-slate-300" id="kpiAvgOrgCagr">Org: +0.00%</span>
+          <p class="text-2xl font-extrabold font-mono text-emerald-600 dark:text-emerald-400" id="kpiAvgCagr">+0.00%</p>
+          <span class="text-xs font-mono text-slate-700 dark:text-slate-300" id="kpiAvgOrgCagr">Org: +0.00%</span>
         </div>
-        <p class="text-[11px] text-slate-400 mt-1">FY19–FY24 Statutory Native</p>
+        <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1" data-i18n="kpi.cagr.foot">FY19–FY24 Statutory Native</p>
       </div>
 
       <div class="glass-card rounded-xl p-4">
-        <p class="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Avg FY24 EBITDA Margin</p>
+        <p class="text-[11px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider" data-i18n="kpi.ebitda.label">Avg FY24 EBITDA Margin</p>
         <div class="mt-1.5 flex items-baseline justify-between">
-          <p class="text-2xl font-extrabold font-mono text-sky-400" id="kpiAvgEbitda">0.0%</p>
+          <p class="text-2xl font-extrabold font-mono text-sky-600 dark:text-sky-400" id="kpiAvgEbitda">0.0%</p>
           <span class="text-xs font-mono" id="kpiEbitdaDelta">0 bps vs FY19</span>
         </div>
-        <p class="text-[11px] text-slate-400 mt-1">Audited Consolidated P&amp;L</p>
+        <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1" data-i18n="kpi.ebitda.foot">Audited Consolidated P&amp;L</p>
       </div>
 
       <div class="glass-card rounded-xl p-4">
-        <p class="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Apex Performers</p>
+        <p class="text-[11px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider" data-i18n="kpi.apex.label">Apex Performers</p>
         <div class="mt-1.5 flex items-baseline justify-between">
-          <p class="text-2xl font-extrabold font-mono text-amber-400" id="kpiApexCount">3</p>
-          <span class="text-[11px] text-amber-300 font-mono">≥10% CAGR &amp; ≥20% EBITDA</span>
+          <p class="text-2xl font-extrabold font-mono text-amber-600 dark:text-amber-400" id="kpiApexCount">3</p>
+          <span class="text-[11px] text-amber-700 dark:text-amber-300 font-mono" data-i18n="kpi.apex.rule">≥10% CAGR &amp; ≥20% EBITDA</span>
         </div>
-        <p class="text-[11px] text-slate-400 mt-1 truncate" id="kpiApexNames">ICBP, Cimory, Weilong</p>
+        <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1 truncate" id="kpiApexNames">ICBP, Cimory, Weilong</p>
       </div>
 
       <div class="glass-card rounded-xl p-4">
-        <p class="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Penetration &amp; Basket Leaders</p>
+        <p class="text-[11px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider" data-i18n="kpi.pen.label">Penetration &amp; Basket Leaders</p>
         <div class="mt-1.5 flex items-baseline justify-between">
-          <p class="text-2xl font-extrabold font-mono text-purple-400" id="kpiPenCount">12</p>
-          <span class="text-xs text-purple-300 font-mono" id="kpiPenShare">30% of Cohort</span>
+          <p class="text-2xl font-extrabold font-mono text-purple-600 dark:text-purple-400" id="kpiPenCount">12</p>
+          <span class="text-xs text-purple-700 dark:text-purple-300 font-mono" id="kpiPenShare">30% of Cohort</span>
         </div>
-        <p class="text-[11px] text-slate-400 mt-1">Kantar CRP / RTM Outperformers</p>
+        <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1" data-i18n="kpi.pen.foot">Kantar CRP / RTM Outperformers</p>
       </div>
 
       <div class="glass-card rounded-xl p-4">
-        <p class="text-[11px] font-medium text-slate-400 uppercase tracking-wider">6Y Milestone Fulfillment</p>
+        <p class="text-[11px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider" data-i18n="kpi.audit.label">6Y Milestone Fulfillment</p>
         <div class="mt-1.5 flex items-baseline justify-between">
-          <p class="text-2xl font-extrabold font-mono text-teal-400" id="kpiAuditRate">0%</p>
-          <span class="text-xs text-teal-300 font-mono" id="kpiAuditCount">0/240 Cycles</span>
+          <p class="text-2xl font-extrabold font-mono text-teal-600 dark:text-teal-400" id="kpiAuditRate">0%</p>
+          <span class="text-xs text-teal-700 dark:text-teal-300 font-mono" id="kpiAuditCount">0/240 Cycles</span>
         </div>
-        <p class="text-[11px] text-slate-400 mt-1">2019–2024 Annual Commitments</p>
+        <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1" data-i18n="kpi.audit.foot">2019–2024 Annual Commitments</p>
       </div>
     </section>
 
@@ -136,24 +230,24 @@
     <section class="grid grid-cols-1 xl:grid-cols-12 gap-6">
       <!-- Left: Growth vs. Profitability Scatter Matrix (7 cols) -->
       <div class="xl:col-span-7 glass-card rounded-2xl p-5 flex flex-col justify-between">
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3.5 border-b border-slate-800">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3.5 border-b border-slate-200 dark:border-slate-800">
           <div>
-            <h2 class="text-base font-bold text-white flex items-center gap-2">
+            <h2 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
               <span class="w-2.5 h-2.5 rounded-full bg-indigo-500"></span>
-              Strategic Brackets: 5-Year CAGR vs. FY2024 Profitability Matrix
+              <span data-i18n="s1.scatter.title">Strategic Brackets: 5-Year CAGR vs. FY2024 Profitability Matrix</span>
             </h2>
-            <p class="text-xs text-slate-400 mt-0.5">
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5" data-i18n="s1.scatter.sub">
               Click any company bubble to load its P&amp;L Bridge, Kantar CRP telemetry, and 6-Year Rolling Audit below.
             </p>
           </div>
           <div class="flex flex-wrap items-center gap-2">
-            <select id="scatterXToggle" class="bg-slate-900 border border-slate-700 text-xs text-slate-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-indigo-500">
-              <option value="cagr5y">X: Statutory 5Y CAGR (%)</option>
-              <option value="organicCagr5y">X: Organic / LFL 5Y CAGR (%)</option>
+            <select id="scatterXToggle" class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-xs text-slate-800 dark:text-slate-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-indigo-500">
+              <option value="cagr5y" data-i18n="s1.x.statutory">X: Statutory 5Y CAGR (%)</option>
+              <option value="organicCagr5y" data-i18n="s1.x.organic">X: Organic / LFL 5Y CAGR (%)</option>
             </select>
-            <select id="scatterColorToggle" class="bg-slate-900 border border-slate-700 text-xs text-slate-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-indigo-500">
-              <option value="cohort">Color: Geographical Cohort</option>
-              <option value="consBracket">Color: Consumer Archetype</option>
+            <select id="scatterColorToggle" class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-xs text-slate-800 dark:text-slate-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-indigo-500">
+              <option value="cohort" data-i18n="s1.color.cohort">Color: Geographical Cohort</option>
+              <option value="consBracket" data-i18n="s1.color.archetype">Color: Consumer Archetype</option>
             </select>
           </div>
         </div>
@@ -162,43 +256,43 @@
           <canvas id="scatterMatrixChart"></canvas>
         </div>
 
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-3.5 mt-2 border-t border-slate-800/80 text-[11px]">
-          <div class="bg-slate-900/75 rounded-lg p-2 border border-amber-500/30">
-            <span class="font-bold text-amber-400">Bracket 1: Apex Performer</span>
-            <p class="text-slate-400 mt-0.5">≥10% CAGR &amp; ≥20% EBITDA</p>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-3.5 mt-2 border-t border-slate-200 dark:border-slate-800/80 text-[11px]">
+          <div class="bg-slate-50 dark:bg-slate-900/75 rounded-lg p-2 border border-amber-200 dark:border-amber-500/30">
+            <span class="font-bold text-amber-600 dark:text-amber-400" data-i18n="s1.b1">Bracket 1: Apex Performer</span>
+            <p class="text-slate-500 dark:text-slate-400 mt-0.5" data-i18n="s1.b1.rule">≥10% CAGR &amp; ≥20% EBITDA</p>
           </div>
-          <div class="bg-slate-900/75 rounded-lg p-2 border border-sky-500/30">
-            <span class="font-bold text-sky-400">Bracket 2: Margin Defender</span>
-            <p class="text-slate-400 mt-0.5">&lt;10% CAGR &amp; ≥20% EBITDA</p>
+          <div class="bg-slate-50 dark:bg-slate-900/75 rounded-lg p-2 border border-sky-200 dark:border-sky-500/30">
+            <span class="font-bold text-sky-600 dark:text-sky-400" data-i18n="s1.b2">Bracket 2: Margin Defender</span>
+            <p class="text-slate-500 dark:text-slate-400 mt-0.5" data-i18n="s1.b2.rule">&lt;10% CAGR &amp; ≥20% EBITDA</p>
           </div>
-          <div class="bg-slate-900/75 rounded-lg p-2 border border-emerald-500/30">
-            <span class="font-bold text-emerald-400">Bracket 3: Volume Driver</span>
-            <p class="text-slate-400 mt-0.5">≥10% CAGR &amp; &lt;20% EBITDA</p>
+          <div class="bg-slate-50 dark:bg-slate-900/75 rounded-lg p-2 border border-emerald-200 dark:border-emerald-500/30">
+            <span class="font-bold text-emerald-600 dark:text-emerald-400" data-i18n="s1.b3">Bracket 3: Volume Driver</span>
+            <p class="text-slate-500 dark:text-slate-400 mt-0.5" data-i18n="s1.b3.rule">≥10% CAGR &amp; &lt;20% EBITDA</p>
           </div>
-          <div class="bg-slate-900/75 rounded-lg p-2 border border-slate-700">
-            <span class="font-bold text-slate-300">Bracket 4: Transformation</span>
-            <p class="text-slate-400 mt-0.5">&lt;10% CAGR &amp; &lt;20% EBITDA</p>
+          <div class="bg-slate-50 dark:bg-slate-900/75 rounded-lg p-2 border border-slate-300 dark:border-slate-700">
+            <span class="font-bold text-slate-700 dark:text-slate-300" data-i18n="s1.b4">Bracket 4: Transformation</span>
+            <p class="text-slate-500 dark:text-slate-400 mt-0.5" data-i18n="s1.b4.rule">&lt;10% CAGR &amp; &lt;20% EBITDA</p>
           </div>
         </div>
       </div>
 
       <!-- Right: Ranked Comparative Bar Chart (5 cols) -->
       <div class="xl:col-span-5 glass-card rounded-2xl p-5 flex flex-col justify-between">
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3.5 border-b border-slate-800">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3.5 border-b border-slate-200 dark:border-slate-800">
           <div>
-            <h2 class="text-base font-bold text-white flex items-center gap-2">
+            <h2 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
               <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
-              Empirical Cohort Leaderboard (Top 15 in View)
+              <span data-i18n="s1.bar.title">Empirical Cohort Leaderboard (Top 15 in View)</span>
             </h2>
-            <p class="text-xs text-slate-400 mt-0.5">
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5" data-i18n="s1.bar.sub">
               Click any bar to inspect the company's full financial and consumer dossier.
             </p>
           </div>
-          <select id="barMetricToggle" class="bg-slate-900 border border-slate-700 text-xs text-slate-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-indigo-500">
-            <option value="cagr5y">5Y Statutory Revenue CAGR (%)</option>
-            <option value="ebitdaMargin2024">FY24 Audited EBITDA Margin (%)</option>
-            <option value="ebitdaDelta">5Y EBITDA Margin Shift (bps)</option>
-            <option value="ebitMargin2024">FY24 Audited EBIT Margin (%)</option>
+          <select id="barMetricToggle" class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-xs text-slate-800 dark:text-slate-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-indigo-500">
+            <option value="cagr5y" data-i18n="s1.m.cagr">5Y Statutory Revenue CAGR (%)</option>
+            <option value="ebitdaMargin2024" data-i18n="s1.m.ebitda">FY24 Audited EBITDA Margin (%)</option>
+            <option value="ebitdaDelta" data-i18n="s1.m.shift">5Y EBITDA Margin Shift (bps)</option>
+            <option value="ebitMargin2024" data-i18n="s1.m.ebit">FY24 Audited EBIT Margin (%)</option>
           </select>
         </div>
 
@@ -206,39 +300,39 @@
           <canvas id="rankingBarChart"></canvas>
         </div>
 
-        <div class="flex items-center justify-between pt-3.5 mt-2 border-t border-slate-800/80 text-xs text-slate-400">
+        <div class="flex items-center justify-between pt-3.5 mt-2 border-t border-slate-200 dark:border-slate-800/80 text-xs text-slate-500 dark:text-slate-400">
           <div class="flex items-center gap-3 flex-wrap">
-            <span class="inline-flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-sm bg-indigo-500"></span>Global</span>
-            <span class="inline-flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-sm bg-teal-400"></span>Regional APAC</span>
-            <span class="inline-flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-sm bg-emerald-500"></span>Indonesia</span>
-            <span class="inline-flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-sm bg-amber-500"></span>Greater China</span>
+            <span class="inline-flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-sm bg-indigo-500"></span><span data-i18n="cohort.name.Global">Global</span></span>
+            <span class="inline-flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-sm bg-teal-400"></span><span data-i18n="cohort.name.RegionalAPAC">Regional APAC</span></span>
+            <span class="inline-flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-sm bg-emerald-500"></span><span data-i18n="cohort.name.Indonesia">Indonesia</span></span>
+            <span class="inline-flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-sm bg-amber-500"></span><span data-i18n="cohort.name.GreaterChina">Greater China</span></span>
           </div>
         </div>
       </div>
     </section>
 
     <!-- SECTION 2: INTERACTIVE ENTITY INSPECTOR (P&L BRIDGE + KANTAR CRP + 6Y ROLLING AUDIT) -->
-    <section id="deepDiveSection" class="glass-card rounded-2xl p-6 border border-indigo-500/35 shadow-2xl">
-      <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-5 border-b border-slate-800">
+    <section id="deepDiveSection" class="glass-card rounded-2xl p-6 border border-indigo-300 dark:border-indigo-500/35 shadow-2xl">
+      <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-5 border-b border-slate-200 dark:border-slate-800">
         <div>
           <div class="flex flex-wrap items-center gap-2">
-            <span class="px-2 py-0.5 text-[11px] font-mono uppercase bg-indigo-500/20 text-indigo-300 border border-indigo-500/40 rounded">
+            <span class="px-2 py-0.5 text-[11px] font-mono uppercase bg-indigo-100 dark:bg-indigo-500/20 text-indigo-700 dark:text-indigo-300 border border-indigo-300 dark:border-indigo-500/40 rounded" data-i18n="s2.badge">
               Single-Entity Deep-Dive Dossier
             </span>
-            <span id="inspectorCohortBadge" class="px-2 py-0.5 text-[11px] font-mono bg-slate-800 text-slate-300 rounded"></span>
-            <span id="inspFinBracketBadge" class="px-2 py-0.5 text-[11px] font-mono bg-amber-500/20 text-amber-300 border border-amber-500/30 rounded"></span>
-            <span id="inspConsBracketBadge" class="px-2 py-0.5 text-[11px] font-mono bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 rounded"></span>
+            <span id="inspectorCohortBadge" class="px-2 py-0.5 text-[11px] font-mono bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded"></span>
+            <span id="inspFinBracketBadge" class="px-2 py-0.5 text-[11px] font-mono bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-500/30 rounded"></span>
+            <span id="inspConsBracketBadge" class="px-2 py-0.5 text-[11px] font-mono bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-500/30 rounded"></span>
           </div>
-          <h2 class="text-xl sm:text-2xl font-extrabold text-white mt-1.5" id="inspectorCompanyName"></h2>
+          <h2 class="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-white mt-1.5" id="inspectorCompanyName"></h2>
         </div>
 
         <div class="flex flex-wrap items-center gap-2">
-          <button id="prevCompanyBtn" class="px-2.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-mono text-slate-200 transition">
+          <button id="prevCompanyBtn" class="px-2.5 py-2 rounded-xl bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-xs font-mono text-slate-800 dark:text-slate-200 transition" data-i18n="s2.prev">
             ← Prev
           </button>
-          <select id="companySelectDropdown" class="bg-slate-900 border border-slate-700 text-xs sm:text-sm text-white font-semibold rounded-xl px-3.5 py-2 focus:outline-none focus:border-indigo-500 min-w-[270px]">
+          <select id="companySelectDropdown" class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-xs sm:text-sm text-slate-900 dark:text-white font-semibold rounded-xl px-3.5 py-2 focus:outline-none focus:border-indigo-500 min-w-[270px]">
           </select>
-          <button id="nextCompanyBtn" class="px-2.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-mono text-slate-200 transition">
+          <button id="nextCompanyBtn" class="px-2.5 py-2 rounded-xl bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-xs font-mono text-slate-800 dark:text-slate-200 transition" data-i18n="s2.next">
             Next →
           </button>
         </div>
@@ -249,35 +343,35 @@
         <!-- Left 5 Cols: Financial Bridge & Consumer Telemetry -->
         <div class="lg:col-span-5 flex flex-col justify-between space-y-4">
           <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-            <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-3">
-              <span class="text-[11px] text-slate-400 block">FY19 → FY24 Rev</span>
-              <span class="text-xs sm:text-sm font-bold font-mono text-white mt-1 block" id="inspRevSpan">-</span>
-              <span class="text-[11px] font-mono text-indigo-400" id="inspTotalGrowth">-</span>
+            <div class="bg-white dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 rounded-xl p-3">
+              <span class="text-[11px] text-slate-500 dark:text-slate-400 block" data-i18n="s2.stat.rev">FY19 → FY24 Rev</span>
+              <span class="text-xs sm:text-sm font-bold font-mono text-slate-900 dark:text-white mt-1 block" id="inspRevSpan">-</span>
+              <span class="text-[11px] font-mono text-indigo-600 dark:text-indigo-400" id="inspTotalGrowth">-</span>
             </div>
-            <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-3">
-              <span class="text-[11px] text-slate-400 block">5Y Rev CAGR</span>
-              <span class="text-xs sm:text-sm font-bold font-mono text-emerald-400 mt-1 block" id="inspCagr">-</span>
-              <span class="text-[11px] font-mono text-slate-400" id="inspOrgCagr">-</span>
+            <div class="bg-white dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 rounded-xl p-3">
+              <span class="text-[11px] text-slate-500 dark:text-slate-400 block" data-i18n="s2.stat.cagr">5Y Rev CAGR</span>
+              <span class="text-xs sm:text-sm font-bold font-mono text-emerald-600 dark:text-emerald-400 mt-1 block" id="inspCagr">-</span>
+              <span class="text-[11px] font-mono text-slate-500 dark:text-slate-400" id="inspOrgCagr">-</span>
             </div>
-            <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-3">
-              <span class="text-[11px] text-slate-400 block">FY24 EBITDA %</span>
-              <span class="text-xs sm:text-sm font-bold font-mono text-sky-400 mt-1 block" id="inspEbitda">-</span>
-              <span class="text-[11px] font-mono text-slate-400" id="inspEbitdaShift">-</span>
+            <div class="bg-white dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 rounded-xl p-3">
+              <span class="text-[11px] text-slate-500 dark:text-slate-400 block" data-i18n="s2.stat.ebitda">FY24 EBITDA %</span>
+              <span class="text-xs sm:text-sm font-bold font-mono text-sky-600 dark:text-sky-400 mt-1 block" id="inspEbitda">-</span>
+              <span class="text-[11px] font-mono text-slate-500 dark:text-slate-400" id="inspEbitdaShift">-</span>
             </div>
-            <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-3">
-              <span class="text-[11px] text-slate-400 block">FY24 EBIT %</span>
-              <span class="text-xs sm:text-sm font-bold font-mono text-amber-400 mt-1 block" id="inspEbit">-</span>
-              <span class="text-[11px] font-mono text-slate-400" id="inspEbitShift">-</span>
+            <div class="bg-white dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 rounded-xl p-3">
+              <span class="text-[11px] text-slate-500 dark:text-slate-400 block" data-i18n="s2.stat.ebit">FY24 EBIT %</span>
+              <span class="text-xs sm:text-sm font-bold font-mono text-amber-600 dark:text-amber-400 mt-1 block" id="inspEbit">-</span>
+              <span class="text-[11px] font-mono text-slate-500 dark:text-slate-400" id="inspEbitShift">-</span>
             </div>
           </div>
 
           <!-- Chart: FY19 vs FY24 Scale & Profitability -->
-          <div class="bg-slate-900/60 border border-slate-800 rounded-xl p-4">
+          <div class="bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 rounded-xl p-4">
             <div class="flex items-center justify-between mb-2">
-              <span class="text-xs font-semibold text-slate-300 uppercase tracking-wider">
+              <span class="text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider" data-i18n="s2.chart.title">
                 Statutory Scale &amp; Margin Comparison (FY19 vs. FY24)
               </span>
-              <span class="text-[11px] font-mono text-slate-400" id="inspCurrencyUnit"></span>
+              <span class="text-[11px] font-mono text-slate-500 dark:text-slate-400" id="inspCurrencyUnit"></span>
             </div>
             <div class="relative h-48 w-full">
               <canvas id="companyBridgeChart"></canvas>
@@ -285,42 +379,42 @@
           </div>
 
           <!-- Audited Financial Bridge Decomposition -->
-          <div class="bg-indigo-950/30 border border-indigo-500/30 rounded-xl p-4 space-y-1.5">
-            <span class="text-xs font-bold uppercase tracking-wider text-indigo-300 block">
+          <div class="bg-indigo-50 dark:bg-indigo-950/30 border border-indigo-200 dark:border-indigo-500/30 rounded-xl p-4 space-y-1.5">
+            <span class="text-xs font-bold uppercase tracking-wider text-indigo-700 dark:text-indigo-300 block" data-i18n="s2.bridge.title">
               Audited 2019–2024 Financial Bridge Drivers (Statutory Filings)
             </span>
-            <p class="text-xs sm:text-sm text-slate-200 leading-relaxed" id="inspAuditedBridgeText"></p>
+            <p class="text-xs sm:text-sm text-slate-800 dark:text-slate-200 leading-relaxed" id="inspAuditedBridgeText"></p>
           </div>
 
           <!-- Verified Kantar CRP & Consumer Telemetry -->
-          <div class="bg-emerald-950/25 border border-emerald-500/30 rounded-xl p-4 space-y-1.5">
-            <span class="text-xs font-bold uppercase tracking-wider text-emerald-300 block">
+          <div class="bg-emerald-50 dark:bg-emerald-950/25 border border-emerald-200 dark:border-emerald-500/30 rounded-xl p-4 space-y-1.5">
+            <span class="text-xs font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-300 block" data-i18n="s2.kantar.title">
               Verified Kantar Brand Footprint (CRP, Penetration, Frequency &amp; Basket)
             </span>
-            <p class="text-xs sm:text-sm text-slate-200 leading-relaxed" id="inspKantarText"></p>
+            <p class="text-xs sm:text-sm text-slate-800 dark:text-slate-200 leading-relaxed" id="inspKantarText"></p>
           </div>
         </div>
 
         <!-- Right 7 Cols: 6-Year Rolling Vision, Mission & Milestones Audit (2019–2024) -->
-        <div class="lg:col-span-7 bg-slate-900/60 border border-slate-800 rounded-xl p-5 flex flex-col justify-between">
+        <div class="lg:col-span-7 bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 rounded-xl p-5 flex flex-col justify-between">
           <div>
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-800">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-200 dark:border-slate-800">
               <div>
-                <h3 class="text-base font-bold text-white">
+                <h3 class="text-base font-bold text-slate-900 dark:text-white" data-i18n="s2.audit.title">
                   Rolling Multi-Year Vision, Mission &amp; Key Milestones Audit (2019–2024)
                 </h3>
-                <p class="text-xs text-slate-400 mt-0.5">
+                <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5" data-i18n="s2.audit.sub">
                   Empirical cross-reference of each year's stated annual report commitments against subsequent multi-year realizations.
                 </p>
               </div>
               <div class="flex items-center gap-1 flex-wrap" id="auditYearStepper">
-                <button data-year="ALL" class="year-btn px-2.5 py-1 rounded text-xs font-mono font-semibold bg-indigo-600 text-white">All 6Y</button>
-                <button data-year="2019" class="year-btn px-2 py-1 rounded text-xs font-mono bg-slate-800 text-slate-300 hover:bg-slate-700">2019</button>
-                <button data-year="2020" class="year-btn px-2 py-1 rounded text-xs font-mono bg-slate-800 text-slate-300 hover:bg-slate-700">2020</button>
-                <button data-year="2021" class="year-btn px-2 py-1 rounded text-xs font-mono bg-slate-800 text-slate-300 hover:bg-slate-700">2021</button>
-                <button data-year="2022" class="year-btn px-2 py-1 rounded text-xs font-mono bg-slate-800 text-slate-300 hover:bg-slate-700">2022</button>
-                <button data-year="2023" class="year-btn px-2 py-1 rounded text-xs font-mono bg-slate-800 text-slate-300 hover:bg-slate-700">2023</button>
-                <button data-year="2024" class="year-btn px-2 py-1 rounded text-xs font-mono bg-slate-800 text-slate-300 hover:bg-slate-700">2024</button>
+                <button data-year="ALL" class="year-btn px-2.5 py-1 rounded text-xs font-mono font-semibold bg-indigo-600 text-slate-900 dark:text-white" data-i18n="s2.audit.all">All 6Y</button>
+                <button data-year="2019" class="year-btn px-2 py-1 rounded text-xs font-mono bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700">2019</button>
+                <button data-year="2020" class="year-btn px-2 py-1 rounded text-xs font-mono bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700">2020</button>
+                <button data-year="2021" class="year-btn px-2 py-1 rounded text-xs font-mono bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700">2021</button>
+                <button data-year="2022" class="year-btn px-2 py-1 rounded text-xs font-mono bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700">2022</button>
+                <button data-year="2023" class="year-btn px-2 py-1 rounded text-xs font-mono bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700">2023</button>
+                <button data-year="2024" class="year-btn px-2 py-1 rounded text-xs font-mono bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700">2024</button>
               </div>
             </div>
 
@@ -328,9 +422,9 @@
             </div>
           </div>
 
-          <div class="pt-4 mt-4 border-t border-slate-800 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-400">
-            <span id="auditScoreSummary" class="font-mono text-slate-200 font-semibold"></span>
-            <span>Verified against FY2019–FY2024 Annual Reports &amp; Exchange Filings</span>
+          <div class="pt-4 mt-4 border-t border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500 dark:text-slate-400">
+            <span id="auditScoreSummary" class="font-mono text-slate-800 dark:text-slate-200 font-semibold"></span>
+            <span data-i18n="s2.audit.foot">Verified against FY2019–FY2024 Annual Reports &amp; Exchange Filings</span>
           </div>
         </div>
       </div>
@@ -340,11 +434,11 @@
     <section class="glass-card rounded-2xl p-6 space-y-4">
       <div class="flex flex-col xl:flex-row xl:items-center justify-between gap-4">
         <div>
-          <h2 class="text-lg font-bold text-white">
+          <h2 class="text-lg font-bold text-slate-900 dark:text-white" data-i18n="s3.title">
             Master Empirical Financial &amp; Consumer Telemetry Table (All 40 Listed Companies)
           </h2>
-          <p class="text-xs text-slate-400">
-            Click any column header to sort, filter by bracket or keyword, or click <span class="text-indigo-400 font-semibold">"Inspect"</span> to load the full company dossier.
+          <p class="text-xs text-slate-500 dark:text-slate-400" data-i18n-html="s3.sub">
+            Click any column header to sort, filter by bracket or keyword, or click <span class="text-indigo-600 dark:text-indigo-400 font-semibold">"Inspect"</span> to load the full company dossier.
           </p>
         </div>
 
@@ -352,48 +446,48 @@
           <input
             type="text"
             id="tableSearchInput"
-            placeholder="Search company, ticker, brand (e.g. Indomie, Oreo, Konjac)..."
-            class="bg-slate-900 border border-slate-700 text-xs text-white rounded-lg px-3 py-2 w-72 focus:outline-none focus:border-indigo-500"
+            placeholder="Search company, ticker, brand (e.g. Indomie, Oreo, Konjac)..." data-i18n-ph="s3.search"
+            class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-xs text-slate-900 dark:text-white rounded-lg px-3 py-2 w-72 focus:outline-none focus:border-indigo-500"
           />
-          <select id="finBracketFilter" class="bg-slate-900 border border-slate-700 text-xs text-slate-200 rounded-lg px-3 py-2 focus:outline-none focus:border-indigo-500">
-            <option value="ALL">All Financial Brackets</option>
-            <option value="Apex Performer">Apex Performer (≥10% CAGR, ≥20% EBITDA)</option>
-            <option value="Margin Defender">Margin Defender (&lt;10% CAGR, ≥20% EBITDA)</option>
-            <option value="Volume Driver">Volume Driver (≥10% CAGR, &lt;20% EBITDA)</option>
-            <option value="Transformation Seeker">Transformation Seeker (&lt;10% CAGR, &lt;20% EBITDA)</option>
+          <select id="finBracketFilter" class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-xs text-slate-800 dark:text-slate-200 rounded-lg px-3 py-2 focus:outline-none focus:border-indigo-500">
+            <option value="ALL" data-i18n="s3.fin.all">All Financial Brackets</option>
+            <option value="Apex Performer" data-i18n="s3.fin.apex">Apex Performer (≥10% CAGR, ≥20% EBITDA)</option>
+            <option value="Margin Defender" data-i18n="s3.fin.margin">Margin Defender (&lt;10% CAGR, ≥20% EBITDA)</option>
+            <option value="Volume Driver" data-i18n="s3.fin.volume">Volume Driver (≥10% CAGR, &lt;20% EBITDA)</option>
+            <option value="Transformation Seeker" data-i18n="s3.fin.transform">Transformation Seeker (&lt;10% CAGR, &lt;20% EBITDA)</option>
           </select>
-          <select id="consBracketFilter" class="bg-slate-900 border border-slate-700 text-xs text-slate-200 rounded-lg px-3 py-2 focus:outline-none focus:border-indigo-500">
-            <option value="ALL">All Consumer Archetypes</option>
-            <option value="Penetration Apex">Penetration Apex</option>
-            <option value="Basket Expander">Basket Expander</option>
-            <option value="Frequency Defender">Frequency Defender</option>
-            <option value="Margin Defender">Margin Defender</option>
-            <option value="Volume Driver">Volume Driver</option>
-            <option value="Stagnating Staple">Stagnating Staple</option>
-            <option value="Transformation Seeker">Transformation Seeker</option>
+          <select id="consBracketFilter" class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-xs text-slate-800 dark:text-slate-200 rounded-lg px-3 py-2 focus:outline-none focus:border-indigo-500">
+            <option value="ALL" data-i18n="s3.cons.all">All Consumer Archetypes</option>
+            <option value="Penetration Apex" data-i18n="arch.PenetrationApex">Penetration Apex</option>
+            <option value="Basket Expander" data-i18n="arch.BasketExpander">Basket Expander</option>
+            <option value="Frequency Defender" data-i18n="arch.FrequencyDefender">Frequency Defender</option>
+            <option value="Margin Defender" data-i18n="arch.MarginDefender">Margin Defender</option>
+            <option value="Volume Driver" data-i18n="arch.VolumeDriver">Volume Driver</option>
+            <option value="Stagnating Staple" data-i18n="arch.StagnatingStaple">Stagnating Staple</option>
+            <option value="Transformation Seeker" data-i18n="arch.TransformationSeeker">Transformation Seeker</option>
           </select>
         </div>
       </div>
 
-      <div class="overflow-x-auto custom-scrollbar border border-slate-800 rounded-xl">
+      <div class="overflow-x-auto custom-scrollbar border border-slate-200 dark:border-slate-800 rounded-xl">
         <table class="w-full text-left border-collapse">
           <thead>
-            <tr class="bg-slate-900/95 text-[11px] font-mono uppercase text-slate-400 border-b border-slate-800 select-none">
-              <th class="py-3 px-3 cursor-pointer hover:text-white" data-sort="id">#</th>
-              <th class="py-3 px-3 cursor-pointer hover:text-white" data-sort="name">Company &amp; Ticker</th>
-              <th class="py-3 px-3 cursor-pointer hover:text-white" data-sort="cohort">Cohort</th>
-              <th class="py-3 px-3 text-right cursor-pointer hover:text-white" data-sort="rev2019">FY19 Rev</th>
-              <th class="py-3 px-3 text-right cursor-pointer hover:text-white" data-sort="rev2024">FY24 Rev</th>
-              <th class="py-3 px-3 text-right cursor-pointer hover:text-white" data-sort="cagr5y">5Y CAGR</th>
-              <th class="py-3 px-3 text-right cursor-pointer hover:text-white" data-sort="organicCagr5y">Org CAGR</th>
-              <th class="py-3 px-3 text-right cursor-pointer hover:text-white" data-sort="ebitdaMargin2019">FY19 EBITDA</th>
-              <th class="py-3 px-3 text-right cursor-pointer hover:text-white" data-sort="ebitdaMargin2024">FY24 EBITDA</th>
-              <th class="py-3 px-3 cursor-pointer hover:text-white" data-sort="finBracket">Financial Bracket</th>
-              <th class="py-3 px-3 cursor-pointer hover:text-white" data-sort="consBracket">Consumer Archetype</th>
-              <th class="py-3 px-3 text-center">Action</th>
+            <tr class="bg-slate-100 dark:bg-slate-900/95 text-[11px] font-mono uppercase text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800 select-none">
+              <th class="py-3 px-3 cursor-pointer hover:text-slate-900 dark:hover:text-white" data-sort="id" data-i18n="th.id">#</th>
+              <th class="py-3 px-3 cursor-pointer hover:text-slate-900 dark:hover:text-white" data-sort="name" data-i18n="th.name">Company &amp; Ticker</th>
+              <th class="py-3 px-3 cursor-pointer hover:text-slate-900 dark:hover:text-white" data-sort="cohort" data-i18n="th.cohort">Cohort</th>
+              <th class="py-3 px-3 text-right cursor-pointer hover:text-slate-900 dark:hover:text-white" data-sort="rev2019" data-i18n="th.rev19">FY19 Rev</th>
+              <th class="py-3 px-3 text-right cursor-pointer hover:text-slate-900 dark:hover:text-white" data-sort="rev2024" data-i18n="th.rev24">FY24 Rev</th>
+              <th class="py-3 px-3 text-right cursor-pointer hover:text-slate-900 dark:hover:text-white" data-sort="cagr5y" data-i18n="th.cagr">5Y CAGR</th>
+              <th class="py-3 px-3 text-right cursor-pointer hover:text-slate-900 dark:hover:text-white" data-sort="organicCagr5y" data-i18n="th.orgcagr">Org CAGR</th>
+              <th class="py-3 px-3 text-right cursor-pointer hover:text-slate-900 dark:hover:text-white" data-sort="ebitdaMargin2019" data-i18n="th.ebitda19">FY19 EBITDA</th>
+              <th class="py-3 px-3 text-right cursor-pointer hover:text-slate-900 dark:hover:text-white" data-sort="ebitdaMargin2024" data-i18n="th.ebitda24">FY24 EBITDA</th>
+              <th class="py-3 px-3 cursor-pointer hover:text-slate-900 dark:hover:text-white" data-sort="finBracket" data-i18n="th.finbracket">Financial Bracket</th>
+              <th class="py-3 px-3 cursor-pointer hover:text-slate-900 dark:hover:text-white" data-sort="consBracket" data-i18n="th.consarch">Consumer Archetype</th>
+              <th class="py-3 px-3 text-center" data-i18n="th.action">Action</th>
             </tr>
           </thead>
-          <tbody id="masterTableBody" class="divide-y divide-slate-800/70 text-xs">
+          <tbody id="masterTableBody" class="divide-y divide-slate-200 dark:divide-slate-800/70 text-xs">
           </tbody>
         </table>
       </div>
@@ -402,43 +496,43 @@
     <!-- SECTION 4: THE 2027-2030 STRATEGIC PLAYBOOK -->
     <section class="space-y-4">
       <div>
-        <h2 class="text-lg font-bold text-white">
+        <h2 class="text-lg font-bold text-slate-900 dark:text-white" data-i18n="s4.title">
           The 2027–2030 Ultimate Recipe for Success: Stratified by Geographical Scope
         </h2>
-        <p class="text-xs text-slate-400">
+        <p class="text-xs text-slate-500 dark:text-slate-400" data-i18n="s4.sub">
           Synthesizing 6 years of audited financial bridges and Kantar Worldpanel Consumer Reach Points (CRP) movements.
         </p>
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
         <div class="glass-card rounded-xl p-5 border-t-2 border-t-indigo-500 space-y-2.5">
-          <span class="text-[11px] font-mono uppercase text-indigo-400 font-semibold">Layer 1 • Global Leaders</span>
-          <h3 class="text-sm font-bold text-white">RIG Volume Restoration &amp; Functional Rotation</h3>
-          <p class="text-xs text-slate-300 leading-relaxed">
+          <span class="text-[11px] font-mono uppercase text-indigo-600 dark:text-indigo-400 font-semibold" data-i18n="s4.l1.tag">Layer 1 • Global Leaders</span>
+          <h3 class="text-sm font-bold text-slate-900 dark:text-white" data-i18n="s4.l1.title">RIG Volume Restoration &amp; Functional Rotation</h3>
+          <p class="text-xs text-slate-700 dark:text-slate-300 leading-relaxed" data-i18n-html="s4.l1.body">
             List-price elasticity peaked in FY2024 (Kraft Heinz Vol/Mix -3.5%, Conagra -1.9%). Winning through 2030 requires rotating out of price-elastic commodities into high-retention functional nutrition (Danone Medical Nutrition, Nestlé Health Science, Campbell's Sovos/Rao's) while funding promotional price-pack resets via structural COGS productivity (General Mills HMM, Nestlé CHF 2.5B Fuel for Growth).
           </p>
         </div>
 
         <div class="glass-card rounded-xl p-5 border-t-2 border-t-teal-400 space-y-2.5">
-          <span class="text-[11px] font-mono uppercase text-teal-300 font-semibold">Layer 2 • Regional APAC</span>
-          <h3 class="text-sm font-bold text-white">Cross-Border Scale &amp; Value-Added Export Hubs</h3>
-          <p class="text-xs text-slate-300 leading-relaxed">
+          <span class="text-[11px] font-mono uppercase text-teal-700 dark:text-teal-300 font-semibold" data-i18n="s4.l2.tag">Layer 2 • Regional APAC</span>
+          <h3 class="text-sm font-bold text-slate-900 dark:text-white" data-i18n="s4.l2.title">Cross-Border Scale &amp; Value-Added Export Hubs</h3>
+          <p class="text-xs text-slate-700 dark:text-slate-300 leading-relaxed" data-i18n-html="s4.l2.body">
             Facing aging domestic demographics in Japan/Korea and FX/commodity volatility in ASEAN, APAC leaders win via overseas manufacturing localization: CJ CheilJedang's US Schwan's/Bibigo network (KRW 4.7T+), Morinaga's US Hi-Chew expansion (&gt;3x growth), Lotte Wellfood's India ice cream merger, and URC's Munchy's ASEAN integration.
           </p>
         </div>
 
         <div class="glass-card rounded-xl p-5 border-t-2 border-t-emerald-500 space-y-2.5">
-          <span class="text-[11px] font-mono uppercase text-emerald-400 font-semibold">Layer 3 • Indonesia Focus</span>
-          <h3 class="text-sm font-bold text-white">D2C Agent Networks, GT Coin-Packs &amp; Frontier M&amp;A</h3>
-          <p class="text-xs text-slate-300 leading-relaxed">
+          <span class="text-[11px] font-mono uppercase text-emerald-600 dark:text-emerald-400 font-semibold" data-i18n="s4.l3.tag">Layer 3 • Indonesia Focus</span>
+          <h3 class="text-sm font-bold text-slate-900 dark:text-white" data-i18n="s4.l3.title">D2C Agent Networks, GT Coin-Packs &amp; Frontier M&amp;A</h3>
+          <p class="text-xs text-slate-700 dark:text-slate-300 leading-relaxed" data-i18n-html="s4.l3.body">
             As Indonesian household shopping frequency consolidates (-2% trips), growth bifurcates into two winning models: (1) Cimory's 9,500+ <em>Miss Cimory</em> D2C agents and <em>Kanzler</em> single-serve minimarket proteins (+45.4% CAGR), and (2) ICBP's $2.99B Pinehill geographical leap paired with Siantar Top's high-margin Rp 500–2,000 General Trade warung dominance (27.6% EBIT margin).
           </p>
         </div>
 
         <div class="glass-card rounded-xl p-5 border-t-2 border-t-amber-500 space-y-2.5">
-          <span class="text-[11px] font-mono uppercase text-amber-400 font-semibold">Layer 4 • Greater China Focus</span>
-          <h3 class="text-sm font-bold text-white">Deflationary ASP Agility &amp; Bulk Discount RTM</h3>
-          <p class="text-xs text-slate-300 leading-relaxed">
+          <span class="text-[11px] font-mono uppercase text-amber-600 dark:text-amber-400 font-semibold" data-i18n="s4.l4.tag">Layer 4 • Greater China Focus</span>
+          <h3 class="text-sm font-bold text-slate-900 dark:text-white" data-i18n="s4.l4.title">Deflationary ASP Agility &amp; Bulk Discount RTM</h3>
+          <p class="text-xs text-slate-700 dark:text-slate-300 leading-relaxed" data-i18n-html="s4.l4.body">
             China's -3.6% ASP deflation punished high-markup offline franchises (Bestore's -22% price cut compressed EBIT to 0.9%). Outperformers re-engineered unit economics via self-owned automated plants and pivoted to Douyin + bulk snack discount chains: Weilong scaled Konjac snacks (+59% YoY, 25.4% EBITDA) and Three Squirrels rebounded +49.3% YoY back above RMB 10.6B.
           </p>
         </div>
@@ -514,6 +608,672 @@
       "Transformation Seeker": { bg: "rgba(148, 163, 184, 0.75)", border: "#cbd5e1" }
     };
 
+    // ============================================================================
+    // INTERNATIONALISATION (EN / ID) + APPEARANCE (DARK / LIGHT / SYSTEM)
+    // ============================================================================
+    const I18N = {
+            "doc.title": {
+                  "en": "Global & APAC FMCG F&B Empirical Command Center (FY2019–FY2026)",
+                  "id": "Pusat Kendali Empiris FMCG F&B Global & APAC (TA2019–TA2026)"
+            },
+            "theme.light": {
+                  "en": "Light",
+                  "id": "Terang"
+            },
+            "theme.dark": {
+                  "en": "Dark",
+                  "id": "Gelap"
+            },
+            "theme.system": {
+                  "en": "System",
+                  "id": "Sistem"
+            },
+            "hdr.badge": {
+                  "en": "100% Audited Filings + Kantar CRP Telemetry",
+                  "id": "100% Laporan Teraudit + Telemetri Kantar CRP"
+            },
+            "hdr.scope": {
+                  "en": "40 Mixed F&B Issuers • FY2019–FY2024 Empirical Dataset",
+                  "id": "40 Emiten F&B Campuran • Dataset Empiris TA2019–TA2024"
+            },
+            "hdr.title": {
+                  "en": "FMCG F&B Financial Performance, Consumer Reach & Rolling Milestone Command Center",
+                  "id": "Pusat Kendali Kinerja Keuangan, Jangkauan Konsumen & Milestone Bergulir FMCG F&B"
+            },
+            "cohort.all": {
+                  "en": "All Cohorts (40)",
+                  "id": "Semua Kohort (40)"
+            },
+            "cohort.global": {
+                  "en": "Global Top 10",
+                  "id": "Global 10 Teratas"
+            },
+            "cohort.apac": {
+                  "en": "Regional APAC (10)",
+                  "id": "APAC Regional (10)"
+            },
+            "cohort.idn": {
+                  "en": "Indonesia Local (10)",
+                  "id": "Indonesia Lokal (10)"
+            },
+            "cohort.cn": {
+                  "en": "Greater China (10)",
+                  "id": "Tiongkok Raya (10)"
+            },
+            "cohort.name.Global": {
+                  "en": "Global",
+                  "id": "Global"
+            },
+            "cohort.name.RegionalAPAC": {
+                  "en": "Regional APAC",
+                  "id": "APAC Regional"
+            },
+            "cohort.name.Indonesia": {
+                  "en": "Indonesia",
+                  "id": "Indonesia"
+            },
+            "cohort.name.GreaterChina": {
+                  "en": "Greater China",
+                  "id": "Tiongkok Raya"
+            },
+            "kpi.scope.label": {
+                  "en": "Active Cohort Scope",
+                  "id": "Cakupan Kohort Aktif"
+            },
+            "kpi.scope.foot": {
+                  "en": "Listed Food & Beverage Peers",
+                  "id": "Emiten Makanan & Minuman Tercatat"
+            },
+            "kpi.allLayers": {
+                  "en": "All 4 Layers",
+                  "id": "Semua 4 Lapisan"
+            },
+            "kpi.cagr.label": {
+                  "en": "Avg 5Y Revenue CAGR",
+                  "id": "Rata-rata CAGR Pendapatan 5T"
+            },
+            "kpi.cagr.foot": {
+                  "en": "FY19–FY24 Statutory Native",
+                  "id": "TA19–TA24 Statutori Mata Uang Asal"
+            },
+            "kpi.org": {
+                  "en": "Org:",
+                  "id": "Organik:"
+            },
+            "kpi.ebitda.label": {
+                  "en": "Avg FY24 EBITDA Margin",
+                  "id": "Rata-rata Margin EBITDA TA24"
+            },
+            "kpi.ebitda.foot": {
+                  "en": "Audited Consolidated P&L",
+                  "id": "Laba Rugi Konsolidasi Teraudit"
+            },
+            "kpi.bpsVsFy19": {
+                  "en": "bps vs FY19",
+                  "id": "bps vs TA19"
+            },
+            "kpi.apex.label": {
+                  "en": "Apex Performers",
+                  "id": "Performa Puncak"
+            },
+            "kpi.apex.rule": {
+                  "en": "≥10% CAGR & ≥20% EBITDA",
+                  "id": "CAGR ≥10% & EBITDA ≥20%"
+            },
+            "kpi.pen.label": {
+                  "en": "Penetration & Basket Leaders",
+                  "id": "Pemimpin Penetrasi & Keranjang"
+            },
+            "kpi.pen.foot": {
+                  "en": "Kantar CRP / RTM Outperformers",
+                  "id": "Unggulan Kantar CRP / RTM"
+            },
+            "kpi.penShare": {
+                  "en": "% of Cohort",
+                  "id": "% dari Kohort"
+            },
+            "kpi.audit.label": {
+                  "en": "6Y Milestone Fulfillment",
+                  "id": "Pemenuhan Milestone 6 Tahun"
+            },
+            "kpi.audit.foot": {
+                  "en": "2019–2024 Annual Commitments",
+                  "id": "Komitmen Tahunan 2019–2024"
+            },
+            "kpi.cycles": {
+                  "en": "Cycles",
+                  "id": "Siklus"
+            },
+            "kpi.none": {
+                  "en": "None in filter",
+                  "id": "Tidak ada dalam filter"
+            },
+            "s1.scatter.title": {
+                  "en": "Strategic Brackets: 5-Year CAGR vs. FY2024 Profitability Matrix",
+                  "id": "Kelompok Strategis: Matriks CAGR 5 Tahun vs. Profitabilitas TA2024"
+            },
+            "s1.scatter.sub": {
+                  "en": "Click any company bubble to load its P&L Bridge, Kantar CRP telemetry, and 6-Year Rolling Audit below.",
+                  "id": "Klik gelembung perusahaan untuk memuat Jembatan Laba Rugi, telemetri Kantar CRP, dan Audit Bergulir 6 Tahun di bawah."
+            },
+            "s1.x.statutory": {
+                  "en": "X: Statutory 5Y CAGR (%)",
+                  "id": "X: CAGR Statutori 5T (%)"
+            },
+            "s1.x.organic": {
+                  "en": "X: Organic / LFL 5Y CAGR (%)",
+                  "id": "X: CAGR Organik / LFL 5T (%)"
+            },
+            "s1.color.cohort": {
+                  "en": "Color: Geographical Cohort",
+                  "id": "Warna: Kohort Geografis"
+            },
+            "s1.color.archetype": {
+                  "en": "Color: Consumer Archetype",
+                  "id": "Warna: Arketipe Konsumen"
+            },
+            "s1.axis.x.statutory": {
+                  "en": "5Y Statutory Revenue CAGR (%)",
+                  "id": "CAGR Pendapatan Statutori 5T (%)"
+            },
+            "s1.axis.x.organic": {
+                  "en": "5Y Organic / LFL Revenue CAGR (%)",
+                  "id": "CAGR Pendapatan Organik / LFL 5T (%)"
+            },
+            "s1.axis.y": {
+                  "en": "FY2024 Audited EBITDA Margin (%)",
+                  "id": "Margin EBITDA Teraudit TA2024 (%)"
+            },
+            "s1.b1": {
+                  "en": "Bracket 1: Apex Performer",
+                  "id": "Kelompok 1: Performa Puncak"
+            },
+            "s1.b1.rule": {
+                  "en": "≥10% CAGR & ≥20% EBITDA",
+                  "id": "CAGR ≥10% & EBITDA ≥20%"
+            },
+            "s1.b2": {
+                  "en": "Bracket 2: Margin Defender",
+                  "id": "Kelompok 2: Penjaga Margin"
+            },
+            "s1.b2.rule": {
+                  "en": "<10% CAGR & ≥20% EBITDA",
+                  "id": "CAGR <10% & EBITDA ≥20%"
+            },
+            "s1.b3": {
+                  "en": "Bracket 3: Volume Driver",
+                  "id": "Kelompok 3: Pendorong Volume"
+            },
+            "s1.b3.rule": {
+                  "en": "≥10% CAGR & <20% EBITDA",
+                  "id": "CAGR ≥10% & EBITDA <20%"
+            },
+            "s1.b4": {
+                  "en": "Bracket 4: Transformation",
+                  "id": "Kelompok 4: Transformasi"
+            },
+            "s1.b4.rule": {
+                  "en": "<10% CAGR & <20% EBITDA",
+                  "id": "CAGR <10% & EBITDA <20%"
+            },
+            "s1.bar.title": {
+                  "en": "Empirical Cohort Leaderboard (Top 15 in View)",
+                  "id": "Papan Peringkat Empiris Kohort (15 Teratas dalam Tampilan)"
+            },
+            "s1.bar.sub": {
+                  "en": "Click any bar to inspect the company's full financial and consumer dossier.",
+                  "id": "Klik batang mana pun untuk menelaah dosir keuangan dan konsumen lengkap perusahaan."
+            },
+            "s1.m.cagr": {
+                  "en": "5Y Statutory Revenue CAGR (%)",
+                  "id": "CAGR Pendapatan Statutori 5T (%)"
+            },
+            "s1.m.ebitda": {
+                  "en": "FY24 Audited EBITDA Margin (%)",
+                  "id": "Margin EBITDA Teraudit TA24 (%)"
+            },
+            "s1.m.shift": {
+                  "en": "5Y EBITDA Margin Shift (bps)",
+                  "id": "Pergeseran Margin EBITDA 5T (bps)"
+            },
+            "s1.m.ebit": {
+                  "en": "FY24 Audited EBIT Margin (%)",
+                  "id": "Margin EBIT Teraudit TA24 (%)"
+            },
+            "tip.cagr": {
+                  "en": "5Y Statutory CAGR",
+                  "id": "CAGR Statutori 5T"
+            },
+            "tip.org": {
+                  "en": "Org",
+                  "id": "Organik"
+            },
+            "tip.ebitdaMargin": {
+                  "en": "FY24 EBITDA Margin",
+                  "id": "Margin EBITDA TA24"
+            },
+            "tip.fy19": {
+                  "en": "FY19",
+                  "id": "TA19"
+            },
+            "tip.finBracket": {
+                  "en": "Fin Bracket",
+                  "id": "Kelompok Keuangan"
+            },
+            "tip.crpArch": {
+                  "en": "CRP Archetype",
+                  "id": "Arketipe CRP"
+            },
+            "s2.badge": {
+                  "en": "Single-Entity Deep-Dive Dossier",
+                  "id": "Dosir Telaah Mendalam Entitas Tunggal"
+            },
+            "s2.prev": {
+                  "en": "← Prev",
+                  "id": "← Sebelumnya"
+            },
+            "s2.next": {
+                  "en": "Next →",
+                  "id": "Berikutnya →"
+            },
+            "s2.stat.rev": {
+                  "en": "FY19 → FY24 Rev",
+                  "id": "Pendapatan TA19 → TA24"
+            },
+            "s2.stat.cagr": {
+                  "en": "5Y Rev CAGR",
+                  "id": "CAGR Pendapatan 5T"
+            },
+            "s2.stat.ebitda": {
+                  "en": "FY24 EBITDA %",
+                  "id": "EBITDA TA24 %"
+            },
+            "s2.stat.ebit": {
+                  "en": "FY24 EBIT %",
+                  "id": "EBIT TA24 %"
+            },
+            "s2.delta": {
+                  "en": "5Y Delta:",
+                  "id": "Delta 5T:"
+            },
+            "s2.orgLfl": {
+                  "en": "Org/LFL:",
+                  "id": "Organik/LFL:"
+            },
+            "s2.chart.title": {
+                  "en": "Statutory Scale & Margin Comparison (FY19 vs. FY24)",
+                  "id": "Perbandingan Skala & Margin Statutori (TA19 vs. TA24)"
+            },
+            "s2.unit": {
+                  "en": "Audited Unit:",
+                  "id": "Satuan Teraudit:"
+            },
+            "s2.bridge.title": {
+                  "en": "Audited 2019–2024 Financial Bridge Drivers (Statutory Filings)",
+                  "id": "Pendorong Jembatan Keuangan Teraudit 2019–2024 (Laporan Statutori)"
+            },
+            "s2.kantar.title": {
+                  "en": "Verified Kantar Brand Footprint (CRP, Penetration, Frequency & Basket)",
+                  "id": "Jejak Merek Kantar Terverifikasi (CRP, Penetrasi, Frekuensi & Keranjang)"
+            },
+            "s2.audit.title": {
+                  "en": "Rolling Multi-Year Vision, Mission & Key Milestones Audit (2019–2024)",
+                  "id": "Audit Visi, Misi & Milestone Utama Multi-Tahun Bergulir (2019–2024)"
+            },
+            "s2.audit.sub": {
+                  "en": "Empirical cross-reference of each year's stated annual report commitments against subsequent multi-year realizations.",
+                  "id": "Pembandingan empiris komitmen yang dinyatakan dalam laporan tahunan setiap tahun terhadap realisasi multi-tahun berikutnya."
+            },
+            "s2.audit.all": {
+                  "en": "All 6Y",
+                  "id": "Semua 6T"
+            },
+            "s2.audit.foot": {
+                  "en": "Verified against FY2019–FY2024 Annual Reports & Exchange Filings",
+                  "id": "Diverifikasi terhadap Laporan Tahunan & Laporan Bursa TA2019–TA2024"
+            },
+            "s2.fin": {
+                  "en": "Fin:",
+                  "id": "Keu:"
+            },
+            "s2.crp": {
+                  "en": "CRP:",
+                  "id": "CRP:"
+            },
+            "s2.card.commitment": {
+                  "en": "FY{y} Annual Report Strategic Commitment",
+                  "id": "Komitmen Strategis Laporan Tahunan TA{y}"
+            },
+            "s2.card.milestone": {
+                  "en": "Stated Milestone:",
+                  "id": "Milestone Tercantum:"
+            },
+            "s2.card.realization": {
+                  "en": "Audited Realization:",
+                  "id": "Realisasi Teraudit:"
+            },
+            "s2.score": {
+                  "en": "Entity 6-Year Rolling Fulfillment Score: {n} / 6 Anchor Report Cycles Accomplished or On Track ({p}%)",
+                  "id": "Skor Pemenuhan Bergulir 6 Tahun Entitas: {n} / 6 Siklus Laporan Jangkar Tercapai atau Sesuai Jalur ({p}%)"
+            },
+            "s2.bridge.rev19": {
+                  "en": "FY19 Rev ({u})",
+                  "id": "Pend. TA19 ({u})"
+            },
+            "s2.bridge.rev24": {
+                  "en": "FY24 Rev ({u})",
+                  "id": "Pend. TA24 ({u})"
+            },
+            "s2.bridge.ebit19": {
+                  "en": "FY19 EBIT %",
+                  "id": "EBIT TA19 %"
+            },
+            "s2.bridge.ebit24": {
+                  "en": "FY24 EBIT %",
+                  "id": "EBIT TA24 %"
+            },
+            "s2.bridge.ebitda19": {
+                  "en": "FY19 EBITDA %",
+                  "id": "EBITDA TA19 %"
+            },
+            "s2.bridge.ebitda24": {
+                  "en": "FY24 EBITDA %",
+                  "id": "EBITDA TA24 %"
+            },
+            "s3.title": {
+                  "en": "Master Empirical Financial & Consumer Telemetry Table (All 40 Listed Companies)",
+                  "id": "Tabel Induk Empiris Keuangan & Telemetri Konsumen (Seluruh 40 Perusahaan Tercatat)"
+            },
+            "s3.sub": {
+                  "en": "Click any column header to sort, filter by bracket or keyword, or click <span class=\"text-indigo-600 dark:text-indigo-400 font-semibold\">\"Inspect\"</span> to load the full company dossier.",
+                  "id": "Klik judul kolom untuk mengurutkan, filter berdasarkan kelompok atau kata kunci, atau klik <span class=\"text-indigo-600 dark:text-indigo-400 font-semibold\">\"Telaah\"</span> untuk memuat dosir lengkap perusahaan."
+            },
+            "s3.search": {
+                  "en": "Search company, ticker, brand (e.g. Indomie, Oreo, Konjac)...",
+                  "id": "Cari perusahaan, ticker, merek (mis. Indomie, Oreo, Konjac)..."
+            },
+            "s3.fin.all": {
+                  "en": "All Financial Brackets",
+                  "id": "Semua Kelompok Keuangan"
+            },
+            "s3.fin.apex": {
+                  "en": "Apex Performer (≥10% CAGR, ≥20% EBITDA)",
+                  "id": "Performa Puncak (CAGR ≥10%, EBITDA ≥20%)"
+            },
+            "s3.fin.margin": {
+                  "en": "Margin Defender (<10% CAGR, ≥20% EBITDA)",
+                  "id": "Penjaga Margin (CAGR <10%, EBITDA ≥20%)"
+            },
+            "s3.fin.volume": {
+                  "en": "Volume Driver (≥10% CAGR, <20% EBITDA)",
+                  "id": "Pendorong Volume (CAGR ≥10%, EBITDA <20%)"
+            },
+            "s3.fin.transform": {
+                  "en": "Transformation Seeker (<10% CAGR, <20% EBITDA)",
+                  "id": "Pencari Transformasi (CAGR <10%, EBITDA <20%)"
+            },
+            "s3.cons.all": {
+                  "en": "All Consumer Archetypes",
+                  "id": "Semua Arketipe Konsumen"
+            },
+            "s3.action": {
+                  "en": "Inspect",
+                  "id": "Telaah"
+            },
+            "th.id": {
+                  "en": "#",
+                  "id": "#"
+            },
+            "th.name": {
+                  "en": "Company & Ticker",
+                  "id": "Perusahaan & Ticker"
+            },
+            "th.cohort": {
+                  "en": "Cohort",
+                  "id": "Kohort"
+            },
+            "th.rev19": {
+                  "en": "FY19 Rev",
+                  "id": "Pend. TA19"
+            },
+            "th.rev24": {
+                  "en": "FY24 Rev",
+                  "id": "Pend. TA24"
+            },
+            "th.cagr": {
+                  "en": "5Y CAGR",
+                  "id": "CAGR 5T"
+            },
+            "th.orgcagr": {
+                  "en": "Org CAGR",
+                  "id": "CAGR Organik"
+            },
+            "th.ebitda19": {
+                  "en": "FY19 EBITDA",
+                  "id": "EBITDA TA19"
+            },
+            "th.ebitda24": {
+                  "en": "FY24 EBITDA",
+                  "id": "EBITDA TA24"
+            },
+            "th.finbracket": {
+                  "en": "Financial Bracket",
+                  "id": "Kelompok Keuangan"
+            },
+            "th.consarch": {
+                  "en": "Consumer Archetype",
+                  "id": "Arketipe Konsumen"
+            },
+            "th.action": {
+                  "en": "Action",
+                  "id": "Aksi"
+            },
+            "bracket.ApexPerformer": {
+                  "en": "Apex Performer",
+                  "id": "Performa Puncak"
+            },
+            "bracket.MarginDefender": {
+                  "en": "Margin Defender",
+                  "id": "Penjaga Margin"
+            },
+            "bracket.VolumeDriver": {
+                  "en": "Volume Driver",
+                  "id": "Pendorong Volume"
+            },
+            "bracket.TransformationSeeker": {
+                  "en": "Transformation Seeker",
+                  "id": "Pencari Transformasi"
+            },
+            "arch.PenetrationApex": {
+                  "en": "Penetration Apex",
+                  "id": "Puncak Penetrasi"
+            },
+            "arch.BasketExpander": {
+                  "en": "Basket Expander",
+                  "id": "Pelebar Keranjang"
+            },
+            "arch.FrequencyDefender": {
+                  "en": "Frequency Defender",
+                  "id": "Penjaga Frekuensi"
+            },
+            "arch.MarginDefender": {
+                  "en": "Margin Defender",
+                  "id": "Penjaga Margin"
+            },
+            "arch.VolumeDriver": {
+                  "en": "Volume Driver",
+                  "id": "Pendorong Volume"
+            },
+            "arch.StagnatingStaple": {
+                  "en": "Stagnating Staple",
+                  "id": "Staple Stagnan"
+            },
+            "arch.TransformationSeeker": {
+                  "en": "Transformation Seeker",
+                  "id": "Pencari Transformasi"
+            },
+            "status.Accomplished": {
+                  "en": "Accomplished",
+                  "id": "Tercapai"
+            },
+            "status.Outperformed": {
+                  "en": "Outperformed",
+                  "id": "Melampaui Target"
+            },
+            "status.OnTrack": {
+                  "en": "On Track",
+                  "id": "Sesuai Jalur"
+            },
+            "status.PartiallyAccomplished": {
+                  "en": "Partially Accomplished",
+                  "id": "Tercapai Sebagian"
+            },
+            "status.Delayed": {
+                  "en": "Delayed",
+                  "id": "Tertunda"
+            },
+            "status.Missed": {
+                  "en": "Missed",
+                  "id": "Tidak Tercapai"
+            },
+            "status.NA": {
+                  "en": "N/A",
+                  "id": "T/A"
+            },
+            "audit.notDisclosed": {
+                  "en": "Not disclosed",
+                  "id": "Tidak diungkapkan"
+            },
+            "s4.title": {
+                  "en": "The 2027–2030 Ultimate Recipe for Success: Stratified by Geographical Scope",
+                  "id": "Resep Sukses Pamungkas 2027–2030: Distratifikasi menurut Cakupan Geografis"
+            },
+            "s4.sub": {
+                  "en": "Synthesizing 6 years of audited financial bridges and Kantar Worldpanel Consumer Reach Points (CRP) movements.",
+                  "id": "Menyintesis 6 tahun jembatan keuangan teraudit dan pergerakan Consumer Reach Points (CRP) Kantar Worldpanel."
+            },
+            "s4.l1.tag": {
+                  "en": "Layer 1 • Global Leaders",
+                  "id": "Lapisan 1 • Pemimpin Global"
+            },
+            "s4.l1.title": {
+                  "en": "RIG Volume Restoration & Functional Rotation",
+                  "id": "Pemulihan Volume RIG & Rotasi Fungsional"
+            },
+            "s4.l1.body": {
+                  "en": "List-price elasticity peaked in FY2024 (Kraft Heinz Vol/Mix -3.5%, Conagra -1.9%). Winning through 2030 requires rotating out of price-elastic commodities into high-retention functional nutrition (Danone Medical Nutrition, Nestlé Health Science, Campbell's Sovos/Rao's) while funding promotional price-pack resets via structural COGS productivity (General Mills HMM, Nestlé CHF 2.5B Fuel for Growth).",
+                  "id": "Elastisitas harga daftar memuncak pada TA2024 (Kraft Heinz Vol/Mix -3,5%, Conagra -1,9%). Menang hingga 2030 menuntut rotasi keluar dari komoditas elastis harga menuju nutrisi fungsional beretensi tinggi (Danone Medical Nutrition, Nestlé Health Science, Sovos/Rao's milik Campbell's) sambil membiayai penyetelan ulang harga-kemasan promosi melalui produktivitas HPP struktural (HMM General Mills, Fuel for Growth CHF 2,5 M Nestlé)."
+            },
+            "s4.l2.tag": {
+                  "en": "Layer 2 • Regional APAC",
+                  "id": "Lapisan 2 • APAC Regional"
+            },
+            "s4.l2.title": {
+                  "en": "Cross-Border Scale & Value-Added Export Hubs",
+                  "id": "Skala Lintas Negara & Hub Ekspor Bernilai Tambah"
+            },
+            "s4.l2.body": {
+                  "en": "Facing aging domestic demographics in Japan/Korea and FX/commodity volatility in ASEAN, APAC leaders win via overseas manufacturing localization: CJ CheilJedang's US Schwan's/Bibigo network (KRW 4.7T+), Morinaga's US Hi-Chew expansion (&gt;3x growth), Lotte Wellfood's India ice cream merger, and URC's Munchy's ASEAN integration.",
+                  "id": "Menghadapi demografi domestik yang menua di Jepang/Korea serta volatilitas kurs/komoditas di ASEAN, pemimpin APAC menang melalui lokalisasi manufaktur di luar negeri: jaringan Schwan's/Bibigo AS milik CJ CheilJedang (KRW 4,7 T+), ekspansi Hi-Chew AS milik Morinaga (pertumbuhan &gt;3x), merger es krim India milik Lotte Wellfood, dan integrasi Munchy's ASEAN milik URC."
+            },
+            "s4.l3.tag": {
+                  "en": "Layer 3 • Indonesia Focus",
+                  "id": "Lapisan 3 • Fokus Indonesia"
+            },
+            "s4.l3.title": {
+                  "en": "D2C Agent Networks, GT Coin-Packs & Frontier M&A",
+                  "id": "Jaringan Agen D2C, Kemasan Receh GT & M&A Perintis"
+            },
+            "s4.l3.body": {
+                  "en": "As Indonesian household shopping frequency consolidates (-2% trips), growth bifurcates into two winning models: (1) Cimory's 9,500+ <em>Miss Cimory</em> D2C agents and <em>Kanzler</em> single-serve minimarket proteins (+45.4% CAGR), and (2) ICBP's $2.99B Pinehill geographical leap paired with Siantar Top's high-margin Rp 500–2,000 General Trade warung dominance (27.6% EBIT margin).",
+                  "id": "Saat frekuensi belanja rumah tangga Indonesia terkonsolidasi (-2% kunjungan), pertumbuhan terbelah menjadi dua model pemenang: (1) 9.500+ agen D2C <em>Miss Cimory</em> dan protein sekali saji minimarket <em>Kanzler</em> milik Cimory (CAGR +45,4%), dan (2) lompatan geografis Pinehill senilai $2,99 M milik ICBP yang dipadukan dengan dominasi warung General Trade bermargin tinggi Rp 500–2.000 milik Siantar Top (margin EBIT 27,6%)."
+            },
+            "s4.l4.tag": {
+                  "en": "Layer 4 • Greater China Focus",
+                  "id": "Lapisan 4 • Fokus Tiongkok Raya"
+            },
+            "s4.l4.title": {
+                  "en": "Deflationary ASP Agility & Bulk Discount RTM",
+                  "id": "Kelincahan ASP Deflasi & RTM Diskon Borongan"
+            },
+            "s4.l4.body": {
+                  "en": "China's -3.6% ASP deflation punished high-markup offline franchises (Bestore's -22% price cut compressed EBIT to 0.9%). Outperformers re-engineered unit economics via self-owned automated plants and pivoted to Douyin + bulk snack discount chains: Weilong scaled Konjac snacks (+59% YoY, 25.4% EBITDA) and Three Squirrels rebounded +49.3% YoY back above RMB 10.6B.",
+                  "id": "Deflasi ASP -3,6% di Tiongkok menghukum franchise offline bermarkup tinggi (potongan harga -22% Bestore menekan EBIT ke 0,9%). Para unggulan merekayasa ulang ekonomi unit melalui pabrik otomatis milik sendiri dan beralih ke Douyin + rantai diskon camilan borongan: Weilong menskalakan camilan Konjac (+59% YoY, EBITDA 25,4%) dan Three Squirrels rebound +49,3% YoY kembali di atas RMB 10,6 M."
+            }
+      };
+
+    let lang = document.documentElement.dataset.langPref === "id" ? "id" : "en";
+
+    function t(key, vars) {
+      const entry = I18N[key];
+      let out = entry ? (entry[lang] ?? entry.en) : key;
+      if (vars) Object.keys(vars).forEach(k => { out = out.split("{" + k + "}").join(vars[k]); });
+      return out;
+    }
+
+    // Data values stay English (they drive filtering & sorting); only their labels are localised.
+    const slug = v => String(v).replace(/[^A-Za-z0-9]/g, "");
+    const tCohort = v => t("cohort.name." + slug(v));
+    const tBracket = v => t("bracket." + slug(v));
+    const tArch = v => t("arch." + slug(v));
+    const tStatus = v => t("status." + slug(v));
+
+    function applyI18n() {
+      document.documentElement.lang = lang;
+      document.title = t("doc.title");
+      document.querySelectorAll("[data-i18n]").forEach(el => { el.textContent = t(el.dataset.i18n); });
+      document.querySelectorAll("[data-i18n-html]").forEach(el => { el.innerHTML = t(el.dataset.i18nHtml); });
+      document.querySelectorAll("[data-i18n-ph]").forEach(el => { el.placeholder = t(el.dataset.i18nPh); });
+      document.querySelectorAll("#langSwitcher [data-lang-choice]").forEach(b => {
+        b.setAttribute("aria-pressed", String(b.dataset.langChoice === lang));
+      });
+    }
+
+    function setLang(next) {
+      lang = next === "id" ? "id" : "en";
+      try { localStorage.setItem("fmcgLangPref", lang); } catch (e) {}
+      document.documentElement.dataset.langPref = lang;
+      applyI18n();
+      populateCompanyDropdown();
+      renderKPIs();
+      renderCharts();
+      renderInspector();
+      renderTable();
+    }
+
+    const systemDark = window.matchMedia("(prefers-color-scheme: dark)");
+    const isDark = () => document.documentElement.classList.contains("dark");
+
+    function applyThemeClasses(pref) {
+      const p = ["light", "dark", "system"].includes(pref) ? pref : "system";
+      document.documentElement.dataset.themePref = p;
+      document.documentElement.classList.toggle("dark", p === "dark" || (p === "system" && systemDark.matches));
+      document.querySelectorAll("#themeSwitcher [data-theme-choice]").forEach(b => {
+        b.setAttribute("aria-pressed", String(b.dataset.themeChoice === p));
+      });
+      return p;
+    }
+
+    function setTheme(pref) {
+      const p = applyThemeClasses(pref);
+      try { localStorage.setItem("fmcgThemePref", p); } catch (e) {}
+      // Canvas pixels carry no CSS: the charts must be repainted with the new palette.
+      renderCharts();
+      renderInspector();
+    }
+
+    function chartColors() {
+      return isDark()
+        ? { grid: "rgba(51, 65, 85, 0.35)", tick: "#94a3b8", tickStrong: "#e2e8f0",
+            title: "#94a3b8", legend: "#cbd5e1", bracket: "rgba(148, 163, 184, 0.35)",
+            tipBg: "rgba(15, 23, 42, 0.96)", tipBorder: "#475569",
+            tipTitle: "#f1f5f9", tipBody: "#e2e8f0" }
+        : { grid: "rgba(148, 163, 184, 0.28)", tick: "#64748b", tickStrong: "#334155",
+            title: "#475569", legend: "#334155", bracket: "rgba(100, 116, 139, 0.45)",
+            tipBg: "rgba(255, 255, 255, 0.98)", tipBorder: "#cbd5e1",
+            tipTitle: "#0f172a", tipBody: "#334155" };
+    }
+
     let state = {
       cohort: "ALL",
       selectedCompanyId: 21, // Default to Indofood CBP (ICBP)
@@ -568,7 +1328,7 @@
     }
 
     function parseAuditEntry(rawString) {
-      if (!rawString) return { target: "Not disclosed", status: "N/A", outcome: "" };
+      if (!rawString) return { target: t("audit.notDisclosed"), status: "N/A", outcome: "" };
       const parts = rawString.split("Outcome:");
       const targetPart = parts[0].replace(/^Target:\s*/i, "").trim();
       const outcomePart = (parts[1] || "").trim();
@@ -587,16 +1347,16 @@
       switch (status) {
         case "Accomplished":
         case "Outperformed":
-          return "bg-emerald-500/20 text-emerald-300 border-emerald-500/40";
+          return "bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border-emerald-300 dark:border-emerald-500/40";
         case "On Track":
-          return "bg-sky-500/20 text-sky-300 border-sky-500/40";
+          return "bg-sky-100 dark:bg-sky-500/20 text-sky-700 dark:text-sky-300 border-sky-300 dark:border-sky-500/40";
         case "Partially Accomplished":
         case "Delayed":
-          return "bg-amber-500/20 text-amber-300 border-amber-500/40";
+          return "bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300 border-amber-300 dark:border-amber-500/40";
         case "Missed":
-          return "bg-rose-500/20 text-rose-300 border-rose-500/40";
+          return "bg-rose-100 dark:bg-rose-500/20 text-rose-700 dark:text-rose-300 border-rose-300 dark:border-rose-500/40";
         default:
-          return "bg-slate-700 text-slate-300 border-slate-600";
+          return "bg-slate-300 dark:bg-slate-700 text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-600";
       }
     }
 
@@ -631,27 +1391,27 @@
 
       document.getElementById("kpiCount").textContent = cohortList.length;
       document.getElementById("kpiCohortLabel").textContent =
-        state.cohort === "ALL" ? "All 4 Layers" : state.cohort;
+        state.cohort === "ALL" ? t("kpi.allLayers") : tCohort(state.cohort);
 
       document.getElementById("kpiAvgCagr").textContent = formatSignedPct(avgCagr);
-      document.getElementById("kpiAvgOrgCagr").textContent = `Org: ${formatSignedPct(avgOrgCagr)}`;
+      document.getElementById("kpiAvgOrgCagr").textContent = `${t("kpi.org")} ${formatSignedPct(avgOrgCagr)}`;
       document.getElementById("kpiAvgEbitda").textContent = `${avgEbitda24.toFixed(1)}%`;
 
       const deltaEl = document.getElementById("kpiEbitdaDelta");
-      deltaEl.textContent = `${ebitdaDeltaBps >= 0 ? "+" : ""}${ebitdaDeltaBps} bps vs FY19`;
-      deltaEl.className = `text-xs font-mono ${ebitdaDeltaBps >= 0 ? "text-emerald-400" : "text-rose-400"}`;
+      deltaEl.textContent = `${ebitdaDeltaBps >= 0 ? "+" : ""}${ebitdaDeltaBps} ${t("kpi.bpsVsFy19")}`;
+      deltaEl.className = `text-xs font-mono ${ebitdaDeltaBps >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"}`;
 
       document.getElementById("kpiApexCount").textContent = apexList.length;
       document.getElementById("kpiApexNames").textContent =
-        apexList.length > 0 ? apexList.map(a => a.name.replace(/^PT\s+/i, "").split(" ")[0]).join(", ") : "None in filter";
+        apexList.length > 0 ? apexList.map(a => a.name.replace(/^PT\s+/i, "").split(" ")[0]).join(", ") : t("kpi.none");
 
       document.getElementById("kpiPenCount").textContent = penList.length;
       document.getElementById("kpiPenShare").textContent =
-        `${Math.round((penList.length / count) * 100)}% of Cohort`;
+        `${Math.round((penList.length / count) * 100)}${t("kpi.penShare")}`;
 
       document.getElementById("kpiAuditRate").textContent =
         `${Math.round((hitCycles / (totalCycles || 1)) * 100)}%`;
-      document.getElementById("kpiAuditCount").textContent = `${hitCycles}/${totalCycles} Cycles`;
+      document.getElementById("kpiAuditCount").textContent = `${hitCycles}/${totalCycles} ${t("kpi.cycles")}`;
     }
 
     // ============================================================================
@@ -659,6 +1419,7 @@
     // ============================================================================
     function renderCharts() {
       const cohortList = getCohortData();
+      const ct = chartColors();
 
       // --- SCATTER MATRIX CHART ---
       const scatterCtx = document.getElementById("scatterMatrixChart").getContext("2d");
@@ -674,7 +1435,7 @@
         .map(key => {
           const items = cohortList.filter(c => c[state.scatterColorBy] === key);
           return {
-            label: key,
+            label: state.scatterColorBy === "cohort" ? tCohort(key) : tArch(key),
             data: items.map(c => ({
               x: c[state.scatterXField],
               y: c.ebitdaMargin2024,
@@ -694,7 +1455,7 @@
         beforeDraw(chart) {
           const { ctx, chartArea: { left, right, top, bottom }, scales: { x, y } } = chart;
           ctx.save();
-          ctx.strokeStyle = "rgba(148, 163, 184, 0.35)";
+          ctx.strokeStyle = ct.bracket;
           ctx.lineWidth = 1;
           ctx.setLineDash([5, 5]);
 
@@ -732,20 +1493,22 @@
             }
           },
           plugins: {
-            legend: { labels: { color: "#cbd5e1", font: { size: 11 }, boxWidth: 10 } },
+            legend: { labels: { color: ct.legend, font: { size: 11 }, boxWidth: 10 } },
             tooltip: {
-              backgroundColor: "rgba(15, 23, 42, 0.96)",
-              borderColor: "#475569",
+              backgroundColor: ct.tipBg,
+              borderColor: ct.tipBorder,
               borderWidth: 1,
+              titleColor: ct.tipTitle,
+              bodyColor: ct.tipBody,
               padding: 10,
               callbacks: {
                 label: ctx => {
                   const c = ctx.raw.company;
                   return [
                     `${c.name} (${c.ticker})`,
-                    `5Y Statutory CAGR: ${formatSignedPct(c.cagr5y)} | Org: ${formatSignedPct(c.organicCagr5y)}`,
-                    `FY24 EBITDA Margin: ${c.ebitdaMargin2024}% (FY19: ${c.ebitdaMargin2019}%)`,
-                    `Fin Bracket: ${c.finBracket} | CRP Archetype: ${c.consBracket}`
+                    `${t("tip.cagr")}: ${formatSignedPct(c.cagr5y)} | ${t("tip.org")}: ${formatSignedPct(c.organicCagr5y)}`,
+                    `${t("tip.ebitdaMargin")}: ${c.ebitdaMargin2024}% (${t("tip.fy19")}: ${c.ebitdaMargin2019}%)`,
+                    `${t("tip.finBracket")}: ${tBracket(c.finBracket)} | ${t("tip.crpArch")}: ${tArch(c.consBracket)}`
                   ];
                 }
               }
@@ -755,22 +1518,22 @@
             x: {
               title: {
                 display: true,
-                text: state.scatterXField === "cagr5y" ? "5Y Statutory Revenue CAGR (%)" : "5Y Organic / LFL Revenue CAGR (%)",
-                color: "#94a3b8",
+                text: state.scatterXField === "cagr5y" ? t("s1.axis.x.statutory") : t("s1.axis.x.organic"),
+                color: ct.title,
                 font: { size: 11 }
               },
-              grid: { color: "rgba(51, 65, 85, 0.35)" },
-              ticks: { color: "#94a3b8", callback: v => `${v}%` }
+              grid: { color: ct.grid },
+              ticks: { color: ct.tick, callback: v => `${v}%` }
             },
             y: {
               title: {
                 display: true,
-                text: "FY2024 Audited EBITDA Margin (%)",
-                color: "#94a3b8",
+                text: t("s1.axis.y"),
+                color: ct.title,
                 font: { size: 11 }
               },
-              grid: { color: "rgba(51, 65, 85, 0.35)" },
-              ticks: { color: "#94a3b8", callback: v => `${v}%` }
+              grid: { color: ct.grid },
+              ticks: { color: ct.tick, callback: v => `${v}%` }
             }
           }
         }
@@ -818,9 +1581,11 @@
           plugins: {
             legend: { display: false },
             tooltip: {
-              backgroundColor: "rgba(15, 23, 42, 0.96)",
-              borderColor: "#475569",
+              backgroundColor: ct.tipBg,
+              borderColor: ct.tipBorder,
               borderWidth: 1,
+              titleColor: ct.tipTitle,
+              bodyColor: ct.tipBody,
               callbacks: {
                 label: ctx => {
                   const c = sortedTop[ctx.dataIndex];
@@ -833,12 +1598,12 @@
           },
           scales: {
             x: {
-              grid: { color: "rgba(51, 65, 85, 0.35)" },
-              ticks: { color: "#94a3b8", font: { size: 10 } }
+              grid: { color: ct.grid },
+              ticks: { color: ct.tick, font: { size: 10 } }
             },
             y: {
               grid: { display: false },
-              ticks: { color: "#e2e8f0", font: { size: 11 } }
+              ticks: { color: ct.tickStrong, font: { size: 11 } }
             }
           }
         }
@@ -854,7 +1619,7 @@
       COMPANIES_DATA.forEach(c => {
         const opt = document.createElement("option");
         opt.value = c.id;
-        opt.textContent = `[#${c.id} ${c.cohort}] ${c.name} (${c.ticker})`;
+        opt.textContent = `[#${c.id} ${tCohort(c.cohort)}] ${c.name} (${c.ticker})`;
         if (c.id === state.selectedCompanyId) opt.selected = true;
         select.appendChild(opt);
       });
@@ -865,7 +1630,7 @@
         COMPANIES_DATA.find(c => c.id === Number(state.selectedCompanyId)) || COMPANIES_DATA[0];
       if (!company) return;
 
-      document.getElementById("inspectorCohortBadge").textContent = `${company.cohort} • ${company.ticker}`;
+      document.getElementById("inspectorCohortBadge").textContent = `${tCohort(company.cohort)} • ${company.ticker}`;
       document.getElementById("inspectorCompanyName").textContent = company.name;
       document.getElementById("companySelectDropdown").value = company.id;
 
@@ -876,39 +1641,41 @@
       document.getElementById("inspRevSpan").textContent =
         `${company.currency} ${company.rev2019}${company.unit} → ${company.rev2024}${company.unit}`;
       document.getElementById("inspTotalGrowth").textContent =
-        `5Y Delta: ${formatSignedPct(totalGrowthPct, 1)}`;
+        `${t("s2.delta")} ${formatSignedPct(totalGrowthPct, 1)}`;
 
       document.getElementById("inspCagr").textContent = formatSignedPct(company.cagr5y);
-      document.getElementById("inspOrgCagr").textContent = `Org/LFL: ${formatSignedPct(company.organicCagr5y)}`;
+      document.getElementById("inspOrgCagr").textContent = `${t("s2.orgLfl")} ${formatSignedPct(company.organicCagr5y)}`;
 
       document.getElementById("inspEbitda").textContent = `${company.ebitdaMargin2024.toFixed(1)}%`;
       document.getElementById("inspEbitdaShift").textContent =
-        `${ebitdaBps >= 0 ? "+" : ""}${ebitdaBps} bps vs FY19`;
+        `${ebitdaBps >= 0 ? "+" : ""}${ebitdaBps} ${t("kpi.bpsVsFy19")}`;
 
       document.getElementById("inspEbit").textContent = `${company.ebitMargin2024.toFixed(1)}%`;
       document.getElementById("inspEbitShift").textContent =
-        `${ebitBps >= 0 ? "+" : ""}${ebitBps} bps vs FY19`;
+        `${ebitBps >= 0 ? "+" : ""}${ebitBps} ${t("kpi.bpsVsFy19")}`;
 
       document.getElementById("inspCurrencyUnit").textContent =
-        `Audited Unit: ${company.currency} (${company.unit})`;
-      document.getElementById("inspFinBracketBadge").textContent = `Fin: ${company.finBracket}`;
-      document.getElementById("inspConsBracketBadge").textContent = `CRP: ${company.consBracket}`;
+        `${t("s2.unit")} ${company.currency} (${company.unit})`;
+      document.getElementById("inspFinBracketBadge").textContent = `${t("s2.fin")} ${tBracket(company.finBracket)}`;
+      document.getElementById("inspConsBracketBadge").textContent = `${t("s2.crp")} ${tArch(company.consBracket)}`;
       document.getElementById("inspAuditedBridgeText").textContent = company.auditedBridge;
       document.getElementById("inspKantarText").textContent = company.kantarTelemetry;
 
       const ctx = document.getElementById("companyBridgeChart").getContext("2d");
       if (bridgeChartInstance) bridgeChartInstance.destroy();
+      const ct = chartColors();
+      const unitLabel = `${company.currency} ${company.unit}`;
 
       bridgeChartInstance = new Chart(ctx, {
         type: "bar",
         data: {
           labels: [
-            `FY19 Rev (${company.currency} ${company.unit})`,
-            `FY24 Rev (${company.currency} ${company.unit})`,
-            "FY19 EBIT %",
-            "FY24 EBIT %",
-            "FY19 EBITDA %",
-            "FY24 EBITDA %"
+            t("s2.bridge.rev19", { u: unitLabel }),
+            t("s2.bridge.rev24", { u: unitLabel }),
+            t("s2.bridge.ebit19"),
+            t("s2.bridge.ebit24"),
+            t("s2.bridge.ebitda19"),
+            t("s2.bridge.ebitda24")
           ],
           datasets: [
             {
@@ -937,8 +1704,8 @@
           maintainAspectRatio: false,
           plugins: { legend: { display: false } },
           scales: {
-            x: { grid: { display: false }, ticks: { color: "#cbd5e1", font: { size: 10 } } },
-            y: { grid: { color: "rgba(51, 65, 85, 0.35)" }, ticks: { color: "#94a3b8", font: { size: 10 } } }
+            x: { grid: { display: false }, ticks: { color: ct.tickStrong, font: { size: 10 } } },
+            y: { grid: { color: ct.grid }, ticks: { color: ct.tick, font: { size: 10 } } }
           }
         }
       });
@@ -965,28 +1732,28 @@
         const badgeStyle = getStatusBadgeClass(parsed.status);
 
         const card = document.createElement("div");
-        card.className = "bg-slate-950/85 border border-slate-800 rounded-xl p-3.5 space-y-2";
+        card.className = "bg-slate-50 dark:bg-slate-950/85 border border-slate-200 dark:border-slate-800 rounded-xl p-3.5 space-y-2";
         card.innerHTML = `
           <div class="flex items-center justify-between">
-            <span class="font-mono text-xs font-bold text-indigo-400">
-              FY${yr} Annual Report Strategic Commitment
+            <span class="font-mono text-xs font-bold text-indigo-600 dark:text-indigo-400">
+              ${t("s2.card.commitment", { y: yr })}
             </span>
             <span class="px-2 py-0.5 text-[11px] font-mono font-semibold border rounded ${badgeStyle}">
-              ${parsed.status}
+              ${tStatus(parsed.status)}
             </span>
           </div>
-          <p class="text-xs text-slate-200">
-            <span class="font-semibold text-slate-400">Stated Milestone:</span> ${parsed.target}
+          <p class="text-xs text-slate-800 dark:text-slate-200">
+            <span class="font-semibold text-slate-500 dark:text-slate-400">${t("s2.card.milestone")}</span> ${parsed.target}
           </p>
-          <p class="text-xs text-slate-300 bg-slate-900/90 border border-slate-800/80 rounded-lg p-2.5">
-            <span class="font-semibold text-emerald-400">Audited Realization:</span> ${parsed.outcome}
+          <p class="text-xs text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800/80 rounded-lg p-2.5">
+            <span class="font-semibold text-emerald-600 dark:text-emerald-400">${t("s2.card.realization")}</span> ${parsed.outcome}
           </p>
         `;
         timelineContainer.appendChild(card);
       });
 
       document.getElementById("auditScoreSummary").textContent =
-        `Entity 6-Year Rolling Fulfillment Score: ${accomplishedCount} / 6 Anchor Report Cycles Accomplished or On Track (${Math.round((accomplishedCount / 6) * 100)}%)`;
+        t("s2.score", { n: accomplishedCount, p: Math.round((accomplishedCount / 6) * 100) });
     }
 
     // ============================================================================
@@ -1001,45 +1768,45 @@
         const isSelected = c.id === Number(state.selectedCompanyId);
         const tr = document.createElement("tr");
         tr.className = `transition-colors ${
-          isSelected ? "bg-indigo-950/45" : "hover:bg-slate-900/75"
+          isSelected ? "bg-indigo-100/70 dark:bg-indigo-950/45" : "hover:bg-slate-50 dark:hover:bg-slate-900/75"
         }`;
 
-        const cagrColor = c.cagr5y >= 10 ? "text-amber-400 font-bold" : c.cagr5y >= 0 ? "text-emerald-400" : "text-rose-400";
-        const ebitdaColor = c.ebitdaMargin2024 >= 20 ? "text-sky-400 font-bold" : "text-slate-200";
+        const cagrColor = c.cagr5y >= 10 ? "text-amber-600 dark:text-amber-400 font-bold" : c.cagr5y >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400";
+        const ebitdaColor = c.ebitdaMargin2024 >= 20 ? "text-sky-600 dark:text-sky-400 font-bold" : "text-slate-800 dark:text-slate-200";
 
         tr.innerHTML = `
-          <td class="py-3 px-3 font-mono text-slate-400">${c.id}</td>
+          <td class="py-3 px-3 font-mono text-slate-500 dark:text-slate-400">${c.id}</td>
           <td class="py-3 px-3">
-            <div class="font-semibold text-white">${c.name}</div>
-            <div class="text-[11px] font-mono text-slate-400">${c.ticker} • ${c.currency}</div>
+            <div class="font-semibold text-slate-900 dark:text-white">${c.name}</div>
+            <div class="text-[11px] font-mono text-slate-500 dark:text-slate-400">${c.ticker} • ${c.currency}</div>
           </td>
           <td class="py-3 px-3">
-            <span class="px-2 py-0.5 rounded text-[11px] font-medium bg-slate-800 text-slate-300">
-              ${c.cohort}
+            <span class="px-2 py-0.5 rounded text-[11px] font-medium bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+              ${tCohort(c.cohort)}
             </span>
           </td>
-          <td class="py-3 px-3 text-right font-mono text-slate-300">${c.rev2019.toFixed(2)}${c.unit}</td>
-          <td class="py-3 px-3 text-right font-mono text-white font-semibold">${c.rev2024.toFixed(2)}${c.unit}</td>
+          <td class="py-3 px-3 text-right font-mono text-slate-700 dark:text-slate-300">${c.rev2019.toFixed(2)}${c.unit}</td>
+          <td class="py-3 px-3 text-right font-mono text-slate-900 dark:text-white font-semibold">${c.rev2024.toFixed(2)}${c.unit}</td>
           <td class="py-3 px-3 text-right font-mono ${cagrColor}">${formatSignedPct(c.cagr5y)}</td>
-          <td class="py-3 px-3 text-right font-mono text-slate-300">${formatSignedPct(c.organicCagr5y)}</td>
-          <td class="py-3 px-3 text-right font-mono text-slate-400">${c.ebitdaMargin2019.toFixed(1)}%</td>
+          <td class="py-3 px-3 text-right font-mono text-slate-700 dark:text-slate-300">${formatSignedPct(c.organicCagr5y)}</td>
+          <td class="py-3 px-3 text-right font-mono text-slate-500 dark:text-slate-400">${c.ebitdaMargin2019.toFixed(1)}%</td>
           <td class="py-3 px-3 text-right font-mono ${ebitdaColor}">${c.ebitdaMargin2024.toFixed(1)}%</td>
           <td class="py-3 px-3">
-            <span class="px-2 py-0.5 rounded text-[11px] font-mono bg-slate-800/90 text-slate-200 border border-slate-700">
-              ${c.finBracket}
+            <span class="px-2 py-0.5 rounded text-[11px] font-mono bg-slate-200/80 dark:bg-slate-800/90 text-slate-800 dark:text-slate-200 border border-slate-300 dark:border-slate-700">
+              ${tBracket(c.finBracket)}
             </span>
           </td>
           <td class="py-3 px-3">
-            <span class="px-2 py-0.5 rounded text-[11px] font-mono bg-indigo-950/60 text-indigo-300 border border-indigo-500/30">
-              ${c.consBracket}
+            <span class="px-2 py-0.5 rounded text-[11px] font-mono bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-500/30">
+              ${tArch(c.consBracket)}
             </span>
           </td>
           <td class="py-3 px-3 text-center">
             <button
               onclick="selectCompany(${c.id}, true)"
-              class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-indigo-600/90 hover:bg-indigo-500 text-white transition-all"
+              class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-indigo-600/90 hover:bg-indigo-500 text-slate-900 dark:text-white transition-all"
             >
-              Inspect
+              ${t("s3.action")}
             </button>
           </td>
         `;
@@ -1061,13 +1828,26 @@
     };
 
     function bindEvents() {
+      document.querySelectorAll("#themeSwitcher [data-theme-choice]").forEach(btn => {
+        btn.addEventListener("click", () => setTheme(btn.dataset.themeChoice));
+      });
+
+      document.querySelectorAll("#langSwitcher [data-lang-choice]").forEach(btn => {
+        btn.addEventListener("click", () => setLang(btn.dataset.langChoice));
+      });
+
+      // Follow the OS only while the user has actually chosen "System".
+      systemDark.addEventListener("change", () => {
+        if ((document.documentElement.dataset.themePref || "system") === "system") setTheme("system");
+      });
+
       document.querySelectorAll(".cohort-btn").forEach(btn => {
         btn.addEventListener("click", () => {
           state.cohort = btn.dataset.cohort;
           document.querySelectorAll(".cohort-btn").forEach(b => {
-            b.className = "cohort-btn px-3 py-1.5 rounded-lg text-xs font-semibold transition-all bg-slate-800/90 text-slate-300 hover:bg-slate-700";
+            b.className = "cohort-btn px-3 py-1.5 rounded-lg text-xs font-semibold transition-all bg-slate-200/80 dark:bg-slate-800/90 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700";
           });
-          btn.className = "cohort-btn px-3 py-1.5 rounded-lg text-xs font-semibold transition-all bg-indigo-600 text-white shadow-sm";
+          btn.className = "cohort-btn px-3 py-1.5 rounded-lg text-xs font-semibold transition-all bg-indigo-600 text-slate-900 dark:text-white shadow-sm";
 
           const cohortCompanies = getCohortData();
           if (cohortCompanies.length > 0 && !cohortCompanies.some(c => c.id === state.selectedCompanyId)) {
@@ -1115,9 +1895,9 @@
         btn.addEventListener("click", () => {
           state.selectedAuditYear = btn.dataset.year;
           document.querySelectorAll(".year-btn").forEach(b => {
-            b.className = "year-btn px-2 py-1 rounded text-xs font-mono bg-slate-800 text-slate-300 hover:bg-slate-700";
+            b.className = "year-btn px-2 py-1 rounded text-xs font-mono bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700";
           });
-          btn.className = "year-btn px-2.5 py-1 rounded text-xs font-mono font-semibold bg-indigo-600 text-white";
+          btn.className = "year-btn px-2.5 py-1 rounded text-xs font-mono font-semibold bg-indigo-600 text-slate-900 dark:text-white";
           renderInspector();
         });
       });
@@ -1152,6 +1932,8 @@
     }
 
     document.addEventListener("DOMContentLoaded", () => {
+      applyThemeClasses(document.documentElement.dataset.themePref || "system");
+      applyI18n();
       populateCompanyDropdown();
       bindEvents();
       renderKPIs();
