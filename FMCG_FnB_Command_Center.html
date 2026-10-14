@@ -1479,7 +1479,10 @@
         return c[state.barMetricField];
       };
 
-      const sortedTop = [...cohortList]
+      // Leaderboard follows the same Strategic Bracket selection: when a bracket
+      // is active, only its companies are listed (sorted, top 15).
+      const barList = cohortList.filter(bracketVisible);
+      const sortedTop = [...barList]
         .sort((a, b) => metricValue(b) - metricValue(a))
         .slice(0, 15);
 
