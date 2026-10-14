@@ -1,0 +1,41 @@
+#,Company,Ticker,Cohort,Currency,Unit,FY19 Revenue,FY24 Revenue,5Y Statutory CAGR %,5Y Organic CAGR %,FY19 EBIT %,FY24 EBIT %,FY19 EBITDA %,FY24 EBITDA %,EBITDA Shift (bps),EBIT Shift (bps),Financial Bracket,Consumer Archetype,Milestones Hit (of 6)
+1,Nestlé S.A.,NESN.SW,Global,CHF,B,92.57,91.35,-0.26,4.8,17.6,17.2,21.4,20.8,-60,-40,Margin Defender,Basket Expander,6
+2,"PepsiCo, Inc.",PEP,Global,USD,B,67.16,91.85,6.46,7.6,15.3,14.0,19.6,18.5,-110,-130,Transformation Seeker,Basket Expander,5
+3,Mondelēz International,MDLZ,Global,USD,B,25.87,36.44,7.09,6.8,14.8,15.6,19.9,19.4,-50,80,Transformation Seeker,Basket Expander,6
+4,Danone S.A.,BN.PA,Global,EUR,B,25.29,27.38,1.6,4.1,15.2,13.0,19.1,16.8,-230,-220,Transformation Seeker,Basket Expander,5
+5,The Kraft Heinz Co.,KHC,Global,USD,B,24.98,25.85,0.69,2.4,12.3,20.9,24.3,24.8,50,860,Margin Defender,Stagnating Staple,6
+6,"General Mills, Inc.",GIS,Global,USD,B,16.87,19.86,3.32,3.9,16.9,17.9,20.6,21.2,60,100,Margin Defender,Frequency Defender,6
+7,Associated British Foods (Grocery & Ingred.),ABF.L,Global,GBP,B,4.99,6.57,5.66,5.2,10.6,12.1,14.5,16.2,170,150,Transformation Seeker,Frequency Defender,5
+8,Unilever PLC (Nutrition & Ice Cream),ULVR.L,Global,EUR,B,19.3,21.7,2.37,4.9,17.5,18.6,20.4,21.5,110,110,Margin Defender,Margin Defender,6
+9,The Campbell's Company,CPB,Global,USD,B,8.11,9.64,3.52,2.8,15.8,15.2,20.1,19.3,-80,-60,Transformation Seeker,Basket Expander,5
+10,"Conagra Brands, Inc.",CAG,Global,USD,B,9.54,12.05,4.78,2.5,15.3,15.9,19.4,19.8,40,60,Transformation Seeker,Margin Defender,6
+11,"Meiji Holdings Co., Ltd.",2269.T,Regional APAC,JPY,B,1252.7,1105.5,-1.3,2.8,8.2,7.6,12.4,11.9,-50,-60,Transformation Seeker,Frequency Defender,6
+12,"Morinaga & Co., Ltd.",2201.T,Regional APAC,JPY,B,208.9,213.4,1.81,4.2,10.2,9.5,14.3,13.8,-50,-70,Transformation Seeker,Basket Expander,6
+13,CJ CheilJedang Corp.,097950.KS,Regional APAC,KRW,B,22352.0,29359.0,5.6,7.22,4.0,5.3,9.8,10.9,110,130,Transformation Seeker,Penetration Apex,6
+14,"Lotte Wellfood Co., Ltd.",280360.KS,Regional APAC,KRW,B,2093.0,4044.0,14.08,4.9,4.7,3.9,9.2,8.8,-40,-80,Volume Driver,Penetration Apex,6
+15,Daesang Corporation,001680.KS,Regional APAC,KRW,B,2960.0,4254.0,7.52,6.8,4.4,4.3,8.5,8.4,-10,-10,Transformation Seeker,Penetration Apex,5
+16,Universal Robina Corp.,URC.PS,Regional APAC,PHP,B,134.17,161.88,3.82,6.4,11.2,10.6,15.8,14.9,-90,-60,Transformation Seeker,Frequency Defender,6
+17,San Miguel Food and Beverage,FB.PS,Regional APAC,PHP,B,310.79,400.9,5.23,5.83,15.4,14.1,20.1,19.2,-90,-130,Transformation Seeker,Margin Defender,6
+18,"Fraser and Neave, Ltd.",F99.SI,Regional APAC,SGD,B,1.9,2.16,2.6,3.4,14.9,13.8,19.2,18.1,-110,-110,Transformation Seeker,Frequency Defender,6
+19,Nestlé (Malaysia) Berhad,4707.KL,Regional APAC,MYR,B,5.52,6.22,2.42,2.42,16.8,10.6,20.4,14.8,-560,-620,Transformation Seeker,Frequency Defender,5
+20,Thai President Foods PCL,TFMAMA.BK,Regional APAC,THB,B,24.51,29.42,3.72,3.72,20.6,19.8,24.8,23.9,-90,-80,Margin Defender,Margin Defender,5
+21,PT Indofood CBP Sukses Makmur Tbk,ICBP.JK,Indonesia,IDR,T,42.3,72.6,11.41,7.8,17.5,22.5,20.8,25.4,460,500,Apex Performer,Penetration Apex,6
+22,PT Indofood Sukses Makmur Tbk,INDF.JK,Indonesia,IDR,T,76.59,115.79,8.62,6.9,12.8,19.6,17.0,23.8,680,680,Margin Defender,Margin Defender,6
+23,PT Mayora Indah Tbk,MYOR.JK,Indonesia,IDR,T,25.03,36.07,7.58,7.58,12.7,10.9,16.2,14.1,-210,-180,Transformation Seeker,Volume Driver,5
+24,PT Cisarua Mountain Dairy Tbk (Cimory),CMRY.JK,Indonesia,IDR,T,1.39,9.03,45.39,45.39,9.4,20.1,13.1,23.2,1010,1070,Apex Performer,Penetration Apex,6
+25,PT Ultrajaya Milk Industry & Trading Co. Tbk,ULTJ.JK,Indonesia,IDR,T,6.24,8.87,7.29,7.29,20.3,16.9,24.5,20.4,-410,-340,Margin Defender,Margin Defender,6
+26,PT Garudafood Putra Putri Jaya Tbk,GOOD.JK,Indonesia,IDR,T,8.44,12.24,7.72,5.8,7.3,8.9,11.4,13.2,180,160,Transformation Seeker,Frequency Defender,6
+27,PT Siantar Top Tbk,STTP.JK,Indonesia,IDR,T,3.51,4.95,7.11,7.11,16.8,27.6,20.5,30.8,1030,1080,Margin Defender,Frequency Defender,6
+28,PT Nippon Indosari Corpindo Tbk,ROTI.JK,Indonesia,IDR,T,3.34,3.93,3.31,4.1,13.9,14.3,20.6,21.1,50,40,Margin Defender,Margin Defender,6
+29,PT Diamond Food Indonesia Tbk,DMND.JK,Indonesia,IDR,T,6.85,9.61,7.01,7.01,6.8,5.9,9.9,9.1,-80,-90,Transformation Seeker,Volume Driver,6
+30,PT FKS Food Sejahtera Tbk,AISA.JK,Indonesia,IDR,T,1.51,1.92,4.92,4.92,-2.1,6.4,2.1,10.8,870,850,Transformation Seeker,Transformation Seeker,6
+31,Inner Mongolia Yili Industrial Group,600887.SS,Greater China,RMB,B,90.22,115.78,5.11,4.2,8.8,10.2,11.9,14.2,230,140,Transformation Seeker,Frequency Defender,6
+32,China Mengniu Dairy Co. Ltd.,2319.HK,Greater China,RMB,B,79.03,88.67,2.33,2.1,6.9,8.2,9.8,10.1,30,130,Transformation Seeker,Stagnating Staple,4
+33,Tingyi (Master Kong) Holding Corp.,0322.HK,Greater China,RMB,B,61.98,80.65,5.41,5.41,7.6,8.0,12.8,12.9,10,40,Transformation Seeker,Frequency Defender,5
+34,Uni-President China Holdings Ltd.,0220.HK,Greater China,RMB,B,22.02,30.33,6.61,6.61,7.4,7.8,12.1,13.4,130,40,Transformation Seeker,Frequency Defender,6
+35,Want Want China Holdings Ltd.,0151.HK,Greater China,RMB,B,20.09,23.51,3.19,3.19,23.9,20.6,28.1,24.9,-320,-330,Margin Defender,Margin Defender,6
+36,"Bright Dairy & Food Co., Ltd.",600597.SS,Greater China,RMB,B,22.56,24.28,1.48,1.48,4.3,3.1,8.6,7.4,-120,-120,Transformation Seeker,Stagnating Staple,5
+37,Three Squirrels Inc.,300783.SZ,Greater China,RMB,B,10.17,10.62,0.87,0.87,3.1,4.9,4.6,6.8,220,180,Transformation Seeker,Transformation Seeker,5
+38,Weilong Delicious Global Holdings Ltd.,9985.HK,Greater China,RMB,B,3.38,6.27,13.15,13.15,24.2,21.8,27.5,25.4,-210,-240,Apex Performer,Penetration Apex,5
+39,"Bestore Co., Ltd.",603719.SS,Greater China,RMB,B,7.71,7.05,-1.77,-1.77,5.8,0.9,8.4,3.8,-460,-490,Transformation Seeker,Stagnating Staple,4
+40,Vitasoy International Holdings Ltd.,0345.HK,Greater China,HKD,B,7.53,6.22,-3.75,-2.9,10.4,3.0,15.6,8.9,-670,-740,Transformation Seeker,Transformation Seeker,5

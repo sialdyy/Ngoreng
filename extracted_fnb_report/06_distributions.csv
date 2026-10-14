@@ -1,0 +1,42 @@
+Financial Bracket,Count,Share %
+Transformation Seeker,26,65.0
+Margin Defender,10,25.0
+Apex Performer,3,7.5
+Volume Driver,1,2.5
+
+Consumer Archetype,Count,Share %
+Frequency Defender,11,27.5
+Margin Defender,8,20.0
+Basket Expander,6,15.0
+Penetration Apex,6,15.0
+Stagnating Staple,4,10.0
+Transformation Seeker,3,7.5
+Volume Driver,2,5.0
+
+Cohort,Count,Share %
+Global,10,25.0
+Regional APAC,10,25.0
+Indonesia,10,25.0
+Greater China,10,25.0
+
+Reporting Currency,Count,Share %
+IDR,10,25.0
+RMB,9,22.5
+USD,6,15.0
+KRW,3,7.5
+EUR,2,5.0
+JPY,2,5.0
+PHP,2,5.0
+CHF,1,2.5
+GBP,1,2.5
+SGD,1,2.5
+MYR,1,2.5
+THB,1,2.5
+HKD,1,2.5
+
+Milestone Status (240 company-years),Count,Share %
+Accomplished,221,92.1
+Partially Accomplished,9,3.8
+Missed,7,2.9
+On Track,2,0.8
+Delayed,1,0.4
