@@ -7,11 +7,11 @@ Dataset: 40 listed Food & Beverage issuers across 4 cohort layers, with audited 
 
 | Cohort | n | Avg 5Y CAGR | Avg Organic CAGR | Avg EBITDA FY19 | Avg EBITDA FY24 | Δ bps | Avg EBIT FY19 | Avg EBIT FY24 | Apex | Pen./RTM Outperf. | Milestone Hits | Fulfillment |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
-| ALL | 40 | +5.59% | +5.72% | 16.23% | 16.57% | +34 | 11.99% | 12.54% | 3 | 12 (30%) | 223/240 | 92.9% |
-| Global | 10 | +3.52% | +4.50% | 19.93% | 19.83% | -10 | 15.13% | 16.04% | 0 | 5 (50%) | 56/60 | 93.3% |
-| Regional APAC | 10 | +4.55% | +4.77% | 15.45% | 14.47% | -98 | 11.04% | 9.95% | 0 | 4 (40%) | 57/60 | 95.0% |
-| Indonesia | 10 | +11.04% | +10.39% | 15.61% | 19.19% | +358 | 11.54% | 15.31% | 2 | 2 (20%) | 59/60 | 98.3% |
-| Greater China | 10 | +3.26% | +3.23% | 13.94% | 12.78% | -116 | 10.24% | 8.85% | 1 | 1 (10%) | 51/60 | 85.0% |
+| ALL | 40 | +5.59% | +5.72% | 16.23% | 16.57% | +33.5 | 11.99% | 12.54% | 3 | 12 (30%) | 223/240 | 92.9% |
+| Global | 10 | +3.52% | +4.50% | 19.93% | 19.83% | -10.0 | 15.13% | 16.04% | 0 | 5 (50%) | 56/60 | 93.3% |
+| Regional APAC | 10 | +4.55% | +4.77% | 15.45% | 14.47% | -98.0 | 11.04% | 9.95% | 0 | 4 (40%) | 57/60 | 95.0% |
+| Indonesia | 10 | +11.04% | +10.39% | 15.61% | 19.19% | +358.0 | 11.54% | 15.31% | 2 | 2 (20%) | 59/60 | 98.3% |
+| Greater China | 10 | +3.26% | +3.23% | 13.94% | 12.78% | -116.0 | 10.24% | 8.85% | 1 | 1 (10%) | 51/60 | 85.0% |
 
 Apex Performers (≥10% CAGR **and** ≥20% FY24 EBITDA): PT Indofood CBP Sukses Makmur Tbk, PT Cisarua Mountain Dairy Tbk (Cimory), Weilong Delicious Global Holdings Ltd.
 
