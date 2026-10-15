@@ -203,7 +203,29 @@
     #nabatiTable tr.np-group td { font-size: 10px; text-transform: uppercase; letter-spacing: .04em; font-weight: 700; padding-top: 10px; padding-bottom: 5px; border-bottom: 0; }
     #nabatiTable td.np-cell { line-height: 1.15; }
     #nabatiTable td.np-cell .np-pct { font-size: 9px; opacity: .72; }
+    #nabatiTable td.np-cell .np-sub2 { font-size: 9px; font-weight: 500; margin-top: 1px; }
     #nabatiTable .np-focus { background: rgba(99,102,241,.1); }
+    :root.light #nabatiTable th, :root.light #nabatiTable td { border-bottom-color: #e2e8f0; }
+    :root.light #nabatiTable .np-focus { background: rgba(99,102,241,.08); }
+
+    /* Company (model) selector chips */
+    .np-chip-group { display: flex; flex-wrap: wrap; align-items: center; gap: 7px; }
+    .np-chip-region { font-size: 9px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: #64748b; font-family: 'JetBrains Mono', monospace; min-width: 96px; }
+    @media (max-width: 640px) { .np-chip-region { min-width: 100%; } }
+    .np-chip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 600; line-height: 1.2; color: #cbd5e1; background: rgba(30,41,59,.75); border: 1px solid rgba(71,85,105,.7); cursor: pointer; transition: transform .14s ease, background .14s ease, color .14s ease, box-shadow .14s ease; white-space: nowrap; }
+    .np-chip:hover { background: rgba(51,65,85,.95); color: #f1f5f9; transform: translateY(-1px); }
+    .np-chip:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--np-accent, #6366f1); }
+    .np-chip .np-dot { width: 8px; height: 8px; border-radius: 999px; background: var(--np-accent, #6366f1); flex: none; }
+    .np-chip .np-cur { font-size: 8.5px; font-weight: 700; letter-spacing: .02em; font-family: 'JetBrains Mono', monospace; padding: 1px 4px; border-radius: 4px; background: rgba(148,163,184,.18); color: #94a3b8; }
+    .np-chip.is-active { color: #fff; background: var(--np-accent, #6366f1); border-color: var(--np-accent, #6366f1); box-shadow: 0 5px 14px -5px var(--np-accent, #6366f1); }
+    .np-chip.is-active .np-dot { background: #fff; }
+    .np-chip.is-active .np-cur { background: rgba(255,255,255,.24); color: #fff; }
+    :root.light .np-chip { color: #334155; background: #eef2f7; border-color: #d7dee8; }
+    :root.light .np-chip:hover { background: #e2e8f0; color: #0f172a; }
+    :root.light .np-chip .np-cur { background: rgba(100,116,139,.16); color: #5b6878; }
+    :root.light .np-chip.is-active { color: #fff; }
+    :root.light .np-chip.is-active .np-cur { background: rgba(255,255,255,.28); color: #fff; }
+    :root.light .np-chip-region { color: #5b6878; }
   </style>
 </head>
 <body class="antialiased selection:bg-indigo-500 selection:text-white min-h-screen flex flex-col">
@@ -649,31 +671,29 @@
       </div>
     </section>
 
-    <!-- SECTION 5: NABATI BASELINE vs COMPANY — NORMALIZED P&L (SM1–SM4 / GA1–GA3) -->
+    <!-- SECTION 5: NABATI BASELINE vs COMPANY -->
     <section class="glass-card rounded-2xl p-6 space-y-4">
       <div class="flex flex-col xl:flex-row xl:items-end justify-between gap-4">
         <div>
-          <h2 class="text-lg font-bold text-white" data-i18n="np.title">Nabati Baseline vs Company — Normalized P&amp;L (SM1–SM4 / GA1–GA3)</h2>
+          <h2 class="text-lg font-bold text-white" data-i18n="np.title">Nabati Baseline vs Company</h2>
           <p class="text-xs text-slate-400 max-w-4xl mt-0.5" data-i18n="np.sub">
-            Pick a model company to trace its P&amp;L across FY2019–FY2024 against Nabati's baseline, line by line. Each row is compared on % of Net Sales (FX-neutral). Lines not disclosed in the source are intentionally left blank — never assumed zero.
+            Pick a model company to trace its normalized P&amp;L (SM1–SM4 / GA1–GA3) across FY2019–FY2024 against Nabati's baseline, line by line. Costs sit in their own component — manpower in SM1, distribution &amp; logistics in SM2, advertising &amp; promotion in SM3. Every row is compared on % of Net Sales (FX-neutral); lines not disclosed in the filing stay blank, never assumed zero.
           </p>
         </div>
-        <div class="flex flex-wrap items-end gap-3 shrink-0">
-          <label class="flex flex-col gap-1">
-            <span class="text-[10px] font-mono uppercase text-slate-400" data-i18n="np.company">Company (model)</span>
-            <select id="nabatiCompany" onchange="setNabatiCompany(this.value)" class="bg-slate-900 border border-slate-700 text-xs text-slate-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-indigo-500 min-w-[230px]"></select>
-          </label>
-          <label class="flex flex-col gap-1">
-            <span class="text-[10px] font-mono uppercase text-slate-400" data-i18n="np.baselineYr">Nabati Baseline year</span>
-            <select id="nabatiBaseYear" onchange="setNabatiBaseYear(this.value)" class="bg-slate-900 border border-slate-700 text-xs text-slate-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-indigo-500"></select>
-          </label>
-        </div>
+        <label class="flex flex-col gap-1 shrink-0">
+          <span class="text-[10px] font-mono uppercase text-slate-400" data-i18n="np.baselineYr">Nabati Baseline year</span>
+          <select id="nabatiBaseYear" onchange="setNabatiBaseYear(this.value)" class="bg-slate-900 border border-slate-700 text-xs text-slate-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-indigo-500"></select>
+        </label>
+      </div>
+      <div>
+        <div class="text-[10px] font-mono uppercase text-slate-400 mb-2" data-i18n="np.company">Company (model)</div>
+        <div id="nabatiChips" class="space-y-2.5" role="radiogroup" aria-label="Company (model)"></div>
       </div>
       <div class="overflow-x-auto custom-scrollbar border border-slate-800 rounded-xl">
         <table class="w-full text-left border-collapse text-xs" id="nabatiTable"></table>
       </div>
       <p class="text-[11px] text-slate-500" data-i18n="np.note">
-        Normalized P&amp;L format (SM1–SM4 / GA1–GA3) per the brief. The 40-company dataset discloses only Net Sales and EBIT margin for FY2019 &amp; FY2024, so other lines and intermediate years stay blank — a template to fill when the detailed breakdown is available. Nabati baseline is illustrative (Rp bn); companies in their own reporting currency, so comparison is on % of Net Sales, not nominal size.
+        Source: audited filings mapped to the normalized SM1–SM4 / GA1–GA3 format for 34 peers (10 SEA, 10 Greater China, 14 global). SEA &amp; Greater China carry FY2019–FY2024; global peers FY2021–FY2024. Cells show % of Net Sales. Nabati baseline is illustrative (Rp bn shown beneath each %); peers report in their own currency, so every comparison is on % of Net Sales — green = better than Nabati on that line, red = worse.
       </p>
     </section>
 
@@ -893,45 +913,36 @@
         "story.w.capacity": "Capacity",
         "story.w.dividend": "Dividend",
         "story.w.margin": "Margin",
-        "np.title": "Nabati Baseline vs Company — Normalized P&L (SM1–SM4 / GA1–GA3)",
-        "np.sub": "Pick a model company to trace its P&L across FY2019–FY2024 against Nabati's baseline, line by line. Each row is compared on % of Net Sales (FX-neutral). Lines not disclosed in the source are intentionally left blank — never assumed zero.",
-        "np.note": "Normalized P&L format (SM1–SM4 / GA1–GA3) per the brief. The 40-company dataset discloses only Net Sales and EBIT margin for FY2019 & FY2024, so other lines and intermediate years stay blank — a template to fill when the detailed breakdown is available. Nabati baseline is illustrative (Rp bn); companies in their own reporting currency, so comparison is on % of Net Sales, not nominal size.",
+        "np.title": "Nabati Baseline vs Company",
+        "np.sub": "Pick a model company to trace its normalized P&L (SM1–SM4 / GA1–GA3) across FY2019–FY2024 against Nabati's baseline, line by line. Costs sit in their own component — manpower in SM1, distribution & logistics in SM2, advertising & promotion in SM3. Every row is compared on % of Net Sales (FX-neutral); lines not disclosed in the filing stay blank, never assumed zero.",
+        "np.note": "Source: audited filings mapped to the normalized SM1–SM4 / GA1–GA3 format for 34 peers (10 SEA, 10 Greater China, 14 global). SEA & Greater China carry FY2019–FY2024; global peers FY2021–FY2024. Cells show % of Net Sales. Nabati baseline is illustrative (Rp bn shown beneath each %); peers report in their own currency, so every comparison is on % of Net Sales — green = better than Nabati on that line, red = worse.",
         "np.company": "Company (model)",
         "np.baselineYr": "Nabati Baseline year",
         "np.thLine": "Line",
         "np.thNabati": "Nabati Baseline",
+        "np.r.sea": "SEA · IDR",
+        "np.r.china": "Greater China",
+        "np.r.global": "Global",
         "np.g.rev": "Revenue",
         "np.g.gp": "Gross Profit",
         "np.g.sm": "Selling & Marketing (SM1–SM4)",
-        "np.g.ga": "General & Administrative (GA1–GA3)",
         "np.g.op": "Operating Profit",
-        "np.g.below": "Below Operating",
-        "np.l.grossSales": "Gross Commercial Sales",
-        "np.l.contraRev": "Contra Revenue / Trade Discount",
-        "np.l.netSales": "Reported Net Sales",
+        "np.g.ga": "Below Operating (GA1–GA3)",
+        "np.g.pre": "Pre-Tax",
+        "np.l.netSales": "Net Sales",
         "np.l.cogs": "COGS",
         "np.l.gp1": "GP1 — Gross Profit",
-        "np.l.sm1": "SM1 — Sales & Marketing Manpower",
+        "np.l.sm1": "SM1 — Sales Force & Manpower",
         "np.l.sm2": "SM2 — Distribution & Logistics",
-        "np.l.sm3": "SM3 — Advertising, Promotion & Commercial",
-        "np.l.sm3cr": "SM3-CR — recorded as Contra Revenue",
-        "np.l.sm4": "SM4 — Other Selling / Commercial Infra",
-        "np.l.unallocSelling": "Unallocated Selling",
-        "np.l.totalSM": "Total Selling & Marketing",
-        "np.l.gp2": "GP2 — after Selling & Marketing",
-        "np.l.ga1": "GA1 — Administrative Manpower",
-        "np.l.ga2": "GA2 — Core General Administration",
-        "np.l.ga3": "GA3 — Other / Misc Administration",
-        "np.l.unallocGA": "Unallocated G&A",
-        "np.l.unallocSGA": "Unallocated SG&A",
-        "np.l.ebit": "EBIT — Operating Profit",
-        "np.l.otherOp": "Other Operating / Non-operating",
-        "np.l.finIncome": "Finance Income",
-        "np.l.finCost": "Finance Cost",
-        "np.l.assoc": "Associates / JV",
-        "np.l.ebt": "EBT — Profit Before Tax",
-        "np.l.tax": "Income Tax",
-        "np.l.netIncome": "Net Income"
+        "np.l.sm3": "SM3 — Advertising & Promotion",
+        "np.l.sm4": "SM4 — Selling Overhead",
+        "np.l.smTotal": "Total Selling & Marketing",
+        "np.l.gp2": "GP2 — Operating Profit",
+        "np.l.ga1": "GA1 — General & Administrative",
+        "np.l.ga2": "GA2 — Finance (net)",
+        "np.l.ga3": "GA3 — Other (net)",
+        "np.l.gaTotal": "Total GA1–GA3",
+        "np.l.ebt": "EBT — Profit Before Tax"
       },
       id: {
         "meta.title": "Pusat Komando Empiris FMCG F&B Global & APAC (FY2019–FY2026)",
@@ -1093,45 +1104,36 @@
         "story.w.capacity": "Kapasitas",
         "story.w.dividend": "Dividen",
         "story.w.margin": "Margin",
-        "np.title": "Nabati Baseline vs Company — P&L Ternormalisasi (SM1–SM4 / GA1–GA3)",
-        "np.sub": "Pilih satu company model untuk menelusuri P&L-nya sepanjang FY2019–FY2024 terhadap baseline Nabati, baris per baris. Tiap baris dibandingkan atas dasar % dari Penjualan Bersih (netral kurs). Baris yang tidak di-disclose di sumber sengaja dikosongkan — tidak diasumsikan nol.",
-        "np.note": "Format P&L ternormalisasi (SM1–SM4 / GA1–GA3) sesuai brief. Dataset 40 perusahaan hanya memuat Penjualan Bersih dan margin EBIT untuk FY2019 & FY2024, jadi baris lain dan tahun antara dibiarkan kosong — kerangka yang bisa diisi saat rincian tersedia. Baseline Nabati bersifat ilustratif (Rp miliar); perusahaan memakai mata uang pelaporan masing-masing, jadi perbandingan atas dasar % Penjualan Bersih, bukan ukuran nominal.",
+        "np.title": "Nabati Baseline vs Company",
+        "np.sub": "Pilih satu company model untuk menelusuri P&L ternormalisasi-nya (SM1–SM4 / GA1–GA3) sepanjang FY2019–FY2024 terhadap baseline Nabati, baris per baris. Biaya ditempatkan pada komponennya — SDM/tenaga penjualan di SM1, distribusi & logistik di SM2, iklan & promosi di SM3. Tiap baris dibandingkan atas dasar % dari Penjualan Bersih (netral kurs); baris yang tidak di-disclose di laporan dikosongkan, tidak diasumsikan nol.",
+        "np.note": "Sumber: laporan keuangan teraudit yang dipetakan ke format ternormalisasi SM1–SM4 / GA1–GA3 untuk 34 peer (10 SEA, 10 Tiongkok Raya, 14 global). SEA & Tiongkok Raya memuat FY2019–FY2024; peer global FY2021–FY2024. Sel menampilkan % dari Penjualan Bersih. Baseline Nabati bersifat ilustratif (Rp miliar ditampilkan di bawah tiap %); peer memakai mata uang pelaporan masing-masing, jadi tiap perbandingan atas dasar % Penjualan Bersih — hijau = lebih baik dari Nabati pada baris itu, merah = lebih buruk.",
         "np.company": "Company (model)",
         "np.baselineYr": "Tahun Nabati Baseline",
         "np.thLine": "Baris",
         "np.thNabati": "Nabati Baseline",
+        "np.r.sea": "SEA · IDR",
+        "np.r.china": "Tiongkok Raya",
+        "np.r.global": "Global",
         "np.g.rev": "Pendapatan",
         "np.g.gp": "Laba Kotor",
         "np.g.sm": "Penjualan & Pemasaran (SM1–SM4)",
-        "np.g.ga": "Umum & Administrasi (GA1–GA3)",
         "np.g.op": "Laba Operasi",
-        "np.g.below": "Di Bawah Operasi",
-        "np.l.grossSales": "Penjualan Komersial Bruto",
-        "np.l.contraRev": "Contra Revenue / Diskon Dagang",
+        "np.g.ga": "Di Bawah Operasi (GA1–GA3)",
+        "np.g.pre": "Pra-Pajak",
         "np.l.netSales": "Penjualan Bersih",
         "np.l.cogs": "HPP (COGS)",
         "np.l.gp1": "GP1 — Laba Kotor",
-        "np.l.sm1": "SM1 — SDM Sales & Marketing",
+        "np.l.sm1": "SM1 — Tenaga Penjualan & SDM",
         "np.l.sm2": "SM2 — Distribusi & Logistik",
-        "np.l.sm3": "SM3 — Iklan, Promosi & Komersial",
-        "np.l.sm3cr": "SM3-CR — dicatat sebagai Contra Revenue",
-        "np.l.sm4": "SM4 — Penjualan Lain / Infra Komersial",
-        "np.l.unallocSelling": "Selling Tak Teralokasi",
-        "np.l.totalSM": "Total Penjualan & Pemasaran",
-        "np.l.gp2": "GP2 — setelah Penjualan & Pemasaran",
-        "np.l.ga1": "GA1 — SDM Administrasi",
-        "np.l.ga2": "GA2 — Administrasi Umum Inti",
-        "np.l.ga3": "GA3 — Administrasi Lain / Misc",
-        "np.l.unallocGA": "G&A Tak Teralokasi",
-        "np.l.unallocSGA": "SG&A Tak Teralokasi",
-        "np.l.ebit": "EBIT — Laba Operasi",
-        "np.l.otherOp": "Operasi Lain / Non-operasi",
-        "np.l.finIncome": "Pendapatan Keuangan",
-        "np.l.finCost": "Biaya Keuangan",
-        "np.l.assoc": "Asosiasi / JV",
-        "np.l.ebt": "EBT — Laba Sebelum Pajak",
-        "np.l.tax": "Pajak Penghasilan",
-        "np.l.netIncome": "Laba Bersih"
+        "np.l.sm3": "SM3 — Iklan & Promosi",
+        "np.l.sm4": "SM4 — Overhead Penjualan",
+        "np.l.smTotal": "Total Penjualan & Pemasaran",
+        "np.l.gp2": "GP2 — Laba Operasi",
+        "np.l.ga1": "GA1 — Umum & Administrasi",
+        "np.l.ga2": "GA2 — Keuangan (neto)",
+        "np.l.ga3": "GA3 — Lain-lain (neto)",
+        "np.l.gaTotal": "Total GA1–GA3",
+        "np.l.ebt": "EBT — Laba Sebelum Pajak"
       }
     };
 
@@ -1357,7 +1359,7 @@
       scatterColorBy: "cohort",
       scatterBracket: "ALL",
       storyExpanded: false,
-      nabatiCompany: 21,
+      nabatiCompany: "ICBP",
       nabatiBaseYear: "2024",
       barMetricField: "cagr5y",
       searchQuery: "",
@@ -1960,15 +1962,20 @@
     // ============================================================================
     const NABATI_YEARS = ["2019", "2020", "2021", "2022", "2023", "2024"];
     // Nabati illustrative baseline (Rp bn); only disclosed lines carry a value.
-    const NABATI_BASELINE = {
-      netSales: 4200, cogs: 3085.7, gp1: 1114.3, unallocSGA: 726.6,
-      ebit: 387.7, finCost: 47.5, ebt: 340.2, tax: 82.7, netIncome: 257.5
+    const NABATI_BASELINE = { netSales: 4200, cogs: 3085.7, gp1: 1114.3, smTotal: 726.6, gp2: 387.7, gaTotal: 47.5, ebt: 340.2 };
+    // Region accent colours for the company-model chips.
+    const NABATI_REGION = {
+      "SEA": { key: "sea", hex: "#34d399" },
+      "Greater China": { key: "china", hex: "#fbbf24" },
+      "Global": { key: "global", hex: "#60a5fa" }
     };
-    // Full normalized skeleton per the brief (group headers + lines + subtotals).
+    // 34 peers mapped to the normalized SM1-SM4 / GA1-GA3 format, as % of Net Sales.
+    // Source: three audited-filing workbooks (SEA + Greater China detailed; globals condensed).
+    // Costs are allocated to their component (manpower->SM1, distribution->SM2, A&P->SM3).
+    const NABATI_COMPANIES = [{"t":"ADES","disp":"ADES","cur":"IDR","full":"Akasha Wira","region":"SEA","src":"full","y":{"2019":{"netSales":100.0,"cogs":54.8,"gp1":45.2,"gp2":16.8,"ga3":2.4,"ebt":14.4},"2020":{"netSales":100.0,"cogs":49.1,"gp1":50.9,"gp2":26.2,"ga3":1.3,"ebt":24.9},"2021":{"netSales":100.0,"cogs":46.6,"gp1":53.4,"gp2":35.1,"ga2":1.0,"ga3":0.0,"ebt":36.1},"2022":{"netSales":100.0,"cogs":48.0,"gp1":52.0,"gp2":35.1,"ga2":0.9,"ga3":0.0,"ebt":36.0},"2023":{"netSales":100.0,"cogs":46.8,"gp1":53.2,"gp2":31.8,"ga2":1.2,"ga3":0.0,"ebt":33.0},"2024":{"netSales":100.0,"cogs":48.6,"gp1":51.4,"gp2":32.2,"ga2":2.0,"ga3":0.1,"ebt":34.1}}},{"t":"CMRY","disp":"CMRY","cur":"IDR","full":"Cimory","region":"SEA","src":"full","y":{"2019":{"netSales":100.0,"cogs":62.9,"gp1":37.1,"gp2":9.8,"ga3":0.5,"ebt":10.3},"2020":{"netSales":100.0,"cogs":59.2,"gp1":40.8,"gp2":12.5,"ga3":0.4,"ebt":12.1},"2021":{"netSales":100.0,"cogs":51.8,"gp1":48.2,"gp2":24.6,"ga2":0.1,"ga3":0.1,"ebt":24.8},"2022":{"netSales":100.0,"cogs":58.2,"gp1":41.8,"gp2":19.7,"ga2":1.2,"ga3":0.2,"ebt":21.1},"2023":{"netSales":100.0,"cogs":58.4,"gp1":41.6,"smTotal":20.9,"gp2":18.4,"ga1":2.5,"ga2":1.6,"ga3":0.1,"ebt":20.1},"2024":{"netSales":100.0,"cogs":54.8,"gp1":45.2,"smTotal":24.4,"gp2":18.5,"ga1":2.3,"ga2":1.8,"ga3":0.8,"ebt":21.1}}},{"t":"GOOD","disp":"GOOD","cur":"IDR","full":"Garudafood","region":"SEA","src":"full","y":{"2019":{"netSales":100.0,"cogs":70.0,"gp1":30.0,"smTotal":16.1,"gp2":7.3,"ga1":6.6,"ga2":1.1,"ga3":0.6,"ebt":6.9},"2020":{"netSales":100.0,"cogs":72.6,"gp1":27.4,"smTotal":14.4,"gp2":5.6,"ga1":7.4,"ga2":1.4,"ga3":0.3,"ebt":4.4},"2021":{"netSales":100.0,"cogs":72.5,"gp1":27.5,"sm3":3.2,"smTotal":13.4,"gp2":8.1,"ga1":6.1,"ga2":1.7,"ga3":0.8,"ebt":7.2},"2022":{"netSales":100.0,"cogs":74.7,"gp1":25.3,"sm3":2.8,"smTotal":13.0,"gp2":6.8,"ga1":5.5,"ga2":1.3,"ga3":1.0,"ebt":6.4},"2023":{"netSales":100.0,"cogs":72.7,"gp1":27.3,"sm3":3.1,"smTotal":13.5,"gp2":8.5,"ga1":5.3,"ga2":1.3,"ga3":0.2,"ebt":7.4},"2024":{"netSales":100.0,"cogs":71.4,"gp1":28.6,"sm3":3.5,"smTotal":14.9,"gp2":7.5,"ga1":6.1,"ga2":1.1,"ga3":0.6,"ebt":7.0}}},{"t":"HOKI","disp":"HOKI","cur":"IDR","full":"Buyung Poetra","region":"SEA","src":"full","y":{"2019":{"netSales":100.0,"cogs":85.9,"gp1":14.1,"gp2":9.0,"ga3":0.6,"ebt":8.4},"2020":{"netSales":100.0,"cogs":87.8,"gp1":12.2,"gp2":5.8,"ga3":1.4,"ebt":4.3},"2021":{"netSales":100.0,"cogs":87.9,"gp1":12.1,"gp2":3.9,"ga2":2.4,"ga3":0.4,"ebt":1.8},"2022":{"netSales":100.0,"cogs":89.8,"gp1":10.2,"gp2":1.9,"ga2":2.3,"ga3":0.4,"ebt":0.1},"2023":{"netSales":100.0,"cogs":92.0,"gp1":8.0,"gp2":0.7,"ga2":1.1,"ga3":0.2,"ebt":0.2},"2024":{"netSales":100.0,"cogs":92.0,"gp1":8.0,"gp2":0.9,"ga2":1.4,"ga3":0.2,"ebt":0.4}}},{"t":"ICBP","disp":"ICBP","cur":"IDR","full":"Indofood CBP","region":"SEA","src":"full","y":{"2019":{"netSales":100.0,"cogs":65.9,"gp1":34.1,"gp2":17.5,"ga2":0.2,"ga3":0.1,"ebt":17.6},"2020":{"netSales":100.0,"cogs":63.1,"gp1":36.9,"gp2":19.7,"ga2":2.0,"ga3":0.4,"ebt":21.4},"2021":{"netSales":100.0,"cogs":64.3,"gp1":35.7,"sm3":3.3,"gp2":20.6,"ga2":3.1,"ga3":0.1,"ebt":17.5},"2022":{"netSales":100.0,"cogs":66.4,"gp1":33.6,"sm3":3.3,"gp2":20.6,"ga2":9.2,"ga3":0.1,"ebt":11.6},"2023":{"netSales":100.0,"cogs":63.0,"gp1":37.0,"sm3":3.5,"gp2":21.2,"ga2":0.8,"ga3":3.6,"ebt":16.9},"2024":{"netSales":100.0,"cogs":63.0,"gp1":37.0,"sm3":3.4,"gp2":22.5,"ga2":4.5,"ga3":2.1,"ebt":15.8}}},{"t":"MYOR","disp":"MYOR","cur":"IDR","full":"Mayora Indah","region":"SEA","src":"full","y":{"2019":{"netSales":100.0,"cogs":68.4,"gp1":31.6,"smTotal":16.1,"gp2":12.7,"ga1":2.9,"ga2":1.2,"ga3":0.7,"ebt":10.8},"2020":{"netSales":100.0,"cogs":70.2,"gp1":29.8,"smTotal":15.4,"gp2":11.6,"ga1":2.9,"ga2":1.2,"ga3":0.6,"ebt":11.0},"2021":{"netSales":100.0,"cogs":75.2,"gp1":24.8,"sm3":13.0,"smTotal":16.3,"gp2":6.4,"ga1":2.2,"ga2":1.1,"ga3":0.3,"ebt":5.6},"2022":{"netSales":100.0,"cogs":77.7,"gp1":22.3,"sm3":8.6,"smTotal":12.1,"gp2":7.9,"ga1":2.3,"ga2":1.2,"ga3":1.4,"ebt":8.2},"2023":{"netSales":100.0,"cogs":73.3,"gp1":26.7,"sm3":8.1,"smTotal":10.7,"gp2":13.7,"ga1":2.4,"ga2":0.7,"ga3":0.0,"ebt":13.0},"2024":{"netSales":100.0,"cogs":77.0,"gp1":23.0,"sm3":7.1,"smTotal":9.8,"gp2":10.9,"ga1":2.4,"ga2":0.8,"ga3":0.7,"ebt":10.8}}},{"t":"ROTI","disp":"ROTI","cur":"IDR","full":"Nippon Indosari","region":"SEA","src":"full","y":{"2019":{"netSales":100.0,"cogs":45.8,"gp1":54.2,"gp2":10.4,"ga3":0.0,"ebt":10.4},"2020":{"netSales":100.0,"cogs":43.9,"gp1":56.1,"gp2":8.0,"ga3":3.0,"ebt":5.0},"2021":{"netSales":100.0,"cogs":45.6,"gp1":54.4,"sm3":6.9,"gp2":12.5,"ga2":0.9,"ga3":0.1,"ebt":11.5},"2022":{"netSales":100.0,"cogs":47.0,"gp1":53.0,"sm3":5.9,"gp2":16.1,"ga2":0.9,"ga3":0.6,"ebt":14.6},"2023":{"netSales":100.0,"cogs":46.0,"gp1":54.0,"sm3":5.5,"gp2":12.4,"ga2":1.2,"ga3":0.0,"ebt":11.2},"2024":{"netSales":100.0,"cogs":45.4,"gp1":54.6,"sm3":5.5,"gp2":13.0,"ga2":1.2,"ga3":0.1,"ebt":11.9}}},{"t":"SKLT","disp":"SKLT","cur":"IDR","full":"Sekar Laut","region":"SEA","src":"full","y":{"2019":{"netSales":100.0,"cogs":74.7,"gp1":25.3,"smTotal":10.5,"gp2":6.3,"ga1":8.4,"ga2":1.7,"ga3":0.2,"ebt":4.4},"2020":{"netSales":100.0,"cogs":73.4,"gp1":26.6,"smTotal":11.7,"gp2":6.0,"ga1":8.9,"ga2":1.5,"ga3":0.0,"ebt":4.4},"2021":{"netSales":100.0,"cogs":72.2,"gp1":27.8,"smTotal":13.1,"gp2":7.2,"ga1":7.5,"ga2":0.7,"ga3":0.9,"ebt":7.5},"2022":{"netSales":100.0,"cogs":73.5,"gp1":26.5,"smTotal":12.5,"gp2":5.7,"ga1":8.2,"ga2":0.4,"ga3":0.7,"ebt":6.0},"2023":{"netSales":100.0,"cogs":73.8,"gp1":26.2,"smTotal":12.1,"gp2":5.8,"ga1":8.3,"ga2":0.6,"ga3":0.2,"ebt":5.4},"2024":{"netSales":100.0,"cogs":74.6,"gp1":25.4,"smTotal":12.1,"gp2":6.1,"ga1":7.2,"ga2":0.3,"ga3":0.8,"ebt":6.6}}},{"t":"STTP","disp":"STTP","cur":"IDR","full":"Siantar Top","region":"SEA","src":"full","y":{"2019":{"netSales":100.0,"cogs":72.9,"gp1":27.1,"gp2":17.6,"ga3":0.3,"ebt":17.3},"2020":{"netSales":100.0,"cogs":72.2,"gp1":27.8,"gp2":19.5,"ga3":0.6,"ebt":20.1},"2021":{"netSales":100.0,"cogs":75.7,"gp1":24.3,"sm3":3.3,"gp2":14.8,"ga2":0.4,"ga3":2.9,"ebt":18.0},"2022":{"netSales":100.0,"cogs":79.1,"gp1":20.9,"sm3":3.0,"gp2":11.8,"ga2":0.6,"ga3":3.0,"ebt":15.3},"2023":{"netSales":100.0,"cogs":69.9,"gp1":30.1,"sm3":3.6,"gp2":20.4,"ga2":1.4,"ga3":1.4,"ebt":23.1},"2024":{"netSales":100.0,"cogs":68.5,"gp1":31.5,"sm3":3.8,"gp2":21.6,"ga2":2.4,"ga3":6.4,"ebt":30.4}}},{"t":"ULTJ","disp":"ULTJ","cur":"IDR","full":"Ultrajaya","region":"SEA","src":"full","y":{"2019":{"netSales":100.0,"cogs":62.4,"gp1":37.6,"gp2":20.3,"ga3":1.8,"ebt":22.1},"2020":{"netSales":100.0,"cogs":62.7,"gp1":37.3,"gp2":22.9,"ga3":1.0,"ebt":23.8},"2021":{"netSales":100.0,"cogs":64.1,"gp1":35.9,"sm3":4.6,"gp2":24.6,"ga2":1.2,"ga3":0.1,"ebt":23.3},"2022":{"netSales":100.0,"cogs":67.9,"gp1":32.1,"sm3":6.1,"gp2":17.0,"ga2":0.1,"ga3":0.3,"ebt":16.8},"2023":{"netSales":100.0,"cogs":67.6,"gp1":32.4,"sm3":5.6,"gp2":17.7,"ga2":0.3,"ga3":0.1,"ebt":18.2},"2024":{"netSales":100.0,"cogs":65.9,"gp1":34.1,"sm3":9.2,"gp2":16.3,"ga2":0.4,"ga3":0.2,"ebt":17.0}}},{"t":"300783.SZ","disp":"3 Squirrels","cur":"CNY","full":"Three Squirrels","region":"Greater China","src":"full","y":{"2019":{"netSales":100.0,"cogs":72.2,"gp1":27.8,"sm2":22.6,"sm4":0.5,"smTotal":24.9,"gp2":2.9,"ga1":1.7,"ga2":0.1,"ga3":0.1,"gaTotal":0.1,"ebt":3.0},"2020":{"netSales":100.0,"cogs":76.1,"gp1":23.9,"sm2":17.5,"sm4":0.5,"smTotal":19.9,"gp2":4.0,"ga1":2.3,"ga2":0.1,"ga3":0.0,"gaTotal":0.1,"ebt":4.1},"2021":{"netSales":100.0,"cogs":70.6,"gp1":29.4,"sm2":21.2,"sm4":0.6,"smTotal":24.6,"gp2":4.8,"ga1":2.9,"ga2":0.1,"ga3":0.9,"gaTotal":0.8,"ebt":5.6},"2022":{"netSales":100.0,"cogs":73.3,"gp1":26.7,"sm2":21.0,"sm4":0.5,"smTotal":24.3,"gp2":2.4,"ga1":3.9,"ga2":0.1,"ga3":0.4,"gaTotal":0.3,"ebt":2.7},"2023":{"netSales":100.0,"cogs":76.7,"gp1":23.3,"sm2":17.4,"sm4":0.4,"smTotal":19.4,"gp2":3.9,"ga1":3.2,"ga2":0.1,"ga3":0.6,"gaTotal":0.5,"ebt":4.4},"2024":{"netSales":100.0,"cogs":75.8,"gp1":24.2,"sm2":17.6,"sm4":0.3,"smTotal":19.7,"gp2":4.6,"ga1":2.1,"ga2":0.1,"ga3":0.6,"gaTotal":0.5,"ebt":5.1}}},{"t":"3799.HK","disp":"Dali","cur":"CNY","full":"Dali Foods","region":"Greater China","src":"full","y":{"2019":{"netSales":100.0,"cogs":60.3,"gp1":39.7,"sm2":17.2,"smTotal":15.6,"gp2":24.1,"ga1":2.6,"ga2":0.0,"ga3":0.0,"gaTotal":0.0,"ebt":24.1},"2020":{"netSales":100.0,"cogs":60.7,"gp1":39.3,"sm2":17.0,"smTotal":14.9,"gp2":24.4,"ga1":2.9,"ga2":0.0,"ga3":0.0,"gaTotal":0.0,"ebt":24.4},"2021":{"netSales":100.0,"cogs":63.4,"gp1":36.6,"smTotal":16.9,"gp2":19.7,"ga2":2.7,"ga3":0.0,"gaTotal":2.7,"ebt":22.4},"2022":{"netSales":100.0,"cogs":64.8,"gp1":35.2,"smTotal":18.4,"gp2":16.8,"ga2":3.5,"ga3":0.0,"gaTotal":3.5,"ebt":20.4}}},{"t":"1112.HK","disp":"H&H","cur":"CNY","full":"H&H International","region":"Greater China","src":"full","y":{"2019":{"netSales":100.0,"cogs":33.8,"gp1":66.2,"sm2":41.1,"sm4":2.3,"smTotal":48.0,"gp2":18.1,"ga1":5.8,"ga2":3.9,"ga3":0.1,"gaTotal":3.8,"ebt":14.3},"2020":{"netSales":100.0,"cogs":35.8,"gp1":64.2,"sm2":41.1,"sm4":1.7,"smTotal":47.4,"gp2":16.8,"ga1":6.1,"ga2":2.6,"ga3":0.1,"gaTotal":2.5,"ebt":14.3},"2021":{"netSales":100.0,"cogs":37.2,"gp1":62.8,"sm2":43.1,"sm4":4.8,"smTotal":52.9,"gp2":9.8,"ga1":6.0,"ga2":2.5,"ga3":0.0,"gaTotal":2.5,"ebt":7.4},"2022":{"netSales":100.0,"cogs":39.7,"gp1":60.3,"sm2":41.0,"sm4":3.0,"smTotal":47.9,"gp2":12.4,"ga1":5.7,"ga2":4.1,"ga3":0.2,"gaTotal":4.3,"ebt":8.1},"2023":{"netSales":100.0,"cogs":40.4,"gp1":59.6,"sm2":40.2,"sm4":2.4,"smTotal":47.2,"gp2":12.4,"ga1":6.1,"ga2":5.6,"ga3":0.1,"gaTotal":5.7,"ebt":6.7},"2024":{"netSales":100.0,"cogs":39.4,"gp1":60.6,"sm2":42.7,"sm4":4.5,"smTotal":51.9,"gp2":8.7,"ga1":6.0,"ga2":7.1,"ga3":0.2,"gaTotal":7.2,"ebt":1.5}}},{"t":"0322.HK","disp":"Master Kong","cur":"CNY","full":"Tingyi / Master Kong","region":"Greater China","src":"full","y":{"2019":{"netSales":100.0,"cogs":68.1,"gp1":31.9,"sm2":21.4,"sm4":1.0,"smTotal":22.9,"gp2":9.0,"ga1":3.8,"ga2":0.7,"ga3":0.4,"gaTotal":0.3,"ebt":8.7},"2020":{"netSales":100.0,"cogs":66.8,"gp1":33.2,"sm2":20.9,"sm4":0.7,"smTotal":23.2,"gp2":10.0,"ga1":3.4,"ga2":0.5,"ga3":0.2,"gaTotal":0.3,"ebt":9.7},"2021":{"netSales":100.0,"cogs":69.6,"gp1":30.4,"sm2":21.2,"sm4":0.3,"smTotal":22.4,"gp2":8.0,"ga1":3.3,"ga2":0.3,"ga3":0.2,"gaTotal":0.1,"ebt":7.8},"2022":{"netSales":100.0,"cogs":70.9,"gp1":29.1,"sm2":21.4,"sm4":1.0,"smTotal":23.4,"gp2":5.7,"ga1":3.0,"ga2":0.6,"ga3":0.2,"gaTotal":0.4,"ebt":5.3},"2023":{"netSales":100.0,"cogs":69.6,"gp1":30.4,"sm2":22.2,"sm4":0.3,"smTotal":24.0,"gp2":6.4,"ga1":3.3,"ga2":0.6,"ga3":0.2,"gaTotal":0.5,"ebt":5.9},"2024":{"netSales":100.0,"cogs":66.9,"gp1":33.1,"sm2":22.4,"sm4":0.3,"smTotal":25.2,"gp2":7.9,"ga1":3.5,"ga2":0.5,"ga3":0.2,"gaTotal":0.4,"ebt":7.5}}},{"t":"2319.HK","disp":"Mengniu","cur":"CNY","full":"China Mengniu Dairy","region":"Greater China","src":"full","y":{"2019":{"netSales":100.0,"cogs":62.4,"gp1":37.6,"sm2":27.3,"sm4":5.0,"smTotal":31.3,"gp2":6.3,"ga1":4.2,"ga2":0.6,"ga3":0.2,"gaTotal":0.8,"ebt":7.1},"2020":{"netSales":100.0,"cogs":62.3,"gp1":37.7,"sm2":28.3,"sm4":2.6,"smTotal":33.4,"gp2":4.2,"ga1":4.1,"ga2":0.7,"ga3":0.6,"gaTotal":1.2,"ebt":5.5},"2021":{"netSales":100.0,"cogs":63.3,"gp1":36.7,"sm2":26.6,"sm4":2.4,"smTotal":31.2,"gp2":5.5,"ga1":4.0,"ga2":0.3,"ga3":0.8,"gaTotal":1.1,"ebt":6.7},"2022":{"netSales":100.0,"cogs":64.7,"gp1":35.3,"sm2":24.1,"sm4":2.4,"smTotal":29.0,"gp2":6.3,"ga1":4.8,"ga2":0.3,"ga3":0.4,"gaTotal":0.7,"ebt":7.0},"2023":{"netSales":100.0,"cogs":62.8,"gp1":37.2,"sm2":25.5,"sm4":1.7,"smTotal":31.0,"gp2":6.2,"ga1":4.8,"ga2":0.1,"ga3":0.1,"gaTotal":0.2,"ebt":6.4},"2024":{"netSales":100.0,"cogs":60.4,"gp1":39.6,"sm2":26.0,"sm4":7.8,"smTotal":37.4,"gp2":2.2,"ga1":4.8,"ga2":0.1,"ga3":1.0,"gaTotal":1.0,"ebt":1.1}}},{"t":"0220.HK","disp":"Uni-Pres CN","cur":"CNY","full":"Uni-President China","region":"Greater China","src":"full","y":{"2019":{"netSales":100.0,"cogs":64.0,"gp1":36.0,"sm2":24.4,"sm4":0.5,"smTotal":27.8,"gp2":8.2,"ga1":4.6,"ga2":0.7,"ga3":0.1,"gaTotal":0.7,"ebt":9.0},"2020":{"netSales":100.0,"cogs":64.6,"gp1":35.4,"sm2":23.5,"sm4":0.5,"smTotal":26.2,"gp2":9.3,"ga1":4.2,"ga2":0.8,"ga3":0.2,"gaTotal":1.0,"ebt":10.2},"2021":{"netSales":100.0,"cogs":67.4,"gp1":32.6,"smTotal":25.0,"gp2":7.6,"ga2":0.8,"ga3":0.1,"gaTotal":0.9,"ebt":8.5},"2022":{"netSales":100.0,"cogs":71.0,"gp1":29.0,"smTotal":23.7,"gp2":5.3,"ga2":0.7,"ga3":0.1,"gaTotal":0.8,"ebt":6.1},"2023":{"netSales":100.0,"cogs":69.5,"gp1":30.5,"sm2":22.0,"sm3":4.6,"sm4":0.5,"smTotal":23.5,"gp2":7.0,"ga1":3.7,"ga2":0.7,"ga3":0.2,"gaTotal":0.9,"ebt":7.8},"2024":{"netSales":100.0,"cogs":67.5,"gp1":32.5,"sm2":22.2,"sm3":4.9,"sm4":0.4,"smTotal":25.1,"gp2":7.4,"ga1":3.7,"ga2":0.6,"ga3":0.2,"gaTotal":0.8,"ebt":8.2}}},{"t":"0345.HK","disp":"Vitasoy","cur":"HKD","full":"Vitasoy","region":"Greater China","src":"full","y":{"2019":{"netSales":100.0,"cogs":46.3,"gp1":53.7,"sm2":28.0,"sm4":4.8,"smTotal":40.7,"gp2":13.0,"ga1":8.4,"ga2":0.0,"ga3":0.3,"gaTotal":0.3,"ebt":12.7},"2020":{"netSales":100.0,"cogs":46.7,"gp1":53.3,"sm2":29.2,"sm4":5.0,"smTotal":43.5,"gp2":9.8,"ga1":9.9,"ga2":0.2,"ga3":0.2,"gaTotal":0.4,"ebt":9.4},"2021":{"netSales":100.0,"cogs":47.4,"gp1":52.6,"sm2":28.1,"sm4":5.3,"smTotal":41.4,"gp2":11.2,"ga1":9.6,"ga2":0.2,"ga3":0.9,"gaTotal":1.0,"ebt":10.2},"2022":{"netSales":100.0,"cogs":52.8,"gp1":47.2,"sm2":34.1,"sm4":7.6,"smTotal":50.5,"gp2":3.3,"ga1":10.8,"ga2":0.4,"ga3":0.0,"gaTotal":0.4,"ebt":3.6},"2023":{"netSales":100.0,"cogs":52.5,"gp1":47.5,"sm2":31.9,"sm4":5.1,"smTotal":45.9,"gp2":1.6,"ga1":10.6,"ga2":0.5,"ga3":0.4,"gaTotal":0.9,"ebt":0.8},"2024":{"netSales":100.0,"cogs":50.0,"gp1":50.0,"sm2":31.8,"sm4":5.4,"smTotal":47.1,"gp2":3.0,"ga1":11.3,"ga2":0.5,"ga3":0.4,"gaTotal":0.9,"ebt":2.1}}},{"t":"0151.HK","disp":"Want Want","cur":"USD","full":"Want Want China","region":"Greater China","src":"full","y":{"2019":{"netSales":100.0,"cogs":54.6,"gp1":45.4,"sm2":14.4,"smTotal":23.2,"gp2":22.1,"ga1":11.3,"ga2":1.1,"ga3":0.0,"gaTotal":1.1,"ebt":23.2},"2020":{"netSales":100.0,"cogs":52.0,"gp1":48.0,"sm2":13.9,"smTotal":24.1,"gp2":23.9,"ga1":12.4,"ga2":1.2,"ga3":0.0,"gaTotal":1.2,"ebt":25.1},"2021":{"netSales":100.0,"cogs":51.8,"gp1":48.2,"sm2":12.6,"smTotal":22.1,"gp2":26.1,"ga1":12.3,"ga2":1.2,"ga3":0.0,"gaTotal":1.2,"ebt":27.3},"2022":{"netSales":100.0,"cogs":55.2,"gp1":44.8,"smTotal":22.6,"gp2":22.2,"ga2":1.8,"ga3":0.0,"gaTotal":1.7,"ebt":23.9},"2023":{"netSales":100.0,"cogs":56.1,"gp1":43.9,"sm2":13.2,"sm3":5.8,"smTotal":22.8,"gp2":21.1,"ga1":12.4,"ga2":0.3,"ga3":0.0,"gaTotal":0.3,"ebt":20.8},"2024":{"netSales":100.0,"cogs":53.4,"gp1":46.6,"sm2":12.8,"sm3":6.4,"smTotal":22.8,"gp2":23.8,"ga1":12.9,"ga2":0.9,"ga3":0.0,"gaTotal":0.9,"ebt":22.9}}},{"t":"0288.HK","disp":"WH Group","cur":"USD","full":"WH Group","region":"Greater China","src":"full","y":{"2019":{"netSales":100.0,"cogs":78.3,"gp1":21.7,"sm2":8.5,"smTotal":13.3,"gp2":8.4,"ga1":3.4,"ga2":0.6,"ga3":0.7,"gaTotal":0.1,"ebt":8.5},"2020":{"netSales":100.0,"cogs":80.4,"gp1":19.6,"sm2":7.5,"smTotal":12.9,"gp2":6.8,"ga1":3.4,"ga2":0.5,"ga3":1.1,"gaTotal":1.6,"ebt":5.1},"2021":{"netSales":100.0,"cogs":81.7,"gp1":18.3,"smTotal":11.1,"gp2":7.2,"ga2":0.4,"ga3":0.6,"gaTotal":1.0,"ebt":6.2},"2022":{"netSales":100.0,"cogs":81.6,"gp1":18.4,"smTotal":11.0,"gp2":7.4,"ga2":0.5,"ga3":0.6,"gaTotal":0.1,"ebt":7.6},"2023":{"netSales":100.0,"cogs":80.5,"gp1":19.5,"smTotal":13.9,"gp2":5.6,"ga2":0.6,"ga3":0.9,"gaTotal":1.6,"ebt":4.0},"2024":{"netSales":100.0,"cogs":80.0,"gp1":20.0,"smTotal":10.8,"gp2":9.3,"ga2":0.6,"ga3":0.6,"gaTotal":0.0,"ebt":9.3}}},{"t":"600887.SH","disp":"Yili","cur":"CNY","full":"Inner Mongolia Yili","region":"Greater China","src":"full","y":{"2019":{"netSales":100.0,"cogs":62.7,"gp1":37.3,"sm2":23.4,"sm4":0.6,"smTotal":28.1,"gp2":9.2,"ga1":4.8,"ga2":0.0,"ga3":0.1,"gaTotal":0.1,"ebt":9.1},"2020":{"netSales":100.0,"cogs":64.0,"gp1":36.0,"sm2":22.3,"sm4":0.5,"smTotal":27.1,"gp2":8.9,"ga1":5.1,"ga2":0.2,"ga3":0.2,"gaTotal":0.4,"ebt":8.4},"2021":{"netSales":100.0,"cogs":69.4,"gp1":30.6,"sm2":17.5,"sm4":0.5,"smTotal":21.3,"gp2":9.3,"ga1":3.8,"ga2":0.0,"ga3":0.1,"gaTotal":0.1,"ebt":9.2},"2022":{"netSales":100.0,"cogs":67.7,"gp1":32.3,"sm2":18.7,"sm4":0.7,"smTotal":23.4,"gp2":8.9,"ga1":4.4,"ga2":0.2,"ga3":0.4,"gaTotal":0.2,"ebt":8.7},"2023":{"netSales":100.0,"cogs":67.4,"gp1":32.6,"sm2":17.9,"sm4":0.7,"smTotal":23.1,"gp2":9.4,"ga1":4.1,"ga2":0.1,"ga3":0.2,"gaTotal":0.1,"ebt":9.3},"2024":{"netSales":100.0,"cogs":66.1,"gp1":33.9,"sm2":19.0,"sm4":0.8,"smTotal":25.1,"gp2":8.8,"ga1":3.9,"ga2":0.5,"ga3":0.6,"gaTotal":0.0,"ebt":8.8}}},{"t":"ABF","disp":"ABF","cur":"GBP","full":"Associated British Foods","region":"Global","src":"cond","y":{"2021":{"netSales":100.0,"cogs":77.4,"gp1":22.6,"smTotal":16.2,"gp2":6.3,"gaTotal":1.1,"ebt":5.2},"2022":{"netSales":100.0,"cogs":77.8,"gp1":22.2,"smTotal":14.7,"gp2":7.5,"gaTotal":1.2,"ebt":6.3},"2023":{"netSales":100.0,"cogs":93.2,"gp1":6.8,"smTotal":0.3,"gp2":7.1,"gaTotal":0.3,"ebt":6.8},"2024":{"netSales":100.0,"cogs":90.9,"gp1":9.1,"smTotal":0.4,"gp2":9.5,"gaTotal":0.0,"ebt":9.6}}},{"t":"CPB","disp":"Campbell","cur":"USD","full":"Campbell Soup","region":"Global","src":"cond","y":{"2021":{"netSales":100.0,"cogs":66.8,"gp1":33.2,"smTotal":14.9,"gp2":18.2,"gaTotal":2.5,"ebt":15.8},"2022":{"netSales":100.0,"cogs":69.3,"gp1":30.7,"sm3":3.7,"smTotal":17.3,"gp2":13.5,"gaTotal":2.1,"ebt":11.4},"2023":{"netSales":100.0,"cogs":68.6,"gp1":31.4,"sm3":3.9,"smTotal":17.3,"gp2":14.0,"gaTotal":2.0,"ebt":12.1},"2024":{"netSales":100.0,"cogs":68.7,"gp1":31.3,"sm3":3.6,"smTotal":20.9,"gp2":10.4,"gaTotal":2.5,"ebt":7.9}}},{"t":"097950","disp":"CJ","cur":"KRW","full":"CJ CheilJedang","region":"Global","src":"cond","y":{"2021":{"netSales":100.0,"cogs":78.0,"gp1":22.0,"sm3":1.3,"smTotal":16.2,"gp2":5.8,"gaTotal":1.2,"ebt":4.6},"2022":{"netSales":100.0,"cogs":78.2,"gp1":21.8,"sm3":1.4,"smTotal":16.3,"gp2":5.5,"gaTotal":1.4,"ebt":4.1},"2023":{"netSales":100.0,"cogs":79.1,"gp1":20.9,"sm3":1.2,"smTotal":16.4,"gp2":4.5,"gaTotal":1.9,"ebt":2.5},"2024":{"netSales":100.0,"cogs":77.4,"gp1":22.6,"sm3":1.3,"smTotal":17.3,"gp2":5.3,"gaTotal":3.2,"ebt":2.1}}},{"t":"BN","disp":"Danone","cur":"EUR","full":"Danone","region":"Global","src":"cond","y":{"2021":{"netSales":100.0,"cogs":52.6,"gp1":47.4,"smTotal":33.7,"gp2":13.7,"gaTotal":3.1,"ebt":10.6},"2022":{"netSales":100.0,"cogs":53.9,"gp1":46.1,"smTotal":33.8,"gp2":12.2,"gaTotal":5.7,"ebt":6.5},"2023":{"netSales":100.0,"cogs":52.6,"gp1":47.4,"smTotal":34.7,"gp2":12.6,"gaTotal":6.4,"ebt":6.2},"2024":{"netSales":100.0,"cogs":50.3,"gp1":49.7,"smTotal":36.7,"gp2":13.0,"gaTotal":1.9,"ebt":11.1}}},{"t":"GIS","disp":"Gen Mills","cur":"USD","full":"General Mills","region":"Global","src":"cond","y":{"2021":{"netSales":100.0,"gp2":17.3,"gaTotal":1.6,"ebt":15.8},"2022":{"netSales":100.0,"cogs":66.3,"gp1":33.7,"sm3":3.6,"smTotal":16.0,"gp2":17.8,"gaTotal":0.3,"ebt":17.5},"2023":{"netSales":100.0,"cogs":67.4,"gp1":32.6,"sm3":4.0,"smTotal":15.5,"gp2":17.1,"gaTotal":1.5,"ebt":15.6},"2024":{"netSales":100.0,"cogs":65.0,"gp1":35.0,"sm3":4.2,"smTotal":17.7,"gp2":17.3,"gaTotal":2.0,"ebt":15.3}}},{"t":"K","disp":"Kellanova","cur":"USD","full":"Kellanova","region":"Global","src":"cond","y":{"2021":{"netSales":100.0,"cogs":67.4,"gp1":32.6,"sm3":4.6,"smTotal":19.2,"gp2":13.5,"gaTotal":1.1,"ebt":12.4},"2022":{"netSales":100.0,"cogs":69.8,"gp1":30.2,"sm3":4.3,"smTotal":20.9,"gp2":9.3,"gaTotal":2.1,"ebt":7.2},"2023":{"netSales":100.0,"cogs":67.3,"gp1":32.7,"sm3":4.8,"smTotal":21.6,"gp2":11.1,"gaTotal":3.1,"ebt":8.0},"2024":{"netSales":100.0,"cogs":63.1,"gp1":36.9,"sm3":4.9,"smTotal":20.6,"gp2":16.3,"gaTotal":3.2,"ebt":13.0}}},{"t":"KHC","disp":"Kraft Heinz","cur":"USD","full":"Kraft Heinz","region":"Global","src":"cond","y":{"2021":{"netSales":100.0,"cogs":66.6,"gp1":33.4,"sm3":4.0,"smTotal":20.1,"gp2":13.3,"gaTotal":6.7,"ebt":6.6},"2022":{"netSales":100.0,"cogs":68.9,"gp1":31.1,"sm3":3.6,"smTotal":17.4,"gp2":13.7,"gaTotal":2.5,"ebt":11.2},"2023":{"netSales":100.0,"cogs":66.3,"gp1":33.7,"sm3":4.0,"smTotal":16.6,"gp2":17.2,"gaTotal":3.5,"ebt":13.6},"2024":{"netSales":100.0,"cogs":65.3,"gp1":34.7,"sm3":4.0,"smTotal":28.2,"gp2":6.5,"gaTotal":3.2,"ebt":3.3}}},{"t":"MDLZ","disp":"Mondelez","cur":"USD","full":"Mondelez","region":"Global","src":"cond","y":{"2021":{"netSales":100.0,"cogs":60.8,"gp1":39.2,"sm3":5.4,"smTotal":21.8,"gp2":17.4,"gaTotal":1.8,"ebt":19.2},"2022":{"netSales":100.0,"cogs":64.1,"gp1":35.9,"sm3":5.3,"smTotal":20.9,"gp2":15.0,"gaTotal":3.6,"ebt":11.4},"2023":{"netSales":100.0,"cogs":61.8,"gp1":38.2,"sm3":5.7,"smTotal":22.4,"gp2":15.8,"gaTotal":2.3,"ebt":18.1},"2024":{"netSales":100.0,"cogs":60.9,"gp1":39.1,"sm3":5.8,"smTotal":21.5,"gp2":17.7,"gaTotal":0.9,"ebt":16.7}}},{"t":"NESN","disp":"Nestle","cur":"CHF","full":"Nestle","region":"Global","src":"cond","y":{"2021":{"netSales":100.0,"cogs":52.0,"gp1":48.0,"smTotal":31.3,"gp2":16.7,"gaTotal":5.5,"ebt":22.2},"2022":{"netSales":100.0,"cogs":54.6,"gp1":45.4,"smTotal":28.9,"gp2":16.5,"gaTotal":3.5,"ebt":13.0},"2023":{"netSales":100.0,"cogs":53.9,"gp1":46.1,"smTotal":29.3,"gp2":16.8,"gaTotal":2.0,"ebt":14.8},"2024":{"netSales":100.0,"cogs":53.1,"gp1":46.9,"smTotal":30.0,"gp2":17.0,"gaTotal":1.2,"ebt":15.8}}},{"t":"PEP","disp":"PepsiCo","cur":"USD","full":"PepsiCo","region":"Global","src":"cond","y":{"2021":{"netSales":100.0,"cogs":46.6,"gp1":53.4,"smTotal":38.5,"gp2":14.9,"gaTotal":2.6,"ebt":12.4},"2022":{"netSales":100.0,"cogs":46.7,"gp1":53.3,"smTotal":39.1,"gp2":14.2,"gaTotal":1.9,"ebt":12.4},"2023":{"netSales":100.0,"cogs":45.6,"gp1":54.4,"smTotal":39.1,"gp2":15.3,"gaTotal":2.8,"ebt":12.5},"2024":{"netSales":100.0,"cogs":45.1,"gp1":54.9,"smTotal":38.7,"gp2":16.2,"gaTotal":3.2,"ebt":13.0}}},{"t":"1216","disp":"Uni-Pres TW","cur":"TWD","full":"Uni-President Enterprises","region":"Global","src":"cond","y":{"2021":{"netSales":100.0,"cogs":67.0,"gp1":33.0,"smTotal":27.0,"gp2":6.0,"gaTotal":1.7,"ebt":7.7},"2022":{"netSales":100.0,"cogs":68.1,"gp1":31.9,"smTotal":26.4,"gp2":5.5,"gaTotal":1.2,"ebt":6.7},"2023":{"netSales":100.0,"cogs":67.7,"gp1":32.3,"smTotal":27.4,"gp2":4.9,"gaTotal":3.5,"ebt":8.4},"2024":{"netSales":100.0,"cogs":67.3,"gp1":32.7,"smTotal":27.6,"gp2":5.1,"gaTotal":1.3,"ebt":6.4}}},{"t":"UL","disp":"Unilever","cur":"EUR","full":"Unilever","region":"Global","src":"cond","y":{"2021":{"netSales":100.0,"cogs":57.7,"gp1":42.3,"smTotal":23.9,"gp2":18.4,"gaTotal":2.1,"ebt":16.3},"2022":{"netSales":100.0,"cogs":59.8,"gp1":40.2,"smTotal":24.4,"gp2":15.8,"gaTotal":1.4,"ebt":17.2},"2023":{"netSales":100.0,"cogs":56.5,"gp1":43.5,"smTotal":25.6,"gp2":17.9,"gaTotal":1.3,"ebt":16.7},"2024":{"netSales":100.0,"cogs":53.3,"gp1":46.7,"smTotal":27.1,"gp2":19.6,"gaTotal":3.6,"ebt":16.0}}},{"t":"URC","disp":"URC","cur":"PHP","full":"Universal Robina","region":"Global","src":"cond","y":{"2021":{"netSales":100.0,"cogs":71.7,"gp1":28.3,"sm3":6.1,"smTotal":17.4,"gp2":10.9,"gaTotal":1.6,"ebt":12.6},"2022":{"netSales":100.0,"cogs":74.1,"gp1":25.9,"sm3":4.8,"smTotal":15.6,"gp2":10.3,"gaTotal":1.5,"ebt":11.8},"2023":{"netSales":100.0,"cogs":72.8,"gp1":27.2,"sm3":5.0,"smTotal":16.3,"gp2":11.0,"gaTotal":0.9,"ebt":10.0},"2024":{"netSales":100.0,"cogs":72.7,"gp1":27.3,"sm3":5.6,"smTotal":17.1,"gp2":10.2,"gaTotal":0.4,"ebt":9.9}}},{"t":"F34","disp":"Wilmar","cur":"USD","full":"Wilmar International","region":"Global","src":"cond","y":{"2021":{"netSales":100.0,"cogs":89.1,"gp1":10.9,"smTotal":6.7,"gp2":4.2,"gaTotal":0.0,"ebt":4.2},"2022":{"netSales":100.0,"cogs":91.1,"gp1":8.9,"smTotal":4.6,"gp2":4.3,"gaTotal":0.1,"ebt":4.2},"2023":{"netSales":100.0,"cogs":92.2,"gp1":7.8,"smTotal":4.6,"gp2":3.2,"gaTotal":0.3,"ebt":2.9},"2024":{"netSales":100.0,"cogs":92.3,"gp1":7.7,"smTotal":4.4,"gp2":3.3,"gaTotal":0.7,"ebt":2.6}}}];
+    // Simplified normalized line set: grouped, with low-value / unallocated lines removed.
     const NABATI_LINES = [
       { group: "rev" },
-      { key: "grossSales" },
-      { key: "contraRev", cost: true },
       { key: "netSales", sub: true, pctProfit: true },
       { group: "gp" },
       { key: "cogs", cost: true },
@@ -1977,114 +1984,98 @@
       { key: "sm1", cost: true },
       { key: "sm2", cost: true },
       { key: "sm3", cost: true },
-      { key: "sm3cr", cost: true },
       { key: "sm4", cost: true },
-      { key: "unallocSelling", cost: true },
-      { key: "totalSM", sub: true, cost: true },
+      { key: "smTotal", sub: true, cost: true },
+      { group: "op" },
       { key: "gp2", sub: true, pctProfit: true },
       { group: "ga" },
       { key: "ga1", cost: true },
       { key: "ga2", cost: true },
       { key: "ga3", cost: true },
-      { key: "unallocGA", cost: true },
-      { key: "unallocSGA", cost: true },
-      { group: "op" },
-      { key: "ebit", sub: true, pctProfit: true },
-      { group: "below" },
-      { key: "otherOp" },
-      { key: "finIncome" },
-      { key: "finCost", cost: true },
-      { key: "assoc" },
-      { key: "ebt", sub: true, pctProfit: true },
-      { key: "tax", cost: true },
-      { key: "netIncome", sub: true, pctProfit: true }
+      { key: "gaTotal", sub: true, cost: true },
+      { group: "pre" },
+      { key: "ebt", sub: true, pctProfit: true }
     ];
 
-    // Build one company's normalized P&L per year from the 40-company dataset.
-    // Only Net Sales and EBIT are derivable (and only for FY2019 & FY2024).
-    function nabatiCompanyCol(c, y) {
-      const out = {}; NABATI_LINES.forEach(l => { if (l.key) out[l.key] = { v: null, pct: null }; });
-      let rev = null, ebitM = null;
-      if (y === "2019") { rev = c.rev2019; ebitM = c.ebitMargin2019; }
-      else if (y === "2024") { rev = c.rev2024; ebitM = c.ebitMargin2024; }
-      if (rev != null) {
-        out.netSales = { v: rev, pct: 100 };
-        if (ebitM != null) out.ebit = { v: rev * ebitM / 100, pct: ebitM };
-      }
-      return out;
-    }
-
-    function nabatiBaselineCol() {
-      const out = {}; const ns = NABATI_BASELINE.netSales;
+    // Nabati baseline as % of Net Sales (only disclosed lines).
+    function nabatiBaselinePct() {
+      const ns = NABATI_BASELINE.netSales, out = {};
       NABATI_LINES.forEach(l => {
         if (!l.key) return;
         const v = NABATI_BASELINE[l.key];
-        out[l.key] = (v == null) ? { v: null, pct: null } : { v, pct: l.key === "netSales" ? 100 : v / ns * 100 };
+        out[l.key] = (v == null) ? null : (l.key === "netSales" ? 100 : v / ns * 100);
       });
       return out;
     }
 
-    window.setNabatiCompany = function(id) { state.nabatiCompany = Number(id); renderNabatiPnL(); };
+    window.setNabatiCompany = function(ticker) { state.nabatiCompany = ticker; renderNabatiPnL(); };
     window.setNabatiBaseYear = function(y) { state.nabatiBaseYear = y; renderNabatiPnL(); };
 
     function renderNabatiPnL() {
       const tableEl = document.getElementById("nabatiTable");
-      const compSel = document.getElementById("nabatiCompany");
+      const chipsEl = document.getElementById("nabatiChips");
       const yrSel = document.getElementById("nabatiBaseYear");
-      if (!tableEl || !compSel || !yrSel) return;
+      if (!tableEl || !chipsEl || !yrSel) return;
 
-      const company = COMPANIES_DATA.find(c => c.id === Number(state.nabatiCompany)) || COMPANIES_DATA[0];
+      let company = NABATI_COMPANIES.find(c => c.t === state.nabatiCompany) || NABATI_COMPANIES[0];
+      state.nabatiCompany = company.t;
 
-      // Controls
-      compSel.innerHTML = COMPANIES_DATA.map(c =>
-        `<option value="${c.id}" ${c.id === company.id ? "selected" : ""}>${c.name} (${c.ticker})</option>`).join("");
+      // Nabati baseline year dropdown (spotlights the matching company-year column).
       yrSel.innerHTML = NABATI_YEARS.map(y =>
         `<option value="${y}" ${y === state.nabatiBaseYear ? "selected" : ""}>FY${y}</option>`).join("");
 
-      const unit = `${company.currency} ${company.unit}`;
-      const baseCol = nabatiBaselineCol();
-      const cols = {}; NABATI_YEARS.forEach(y => { cols[y] = nabatiCompanyCol(company, y); });
+      // Company-model chips, grouped by region.
+      chipsEl.innerHTML = ["SEA", "Greater China", "Global"].map(reg => {
+        const members = NABATI_COMPANIES.filter(c => c.region === reg);
+        if (!members.length) return "";
+        const rc = NABATI_REGION[reg];
+        const chips = members.map(c => {
+          const active = c.t === company.t;
+          return `<button type="button" role="radio" aria-checked="${active}" title="${c.full} (${c.t})"` +
+            ` onclick="setNabatiCompany('${c.t}')" class="np-chip${active ? " is-active" : ""}" style="--np-accent:${rc.hex}">` +
+            `<span class="np-dot"></span>${c.disp}<span class="np-cur">${c.cur}</span></button>`;
+        }).join("");
+        return `<div class="np-chip-group"><span class="np-chip-region">${t("np.r." + rc.key)}</span>${chips}</div>`;
+      }).join("");
 
-      const fmtVal = (v, rp) => v == null ? "" : (rp ? "Rp " : "") + Number(v).toLocaleString("en-US", { minimumFractionDigits: rp ? 1 : 2, maximumFractionDigits: rp ? 1 : 2 });
+      const baseYear = state.nabatiBaseYear;
+      const basePct = nabatiBaselinePct();
       const fmtPct = p => p == null ? "" : p.toFixed(1) + "%";
+      const fmtRp = v => v == null ? "" : "Rp " + Number(v).toLocaleString("en-US", { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + " bn";
 
-      const cell = (data, line, rp, compareTo) => {
-        if (!data || data.v == null) return `<td class="num np-cell text-slate-600"></td>`;
-        let pctCls = "text-slate-400";
-        if (compareTo != null && data.pct != null && line.key !== "netSales") {
-          const better = line.pctProfit ? data.pct > compareTo : data.pct < compareTo;
-          if (Math.abs(data.pct - compareTo) >= 0.05) pctCls = better ? "text-emerald-400" : "text-rose-400";
-        }
-        const pctHtml = data.pct == null ? "" : `<div class="np-pct ${compareTo != null ? pctCls : "text-slate-400"}">${fmtPct(data.pct)}</div>`;
-        return `<td class="num np-cell text-slate-200">${fmtVal(data.v, rp)}${pctHtml}</td>`;
-      };
-
-      const compLabel = `${company.name.replace(/^PT\s+/i, "")} &middot; ${unit}`;
       const head = `<thead>
         <tr class="bg-slate-900/95 text-slate-400 border-b border-slate-800">
           <th rowspan="2" class="align-bottom">${t("np.thLine")}</th>
           <th class="num">${t("np.thNabati")}</th>
-          <th class="num" colspan="6">${compLabel}</th>
+          <th class="num" colspan="6">${company.full} &middot; ${company.cur} &middot; % Net Sales</th>
         </tr>
         <tr class="bg-slate-900/95 text-slate-500 border-b border-slate-800">
-          <th class="num normal-case font-normal text-[9px]">Rp bn &middot; FY${state.nabatiBaseYear}</th>
-          ${NABATI_YEARS.map(y => `<th class="num font-mono ${y === state.nabatiBaseYear ? "np-focus text-indigo-300" : ""}">${y}</th>`).join("")}
+          <th class="num normal-case font-normal text-[9px]">% NS &middot; Rp bn</th>
+          ${NABATI_YEARS.map(y => `<th class="num font-mono ${y === baseYear ? "np-focus text-indigo-300" : ""}">${y}</th>`).join("")}
         </tr>
       </thead>`;
 
       const body = "<tbody>" + NABATI_LINES.map(line => {
-        if (line.group) {
-          return `<tr class="np-group"><td colspan="8" class="text-slate-400">${t("np.g." + line.group)}</td></tr>`;
-        }
-        const nb = baseCol[line.key];
-        const yearCells = NABATI_YEARS.map(y =>
-          cell(cols[y][line.key], line, false, nb && nb.pct != null ? nb.pct : null) +
-          ""
-        ).map((h, i) => h.replace('class="num np-cell', `class="num np-cell ${NABATI_YEARS[i] === state.nabatiBaseYear ? "np-focus" : ""}`)).join("");
+        if (line.group) return `<tr class="np-group"><td colspan="8" class="text-slate-400">${t("np.g." + line.group)}</td></tr>`;
+        const nb = basePct[line.key];
+        const nbHtml = nb == null
+          ? `<td class="num np-cell text-slate-600"></td>`
+          : `<td class="num np-cell text-slate-200">${fmtPct(nb)}<div class="np-sub2 text-slate-500">${fmtRp(NABATI_BASELINE[line.key])}</div></td>`;
+        const yearCells = NABATI_YEARS.map(y => {
+          const focusCls = y === baseYear ? " np-focus" : "";
+          const yd = company.y[y];
+          const p = yd ? yd[line.key] : undefined;
+          if (p == null) return `<td class="num np-cell text-slate-600${focusCls}"></td>`;
+          let cls = "text-slate-200";
+          if (nb != null && line.key !== "netSales" && Math.abs(p - nb) >= 0.05) {
+            const better = line.pctProfit ? p > nb : p < nb;
+            cls = better ? "text-emerald-400" : "text-rose-400";
+          }
+          return `<td class="num np-cell${focusCls}"><span class="${cls}">${fmtPct(p)}</span></td>`;
+        }).join("");
         return `<tr class="${line.sub ? "np-sub bg-slate-900/40" : ""}">
           <td class="${line.sub ? "text-white" : "text-slate-300"}">${t("np.l." + line.key)}</td>
-          ${cell(nb, line, true, null)}
-          ${yearCells}</tr>`;
+          ${nbHtml}${yearCells}</tr>`;
       }).join("") + "</tbody>";
 
       tableEl.innerHTML = head + body;
