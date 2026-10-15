@@ -205,8 +205,8 @@
     #nabatiTable td.np-cell .np-pct { font-size: 9px; opacity: .72; }
     #nabatiTable td.np-cell .np-sub2 { font-size: 9px; font-weight: 500; margin-top: 1px; }
     #nabatiTable .np-focus { background: rgba(99,102,241,.1); }
-    /* Dual cell: nominal amount on the left, % on the right */
-    #nabatiTable td.np-dual { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+    /* Dual cell: nominal amount on the left, % on the right (inner flex keeps the td a table-cell) */
+    #nabatiTable td.np-dual .np-dualwrap { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
     #nabatiTable td.np-dual .np-amt { font-size: 9px; font-weight: 500; opacity: .6; letter-spacing: -.01em; }
     /* Δ vs Nabati: dedicated comparison column, amber-tinted so it reads as "the comparison" */
     #nabatiTable .np-delta { font-weight: 700; background: rgba(245,158,11,.10); border-left: 2px solid rgba(245,158,11,.55); }
@@ -2126,7 +2126,6 @@
       const baseYear = state.nabatiBaseYear;
       const basePct = nabatiBaselinePct(baseYear);
       const compBaseYd = company.y[baseYear] || null;
-      const compBaseNom = (company.n && company.n[baseYear]) || null;
       const fmtPct = p => p == null ? "" : p.toFixed(1) + "%";
       const fmtPp  = d => (d > 0 ? "+" : d < 0 ? "−" : "") + Math.abs(d).toFixed(1) + " pp";
       // Green when the line is better than Nabati (profit higher / cost lower).
@@ -2156,19 +2155,19 @@
         let nbHtml = `<td class="num np-cell text-slate-600"></td>`;
         if (nb != null) {
           const amt = fmtMoneyCompact(NABATI_BASELINE[baseYear][line.key] * 1e9, "Rp");
-          nbHtml = `<td class="num np-cell np-dual text-slate-200"><span class="np-amt text-slate-500">${amt}</span><span>${fmtPct(nb)}</span></td>`;
+          nbHtml = `<td class="num np-cell np-dual text-slate-200"><div class="np-dualwrap"><span class="np-amt text-slate-500">${amt}</span><span>${fmtPct(nb)}</span></div></td>`;
         }
-        // Company year cells; spotlight (baseline) year also shows nominal.
+        // Company year cells: nominal (own currency) left, % right — every year.
         const yearCells = NABATI_YEARS.map(y => {
-          const isFocus = y === baseYear;
-          const focusCls = isFocus ? " np-focus" : "";
+          const focusCls = y === baseYear ? " np-focus" : "";
           const yd = company.y[y];
           const p = yd ? yd[line.key] : undefined;
           if (p == null) return `<td class="num np-cell text-slate-600${focusCls}"></td>`;
           const valSpan = `<span class="${betterCls(line, p, nb)}">${fmtPct(p)}</span>`;
-          if (isFocus && compBaseNom && compBaseNom[line.key] != null) {
-            const amt = fmtMoneyCompact(compBaseNom[line.key] * 1e6, company.cur);
-            return `<td class="num np-cell np-dual${focusCls}"><span class="np-amt text-slate-500">${amt}</span>${valSpan}</td>`;
+          const nom = (company.n && company.n[y]) ? company.n[y][line.key] : null;
+          if (nom != null) {
+            const amt = fmtMoneyCompact(nom * 1e6, company.cur);
+            return `<td class="num np-cell np-dual${focusCls}"><div class="np-dualwrap"><span class="np-amt text-slate-500">${amt}</span>${valSpan}</div></td>`;
           }
           return `<td class="num np-cell${focusCls}">${valSpan}</td>`;
         }).join("");
