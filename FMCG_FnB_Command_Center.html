@@ -182,6 +182,17 @@
     }
     .bracket-filter-card.is-muted { opacity: 0.4; }
     .bracket-filter-card.is-muted:hover { opacity: 0.75; }
+
+    /* Bracket Story band (theme ranking + per-year magic-word matrix) */
+    .bs-cols { display: grid; grid-template-columns: 340px 1fr; gap: 20px; align-items: start; }
+    @media (max-width: 1100px) { .bs-cols { grid-template-columns: 1fr; } }
+    .bs-matrix-row { display: grid; grid-template-columns: 136px repeat(6, minmax(0, 1fr)); gap: 5px; align-items: stretch; }
+    .bs-row-hidden { display: none; }
+    .bs-cell { border-radius: 7px; padding: 7px 4px; text-align: center; border: 1px solid; font-size: 11px; font-weight: 700; }
+    .bs-cell.is-miss { opacity: 0.4; }
+    .bs-themebar { position: relative; height: 30px; border-radius: 7px; overflow: hidden; }
+    .bs-themefill { height: 100%; display: flex; align-items: center; gap: 5px; padding: 0 9px; border-radius: 7px; min-width: 0; }
+    .bs-matrix-scroll { overflow-x: auto; }
   </style>
 </head>
 <body class="antialiased selection:bg-indigo-500 selection:text-white min-h-screen flex flex-col">
@@ -391,6 +402,11 @@
           </div>
         </div>
       </div>
+    </section>
+
+    <!-- SECTION 1B: BRACKET STORY (per-bracket theme ranking + per-year "magic words") -->
+    <section id="bracketStorySection">
+      <div id="bracketStoryInner"></div>
     </section>
 
     <!-- SECTION 2: INTERACTIVE ENTITY INSPECTOR (P&L BRIDGE + KANTAR CRP + 6Y ROLLING AUDIT) -->
@@ -816,7 +832,27 @@
         "arch.margin": "Margin Defender",
         "arch.volume": "Volume Driver",
         "arch.stagnating": "Stagnating Staple",
-        "arch.transform": "Transformation Seeker"
+        "arch.transform": "Transformation Seeker",
+        "story.hint": "Press a Bracket above to see its most-discussed themes and year-by-year execution trail.",
+        "story.empty": "No companies in this bracket for the active cohort.",
+        "story.themesTitle": "Most-discussed themes",
+        "story.matrixTitle": "How each company moved, year by year",
+        "story.matrixTop": "shown",
+        "story.sortedBy": "sorted by dominant theme",
+        "story.readGuide": "Read across a row for each company's storyline; cell colour = theme. Faded cells = milestone not met.",
+        "story.showAll": "Show all",
+        "story.showLess": "Show less",
+        "story.exec": "Execution",
+        "story.companies": "companies",
+        "story.w.growth": "Growth",
+        "story.w.divest": "Divest",
+        "story.w.pricing": "Pricing",
+        "story.w.innovate": "Innovate",
+        "story.w.channel": "Channel",
+        "story.w.overseas": "Overseas",
+        "story.w.capacity": "Capacity",
+        "story.w.dividend": "Dividend",
+        "story.w.margin": "Margin"
       },
       id: {
         "meta.title": "Pusat Komando Empiris FMCG F&B Global & APAC (FY2019–FY2026)",
@@ -956,7 +992,27 @@
         "arch.margin": "Margin Defender",
         "arch.volume": "Volume Driver",
         "arch.stagnating": "Stagnating Staple",
-        "arch.transform": "Transformation Seeker"
+        "arch.transform": "Transformation Seeker",
+        "story.hint": "Tekan sebuah Bracket di atas untuk melihat tema yang paling dibahas & jejak eksekusi per tahun.",
+        "story.empty": "Tidak ada emiten pada bracket ini untuk cohort aktif.",
+        "story.themesTitle": "Tema paling dibicarakan",
+        "story.matrixTitle": "Bagaimana tiap emiten bergerak per tahun",
+        "story.matrixTop": "ditampilkan",
+        "story.sortedBy": "diurutkan per tema dominan",
+        "story.readGuide": "Baca per baris = jalan cerita emiten; warna sel = tema. Sel pudar = milestone tak tercapai.",
+        "story.showAll": "Tampilkan semua",
+        "story.showLess": "Tampilkan lebih sedikit",
+        "story.exec": "Eksekusi",
+        "story.companies": "emiten",
+        "story.w.growth": "Tumbuh",
+        "story.w.divest": "Divestasi",
+        "story.w.pricing": "Pricing",
+        "story.w.innovate": "Inovasi",
+        "story.w.channel": "Channel",
+        "story.w.overseas": "Ekspor",
+        "story.w.capacity": "Kapasitas",
+        "story.w.dividend": "Dividen",
+        "story.w.margin": "Margin"
       }
     };
 
@@ -1180,6 +1236,7 @@
       scatterXField: "cagr5y",
       scatterColorBy: "cohort",
       scatterBracket: "ALL",
+      storyExpanded: false,
       barMetricField: "cagr5y",
       searchQuery: "",
       finBracket: "ALL",
@@ -1331,8 +1388,186 @@
     // Toggle filter: press a bracket to show only its entities; press again to show all.
     window.toggleScatterBracket = function(bracket) {
       state.scatterBracket = (state.scatterBracket === bracket) ? "ALL" : bracket;
+      state.storyExpanded = false;
       renderCharts();
     };
+
+    // ============================================================================
+    // BRACKET STORY — theme ranking + per-year "magic words"
+    // Each outcome is mapped to one of seven strategic themes (specific wins over
+    // generic growth); themes are ranked within the bracket, and each company's
+    // six years are compressed to one colour-coded magic word.
+    // ============================================================================
+    const STORY_YEARS = ["2019", "2020", "2021", "2022", "2023", "2024"];
+    const BRACKET_THEMES = [
+      { key: "mna",    rgb: "129,140,248", en: "M&A / Portfolio",           id: "M&A / Portofolio",
+        re: /acqui|acquisition|buyout|buy[- ]?out|\bstake\b|divest|divestitur|\bsold\b|\bsale\b|\bmerger\b|\bmerge\b|spin-?off|\bstructured\b|carve|unification|demerger/i },
+      { key: "innov",  rgb: "192,132,252", en: "Innovation / New category", id: "Inovasi / Kategori",
+        re: /launch|innovat|new categ|premium|functional|health science|nutrition|konjac|kanzler|yogurt|\boat\b|plant-based|hi-chew|sparkling|vegetable snack|disrupt|viral|new product|reformulat|wellness|sub-brand/i },
+      { key: "dist",   rgb: "251,191,36",  en: "Distribution / Channel",    id: "Distribusi / Channel",
+        re: /douyin|e-?commerce|\bd2c\b|\bagent|minimarket|alfamart|indomaret|\bbulk\b|discount chan|modern trade|warung|retail|distribut|channel|overseas|export|localiz|\bstores?\b|offline/i },
+      { key: "price",  rgb: "94,234,212",  en: "Pricing / Inflation",       id: "Pricing / Inflasi",
+        re: /pricing|\bprice|inflation|\basp\b|list-price|passthrough|pass[- ]through|\bwheat\b|\bcpo\b/i },
+      { key: "cap",    rgb: "251,113,133", en: "Capacity / Capital",        id: "Kapasitas / Kapital",
+        re: /\bplant|capacit|commission|factory|automat|\bipo\b|listing|dividend|buyback|capital|construction|break ground|\bfarm\b|net cash|net debt|equity injection|relist|rights issue/i },
+      { key: "margin", rgb: "56,189,248",  en: "Margin / Efficiency",       id: "Margin / Efisiensi",
+        re: /margin|\butop\b|cost saving|\bsavings\b|synerg|productivity|\bhmm\b|efficien|compress|restructur/i },
+      { key: "growth", rgb: "52,211,153",  en: "Revenue / Profit growth",   id: "Pertumbuhan Rev / Profit",
+        re: /revenue|profit|sales|grew|rose|jumped|surged|rebound|record|turnover|growth|net profit/i }
+    ];
+    const STORY_MISC = { key: "misc", rgb: "100,116,139", en: "Other", id: "Lainnya", re: null };
+    const STORY_ALL = BRACKET_THEMES.concat([STORY_MISC]);
+    const STORY_HIT = s => s === "Accomplished" || s === "Outperformed" || s === "On Track";
+
+    function themeLabel(th) { return state.lang === "id" ? th.id : th.en; }
+
+    function storyThemeOf(target, outcome) {
+      const txt = `${target} ${outcome}`.toLowerCase();
+      for (const th of BRACKET_THEMES) if (th.re.test(txt)) return th;
+      return STORY_MISC;
+    }
+
+    function storyMagicWord(th, outcome) {
+      const low = outcome.toLowerCase();
+      const signed = outcome.match(/[+\-]\d+(?:\.\d+)?%/);
+      switch (th.key) {
+        case "growth": return signed ? signed[0] : t("story.w.growth");
+        case "mna":    return /divest|\bsold\b|\bsale\b/.test(low) ? t("story.w.divest") : "M&A";
+        case "price":  return t("story.w.pricing");
+        case "innov":  return t("story.w.innovate");
+        case "dist":   return /overseas|export|localiz/.test(low) ? t("story.w.overseas") : t("story.w.channel");
+        case "cap":    return /\bipo\b|listing/.test(low) ? "IPO" : (/dividend|buyback/.test(low) ? t("story.w.dividend") : t("story.w.capacity"));
+        case "margin": return t("story.w.margin");
+        default:       return "—";
+      }
+    }
+
+    function storyShortName(c) {
+      return c.name
+        .replace(/^PT\s+/i, "")
+        .replace(/\s*\([^)]*\)\s*/g, " ")
+        .replace(/,.*$/, "")
+        .replace(/\s+(Tbk|PLC|Ltd\.?|Inc\.?|Corp\.?|Co\.?,?|S\.A\.|PCL|Berhad|Holdings?|Group|International|Industrial|Company|Brands?|Foods?|Dairy|Delicious).*$/i, "")
+        .replace(/^The\s+/i, "")
+        .trim()
+        .split(/\s+/).slice(0, 2).join(" ") || c.name;
+    }
+
+    window.toggleStoryExpand = function() {
+      state.storyExpanded = !state.storyExpanded;
+      renderBracketStory();
+    };
+
+    function renderBracketStory() {
+      const inner = document.getElementById("bracketStoryInner");
+      if (!inner) return;
+      const hintCard = msg => `<div class="glass-card rounded-2xl px-5 py-4 text-sm text-slate-400">${msg}</div>`;
+
+      if (state.scatterBracket === "ALL") { inner.innerHTML = hintCard(t("story.hint")); return; }
+      const list = getCohortData().filter(c => c.finBracket === state.scatterBracket);
+      if (list.length === 0) { inner.innerHTML = hintCard(t("story.empty")); return; }
+
+      const light = isLightTheme();
+
+      // Per-company six-year cells
+      const rows = list.map(c => {
+        const cells = STORY_YEARS.map(y => {
+          const p = parseAuditEntry(c.rollingAudit?.[y]);
+          const th = storyThemeOf(p.target, p.outcome);
+          return { th, word: storyMagicWord(th, p.outcome), ok: STORY_HIT(p.status) };
+        });
+        const cnt = {};
+        cells.forEach(cell => { cnt[cell.th.key] = (cnt[cell.th.key] || 0) + 1; });
+        const dom = STORY_ALL.filter(th => cnt[th.key]).sort((a, b) => cnt[b.key] - cnt[a.key])[0] || STORY_MISC;
+        return { c, cells, dom };
+      });
+
+      // Theme ranking across all company-years
+      const tcount = {}, tcos = {};
+      rows.forEach(r => r.cells.forEach(cell => {
+        tcount[cell.th.key] = (tcount[cell.th.key] || 0) + 1;
+        tcos[cell.th.key] = tcos[cell.th.key] || [];
+        const nm = storyShortName(r.c);
+        if (!tcos[cell.th.key].includes(nm)) tcos[cell.th.key].push(nm);
+      }));
+      const ranked = STORY_ALL.filter(th => tcount[th.key]).sort((a, b) => tcount[b.key] - tcount[a.key]);
+      const maxCount = Math.max.apply(null, ranked.map(th => tcount[th.key]));
+      const order = {}; ranked.forEach((th, i) => { order[th.key] = i; });
+      rows.sort((a, b) => (order[a.dom.key] - order[b.dom.key]) || (b.c.cagr5y - a.c.cagr5y));
+
+      let hit = 0, tot = 0;
+      rows.forEach(r => r.cells.forEach(cell => { tot++; if (cell.ok) hit++; }));
+      const pct = Math.round(hit / (tot || 1) * 100);
+
+      const BR = ({
+        "Apex Performer":        { rgb: "251,191,36",  dark: "#fbbf24", lt: "#b45309", num: "1" },
+        "Margin Defender":       { rgb: "56,189,248",  dark: "#38bdf8", lt: "#0369a1", num: "2" },
+        "Volume Driver":         { rgb: "52,211,153",  dark: "#34d399", lt: "#047857", num: "3" },
+        "Transformation Seeker": { rgb: "148,163,184", dark: "#cbd5e1", lt: "#475569", num: "4" }
+      })[state.scatterBracket] || { rgb: "99,102,241", dark: "#818cf8", lt: "#4f46e5", num: "" };
+      const accentTxt = light ? BR.lt : BR.dark;
+      const chip = nm => `<span class="text-[9.5px] px-1.5 py-[1px] rounded-full text-white whitespace-nowrap" style="background:rgba(148,163,184,.2)">${nm}</span>`;
+
+      const themesHtml = ranked.map(th => {
+        const n = tcount[th.key];
+        const cos = tcos[th.key];
+        const shown = cos.slice(0, 3).map(chip).join("");
+        const extra = cos.length > 3 ? `<span class="text-[9.5px] px-1.5 py-[1px] rounded-full text-slate-400 whitespace-nowrap" style="background:rgba(148,163,184,.14)">+${cos.length - 3}</span>` : "";
+        return `<div class="flex items-center gap-2 mb-1.5">
+          <div class="bs-themebar flex-1" style="background:rgba(148,163,184,.07)">
+            <div class="bs-themefill" style="width:${Math.max(20, Math.round(n / maxCount * 100))}%;background:rgba(${th.rgb},.26)">
+              <span class="text-[11.5px] font-bold text-white whitespace-nowrap">${themeLabel(th)}</span>${shown}${extra}
+            </div>
+          </div>
+          <span class="text-xs font-extrabold text-white w-7 text-right">${n}&times;</span>
+        </div>`;
+      }).join("");
+
+      const CAP = 8;
+      const capped = rows.length > CAP && !state.storyExpanded;
+      const head = `<div class="bs-matrix-row mb-1.5"><div></div>${STORY_YEARS.map(y => `<div class="text-[10.5px] text-slate-400 text-center font-semibold">${y}</div>`).join("")}</div>`;
+      const rowsHtml = rows.map((r, i) => {
+        const cells = r.cells.map(cell =>
+          `<div class="bs-cell ${cell.ok ? "" : "is-miss"}" style="background:rgba(${cell.th.rgb},.16);border-color:rgba(${cell.th.rgb},.5);color:${light ? "#334155" : "rgb(" + cell.th.rgb + ")"}">${cell.word}</div>`
+        ).join("");
+        return `<div class="bs-matrix-row mb-1.5 ${capped && i >= CAP ? "bs-row-hidden" : ""}">
+          <div class="flex items-center pl-2 min-w-0" style="border-left:3px solid rgb(${r.dom.rgb})">
+            <div class="min-w-0"><div class="text-[11.5px] font-bold text-white truncate">${storyShortName(r.c)}</div><div class="text-[9px] text-slate-400 font-mono">${r.c.ticker}</div></div>
+          </div>${cells}
+        </div>`;
+      }).join("");
+
+      const matrixSuffix = rows.length > CAP
+        ? ` <span class="text-slate-400 font-normal normal-case">— ${CAP} ${t("story.matrixTop")} (${t("story.sortedBy")})</span>`
+        : ` <span class="text-slate-400 font-normal normal-case">(${t("story.sortedBy")})</span>`;
+      const showAllBtn = rows.length > CAP
+        ? `<button type="button" onclick="toggleStoryExpand()" class="mt-2 text-[11px] text-indigo-300 border border-indigo-500/40 rounded-lg px-3 py-1 bg-indigo-500/10 hover:bg-indigo-500/20 transition">${state.storyExpanded ? t("story.showLess") + " ▴" : t("story.showAll") + " (" + rows.length + ") ▾"}</button>`
+        : "";
+
+      const legend = ranked.map(th => `<span class="inline-flex items-center gap-1.5 text-[11px] text-slate-400"><span class="w-2.5 h-2.5 rounded-sm" style="background:rgb(${th.rgb})"></span>${themeLabel(th)}</span>`).join("");
+
+      inner.innerHTML = `
+        <div class="glass-card rounded-2xl p-5" style="box-shadow:0 0 0 1px rgba(${BR.rgb},.9),0 12px 30px -18px rgba(${BR.rgb},1)">
+          <div class="flex flex-wrap items-center justify-between gap-2 pb-3.5 border-b border-slate-800">
+            <div class="text-base font-bold" style="color:${accentTxt}">Bracket ${BR.num} &middot; ${tBracket(state.scatterBracket)}
+              <span class="text-xs font-normal text-slate-400"> &middot; ${rows.length} ${t("story.companies")}</span></div>
+            <span class="text-[11px] font-mono px-2.5 py-0.5 rounded-full" style="background:rgba(${BR.rgb},.16);color:${accentTxt};border:1px solid rgba(${BR.rgb},.4)">${t("story.exec")} ${hit}/${tot} &middot; ${pct}%</span>
+          </div>
+          <div class="bs-cols mt-4">
+            <div>
+              <span class="text-[10.5px] font-bold uppercase tracking-wider text-slate-400 block mb-2.5">${t("story.themesTitle")}</span>
+              ${themesHtml}
+            </div>
+            <div>
+              <span class="text-[10.5px] font-bold uppercase tracking-wider text-slate-400 block mb-2.5">${t("story.matrixTitle")}${matrixSuffix}</span>
+              <div class="bs-matrix-scroll">${head}${rowsHtml}</div>
+              <p class="text-[11px] text-slate-400 mt-2">${t("story.readGuide")}</p>
+              ${showAllBtn}
+            </div>
+          </div>
+          <div class="flex flex-wrap gap-x-3 gap-y-1.5 mt-4 pt-3 border-t border-slate-800">${legend}</div>
+        </div>`;
+    }
 
     // ============================================================================
     // 2. RENDER SCATTER MATRIX & RANKING BAR CHARTS
@@ -1540,6 +1775,8 @@
           }
         }
       });
+
+      renderBracketStory();
     }
 
     // ============================================================================
