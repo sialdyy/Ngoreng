@@ -188,7 +188,7 @@
     @media (max-width: 1100px) { .bs-cols { grid-template-columns: 1fr; } }
     .bs-matrix-row { display: grid; grid-template-columns: 136px repeat(6, minmax(0, 1fr)); gap: 5px; align-items: stretch; }
     .bs-row-hidden { display: none; }
-    .bs-cell { border-radius: 7px; padding: 7px 4px; text-align: center; border: 1px solid; font-size: 11px; font-weight: 700; }
+    .bs-cell { border-radius: 7px; padding: 6px 5px; text-align: center; border: 1px solid; font-size: 10px; font-weight: 700; line-height: 1.18; display: flex; align-items: center; justify-content: center; min-height: 36px; }
     .bs-cell.is-miss { opacity: 0.4; }
     .bs-themebar { position: relative; height: 30px; border-radius: 7px; overflow: hidden; }
     .bs-themefill { height: 100%; display: flex; align-items: center; gap: 5px; padding: 0 9px; border-radius: 7px; min-width: 0; }
@@ -834,6 +834,7 @@
         "arch.stagnating": "Stagnating Staple",
         "arch.transform": "Transformation Seeker",
         "story.hint": "Press a Bracket above to see its most-discussed themes and year-by-year execution trail.",
+        "story.overall": "Overall · all brackets",
         "story.empty": "No companies in this bracket for the active cohort.",
         "story.themesTitle": "Most-discussed themes",
         "story.matrixTitle": "How each company moved, year by year",
@@ -994,6 +995,7 @@
         "arch.stagnating": "Stagnating Staple",
         "arch.transform": "Transformation Seeker",
         "story.hint": "Tekan sebuah Bracket di atas untuk melihat tema yang paling dibahas & jejak eksekusi per tahun.",
+        "story.overall": "Keseluruhan · semua bracket",
         "story.empty": "Tidak ada emiten pada bracket ini untuk cohort aktif.",
         "story.themesTitle": "Tema paling dibicarakan",
         "story.matrixTitle": "Bagaimana tiap emiten bergerak per tahun",
@@ -1423,23 +1425,64 @@
 
     function storyThemeOf(target, outcome) {
       const txt = `${target} ${outcome}`.toLowerCase();
+      // Expanding margin as input costs normalize is a margin story, not a pricing action.
+      if (/\bmargin\b/.test(txt) && /normaliz|normalise/.test(txt)) return BRACKET_THEMES.find(th => th.key === "margin");
       for (const th of BRACKET_THEMES) if (th.re.test(txt)) return th;
       return STORY_MISC;
     }
 
-    function storyMagicWord(th, outcome) {
-      const low = outcome.toLowerCase();
-      const signed = outcome.match(/[+\-]\d+(?:\.\d+)?%/);
-      switch (th.key) {
-        case "growth": return signed ? signed[0] : t("story.w.growth");
-        case "mna":    return /divest|\bsold\b|\bsale\b/.test(low) ? t("story.w.divest") : "M&A";
-        case "price":  return t("story.w.pricing");
-        case "innov":  return t("story.w.innovate");
-        case "dist":   return /overseas|export|localiz/.test(low) ? t("story.w.overseas") : t("story.w.channel");
-        case "cap":    return /\bipo\b|listing/.test(low) ? "IPO" : (/dividend|buyback/.test(low) ? t("story.w.dividend") : t("story.w.capacity"));
-        case "margin": return t("story.w.margin");
-        default:       return "—";
+    // Focused short phrase per cell: within the assigned theme, a sub-pattern on
+    // the actual milestone text picks a specific, direction-carrying phrase
+    // (e.g. an overseas acquisition reads "Ekspansi Luar Negeri", not just "M&A").
+    const STORY_PHRASES = {
+      mna: [
+        [/overseas|international|africa|middle east|cross-border|pinehill|schwan|global expansion|offshore/, { en: "Overseas expansion", id: "Ekspansi Luar Negeri" }],
+        [/buyout|buy[- ]?out|remaining .*stake|\bstake\b|minority/, { en: "Stake buyout", id: "Buyout Saham" }],
+        [/divest|carve|\bsold\b|\bsale\b|demerger|unification|spin-?off/, { en: "Divested a unit", id: "Divestasi Unit" }],
+        [null, { en: "M&A deal", id: "Aksi M&A" }]
+      ],
+      innov: [
+        [/health|nutrition|functional|wellness|medical/, { en: "Health & nutrition", id: "Nutrisi & Kesehatan" }],
+        [/premium|premiumi/, { en: "Premiumization", id: "Premiumisasi" }],
+        [/konjac|kanzler|yogurt|\boat\b|plant-based|sparkling|vegetable snack|hi-chew|new product|new categ|sub-brand|reformulat|disrupt|viral|launch/, { en: "New category push", id: "Kategori Baru" }],
+        [null, { en: "Product innovation", id: "Inovasi Produk" }]
+      ],
+      dist: [
+        [/overseas|export|localiz|\bindia\b|\basean\b|\bus\b|cross-border/, { en: "Overseas expansion", id: "Ekspansi Luar Negeri" }],
+        [/\bd2c\b|direct-to|\bagent/, { en: "D2C agent network", id: "Jaringan Agen D2C" }],
+        [/douyin|e-?commerce|online/, { en: "E-commerce push", id: "Dorong E-commerce" }],
+        [/\bbulk\b|discount chan/, { en: "Bulk-discount channel", id: "Kanal Diskon Grosir" }],
+        [/stores?|offline|minimarket|alfamart|indomaret|warung|modern trade|retail/, { en: "Store / RTM rollout", id: "Perluasan Gerai" }],
+        [null, { en: "Channel expansion", id: "Perluasan Distribusi" }]
+      ],
+      price: [
+        [/inflation|wheat|cpo|passthrough|pass[- ]through|commodity/, { en: "Inflation passthrough", id: "Passthrough Inflasi" }],
+        [/cut|reduction|war|deflation|lower price/, { en: "Price cut", id: "Potong Harga" }],
+        [null, { en: "Price adjustment", id: "Penyesuaian Harga" }]
+      ],
+      cap: [
+        [/\bipo\b|listing|relist/, { en: "IPO / listing", id: "IPO / Pencatatan" }],
+        [/dividend|buyback/, { en: "Dividend / buyback", id: "Dividen / Buyback" }],
+        [/\bplant|factory|construction|break ground|\bfarm\b|commission|automat|capacit/, { en: "New capacity", id: "Tambah Kapasitas" }],
+        [/net cash|net debt|equity injection|rights issue|balance/, { en: "Balance-sheet move", id: "Perkuat Neraca" }],
+        [null, { en: "Capital action", id: "Aksi Permodalan" }]
+      ],
+      margin: [
+        [/cost|savings|synerg|productivity|\bhmm\b|efficien/, { en: "Cost efficiency", id: "Efisiensi Biaya" }],
+        [null, { en: "Margin expansion", id: "Ekspansi Margin" }]
+      ]
+    };
+
+    function storyPhrase(th, target, outcome) {
+      if (th.key === "growth") {
+        const m = outcome.match(/[+\-]\d+(?:\.\d+)?%/);
+        if (m) return state.lang === "id" ? `Pendapatan ${m[0]}` : `Revenue ${m[0]}`;
+        return state.lang === "id" ? "Tumbuh Kuat" : "Strong growth";
       }
+      const txt = `${target} ${outcome}`.toLowerCase();
+      const rules = STORY_PHRASES[th.key] || [];
+      for (const [re, ph] of rules) if (re === null || re.test(txt)) return state.lang === "id" ? ph.id : ph.en;
+      return themeLabel(th);
     }
 
     function storyShortName(c) {
@@ -1463,8 +1506,10 @@
       if (!inner) return;
       const hintCard = msg => `<div class="glass-card rounded-2xl px-5 py-4 text-sm text-slate-400">${msg}</div>`;
 
-      if (state.scatterBracket === "ALL") { inner.innerHTML = hintCard(t("story.hint")); return; }
-      const list = getCohortData().filter(c => c.finBracket === state.scatterBracket);
+      // "ALL" shows an overall summary across the whole active cohort; pressing a
+      // bracket narrows it to that bracket.
+      const isOverall = state.scatterBracket === "ALL";
+      const list = isOverall ? getCohortData() : getCohortData().filter(c => c.finBracket === state.scatterBracket);
       if (list.length === 0) { inner.innerHTML = hintCard(t("story.empty")); return; }
 
       const light = isLightTheme();
@@ -1474,7 +1519,7 @@
         const cells = STORY_YEARS.map(y => {
           const p = parseAuditEntry(c.rollingAudit?.[y]);
           const th = storyThemeOf(p.target, p.outcome);
-          return { th, word: storyMagicWord(th, p.outcome), ok: STORY_HIT(p.status) };
+          return { th, word: storyPhrase(th, p.target, p.outcome), ok: STORY_HIT(p.status) };
         });
         const cnt = {};
         cells.forEach(cell => { cnt[cell.th.key] = (cnt[cell.th.key] || 0) + 1; });
@@ -1499,12 +1544,14 @@
       rows.forEach(r => r.cells.forEach(cell => { tot++; if (cell.ok) hit++; }));
       const pct = Math.round(hit / (tot || 1) * 100);
 
-      const BR = ({
-        "Apex Performer":        { rgb: "251,191,36",  dark: "#fbbf24", lt: "#b45309", num: "1" },
-        "Margin Defender":       { rgb: "56,189,248",  dark: "#38bdf8", lt: "#0369a1", num: "2" },
-        "Volume Driver":         { rgb: "52,211,153",  dark: "#34d399", lt: "#047857", num: "3" },
-        "Transformation Seeker": { rgb: "148,163,184", dark: "#cbd5e1", lt: "#475569", num: "4" }
-      })[state.scatterBracket] || { rgb: "99,102,241", dark: "#818cf8", lt: "#4f46e5", num: "" };
+      const BR = isOverall
+        ? { rgb: "99,102,241", dark: "#818cf8", lt: "#4f46e5", num: "" }
+        : (({
+            "Apex Performer":        { rgb: "251,191,36",  dark: "#fbbf24", lt: "#b45309", num: "1" },
+            "Margin Defender":       { rgb: "56,189,248",  dark: "#38bdf8", lt: "#0369a1", num: "2" },
+            "Volume Driver":         { rgb: "52,211,153",  dark: "#34d399", lt: "#047857", num: "3" },
+            "Transformation Seeker": { rgb: "148,163,184", dark: "#cbd5e1", lt: "#475569", num: "4" }
+          })[state.scatterBracket] || { rgb: "99,102,241", dark: "#818cf8", lt: "#4f46e5", num: "" });
       const accentTxt = light ? BR.lt : BR.dark;
       const chip = nm => `<span class="text-[9.5px] px-1.5 py-[1px] rounded-full text-white whitespace-nowrap" style="background:rgba(148,163,184,.2)">${nm}</span>`;
 
@@ -1549,7 +1596,7 @@
       inner.innerHTML = `
         <div class="glass-card rounded-2xl p-5" style="box-shadow:0 0 0 1px rgba(${BR.rgb},.9),0 12px 30px -18px rgba(${BR.rgb},1)">
           <div class="flex flex-wrap items-center justify-between gap-2 pb-3.5 border-b border-slate-800">
-            <div class="text-base font-bold" style="color:${accentTxt}">Bracket ${BR.num} &middot; ${tBracket(state.scatterBracket)}
+            <div class="text-base font-bold" style="color:${accentTxt}">${isOverall ? t("story.overall") : "Bracket " + BR.num + " &middot; " + tBracket(state.scatterBracket)}
               <span class="text-xs font-normal text-slate-400"> &middot; ${rows.length} ${t("story.companies")}</span></div>
             <span class="text-[11px] font-mono px-2.5 py-0.5 rounded-full" style="background:rgba(${BR.rgb},.16);color:${accentTxt};border:1px solid rgba(${BR.rgb},.4)">${t("story.exec")} ${hit}/${tot} &middot; ${pct}%</span>
           </div>
