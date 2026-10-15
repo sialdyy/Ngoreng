@@ -9,7 +9,7 @@
     (function () {
       var stored = null;
       try { stored = localStorage.getItem("fnbcc.theme"); } catch (e) {}
-      var pref = (stored === "light" || stored === "dark" || stored === "system") ? stored : "system";
+      var pref = (stored === "light" || stored === "dark" || stored === "system") ? stored : "light";
       var sysDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
       var effective = pref === "system" ? (sysDark ? "dark" : "light") : pref;
       document.documentElement.dataset.themePref = pref;
@@ -35,6 +35,8 @@
     };
   </script>
   <style>
+    /* Default presentation: open at 75% page zoom. */
+    body { zoom: 0.75; }
     body { background-color: #070b14; color: #f1f5f9; }
     .glass-card {
       background: rgba(15, 23, 42, 0.88);
@@ -205,8 +207,12 @@
     #nabatiTable td.np-cell .np-pct { font-size: 9px; opacity: .72; }
     #nabatiTable td.np-cell .np-sub2 { font-size: 9px; font-weight: 500; margin-top: 1px; }
     #nabatiTable .np-focus { background: rgba(99,102,241,.1); }
+    #nabatiTable td.np-delta { font-weight: 700; }
     :root.light #nabatiTable th, :root.light #nabatiTable td { border-bottom-color: #e2e8f0; }
     :root.light #nabatiTable .np-focus { background: rgba(99,102,241,.08); }
+    /* Subtotal rows: keep a readable tint instead of translucent dark in light mode */
+    :root.light #nabatiTable tr.np-sub td { background-color: #eef2f7; }
+    :root.light #nabatiTable tr.np-sub td.np-focus { background-color: #e3e8fb; }
 
     /* Company (model) selector chips */
     .np-chip-group { display: flex; flex-wrap: wrap; align-items: center; gap: 7px; }
@@ -214,17 +220,20 @@
     @media (max-width: 640px) { .np-chip-region { min-width: 100%; } }
     .np-chip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 600; line-height: 1.2; color: #cbd5e1; background: rgba(30,41,59,.75); border: 1px solid rgba(71,85,105,.7); cursor: pointer; transition: transform .14s ease, background .14s ease, color .14s ease, box-shadow .14s ease; white-space: nowrap; }
     .np-chip:hover { background: rgba(51,65,85,.95); color: #f1f5f9; transform: translateY(-1px); }
-    .np-chip:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--np-accent, #6366f1); }
-    .np-chip .np-dot { width: 8px; height: 8px; border-radius: 999px; background: var(--np-accent, #6366f1); flex: none; }
+    .np-chip:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--np-accent, #4f46e5); }
+    .np-chip .np-dot { width: 8px; height: 8px; border-radius: 999px; background: var(--np-dot, #6366f1); flex: none; }
     .np-chip .np-cur { font-size: 8.5px; font-weight: 700; letter-spacing: .02em; font-family: 'JetBrains Mono', monospace; padding: 1px 4px; border-radius: 4px; background: rgba(148,163,184,.18); color: #94a3b8; }
-    .np-chip.is-active { color: #fff; background: var(--np-accent, #6366f1); border-color: var(--np-accent, #6366f1); box-shadow: 0 5px 14px -5px var(--np-accent, #6366f1); }
-    .np-chip.is-active .np-dot { background: #fff; }
-    .np-chip.is-active .np-cur { background: rgba(255,255,255,.24); color: #fff; }
+    /* Active chip: deep accent fill so white label stays legible in both themes */
+    .np-chip.is-active { color: #fff; background: var(--np-accent, #4f46e5); border-color: var(--np-accent, #4f46e5); box-shadow: 0 5px 14px -5px var(--np-accent, #4f46e5); }
+    .np-chip.is-active:hover { color: #fff; }
+    .np-chip.is-active .np-dot { background: #fff; box-shadow: 0 0 0 2px rgba(255,255,255,.35); }
+    .np-chip.is-active .np-cur { background: rgba(255,255,255,.26); color: #fff; }
     :root.light .np-chip { color: #334155; background: #eef2f7; border-color: #d7dee8; }
     :root.light .np-chip:hover { background: #e2e8f0; color: #0f172a; }
     :root.light .np-chip .np-cur { background: rgba(100,116,139,.16); color: #5b6878; }
-    :root.light .np-chip.is-active { color: #fff; }
-    :root.light .np-chip.is-active .np-cur { background: rgba(255,255,255,.28); color: #fff; }
+    :root.light .np-chip.is-active { color: #fff; background: var(--np-accent, #4f46e5); border-color: var(--np-accent, #4f46e5); }
+    :root.light .np-chip.is-active:hover { color: #fff; background: var(--np-accent, #4f46e5); }
+    :root.light .np-chip.is-active .np-cur { background: rgba(255,255,255,.3); color: #fff; }
     :root.light .np-chip-region { color: #5b6878; }
   </style>
 </head>
@@ -915,11 +924,12 @@
         "story.w.margin": "Margin",
         "np.title": "Nabati Baseline vs Company",
         "np.sub": "Pick a model company to trace its normalized P&L (SM1–SM4 / GA1–GA3) across FY2019–FY2024 against Nabati's baseline, line by line. Costs sit in their own component — manpower in SM1, distribution & logistics in SM2, advertising & promotion in SM3. Every row is compared on % of Net Sales (FX-neutral); lines not disclosed in the filing stay blank, never assumed zero.",
-        "np.note": "Source: audited filings mapped to the normalized SM1–SM4 / GA1–GA3 format for 34 peers (10 SEA, 10 Greater China, 14 global). SEA & Greater China carry FY2019–FY2024; global peers FY2021–FY2024. Cells show % of Net Sales. Nabati baseline is illustrative (Rp bn shown beneath each %); peers report in their own currency, so every comparison is on % of Net Sales — green = better than Nabati on that line, red = worse.",
+        "np.note": "Nabati Baseline = Nabati's own FY2024 P&L, totalled across Indonesia, China & Malaysia (GT + MT channels) from the channel P&L workbook (Rp bn shown beneath each %); FY2019–FY2023 are left blank until their actuals are compiled. Peers: audited filings mapped to the normalized SM1–SM4 / GA1–GA3 format for 34 companies (10 SEA, 10 Greater China, 14 global) — SEA & Greater China carry FY2019–FY2024, global peers FY2021–FY2024. All cells show % of Net Sales. The Δ vs Nabati column is the selected company's baseline-year gap in percentage points. Green = better than Nabati on that line (higher profit / lower cost), red = worse.",
         "np.company": "Company (model)",
         "np.baselineYr": "Nabati Baseline year",
         "np.thLine": "Line",
         "np.thNabati": "Nabati Baseline",
+        "np.thDelta": "Δ vs Nabati",
         "np.r.sea": "SEA · IDR",
         "np.r.china": "Greater China",
         "np.r.global": "Global",
@@ -1106,11 +1116,12 @@
         "story.w.margin": "Margin",
         "np.title": "Nabati Baseline vs Company",
         "np.sub": "Pilih satu company model untuk menelusuri P&L ternormalisasi-nya (SM1–SM4 / GA1–GA3) sepanjang FY2019–FY2024 terhadap baseline Nabati, baris per baris. Biaya ditempatkan pada komponennya — SDM/tenaga penjualan di SM1, distribusi & logistik di SM2, iklan & promosi di SM3. Tiap baris dibandingkan atas dasar % dari Penjualan Bersih (netral kurs); baris yang tidak di-disclose di laporan dikosongkan, tidak diasumsikan nol.",
-        "np.note": "Sumber: laporan keuangan teraudit yang dipetakan ke format ternormalisasi SM1–SM4 / GA1–GA3 untuk 34 peer (10 SEA, 10 Tiongkok Raya, 14 global). SEA & Tiongkok Raya memuat FY2019–FY2024; peer global FY2021–FY2024. Sel menampilkan % dari Penjualan Bersih. Baseline Nabati bersifat ilustratif (Rp miliar ditampilkan di bawah tiap %); peer memakai mata uang pelaporan masing-masing, jadi tiap perbandingan atas dasar % Penjualan Bersih — hijau = lebih baik dari Nabati pada baris itu, merah = lebih buruk.",
+        "np.note": "Nabati Baseline = P&L Nabati sendiri FY2024, ditotalkan dari Indonesia, China & Malaysia (channel GT + MT) dari workbook P&L channel (Rp miliar ditampilkan di bawah tiap %); FY2019–FY2023 dikosongkan dulu sampai actual-nya dikompilasi. Peer: laporan keuangan teraudit yang dipetakan ke format ternormalisasi SM1–SM4 / GA1–GA3 untuk 34 perusahaan (10 SEA, 10 Tiongkok Raya, 14 global) — SEA & Tiongkok Raya memuat FY2019–FY2024, peer global FY2021–FY2024. Semua sel menampilkan % dari Penjualan Bersih. Kolom Δ vs Nabati adalah selisih company terpilih pada tahun baseline dalam poin persentase. Hijau = lebih baik dari Nabati pada baris itu (laba lebih tinggi / biaya lebih rendah), merah = lebih buruk.",
         "np.company": "Company (model)",
         "np.baselineYr": "Tahun Nabati Baseline",
         "np.thLine": "Baris",
         "np.thNabati": "Nabati Baseline",
+        "np.thDelta": "Δ vs Nabati",
         "np.r.sea": "SEA · IDR",
         "np.r.china": "Tiongkok Raya",
         "np.r.global": "Global",
@@ -1306,7 +1317,7 @@
         storedLang = localStorage.getItem(STORAGE_KEYS.lang);
       } catch (e) {}
 
-      state.themePref = (storedTheme === "light" || storedTheme === "dark" || storedTheme === "system") ? storedTheme : "system";
+      state.themePref = (storedTheme === "light" || storedTheme === "dark" || storedTheme === "system") ? storedTheme : "light";
       state.lang = (storedLang === "id") ? "id" : "en";
 
       applyTheme(state.themePref, false);
@@ -1961,13 +1972,19 @@
     // % of Net Sales (FX-neutral), since companies report in different currencies.
     // ============================================================================
     const NABATI_YEARS = ["2019", "2020", "2021", "2022", "2023", "2024"];
-    // Nabati illustrative baseline (Rp bn); only disclosed lines carry a value.
-    const NABATI_BASELINE = { netSales: 4200, cogs: 3085.7, gp1: 1114.3, smTotal: 726.6, gp2: 387.7, gaTotal: 47.5, ebt: 340.2 };
-    // Region accent colours for the company-model chips.
+    // Nabati P&L baseline (Rp bn) — totalled from the channel/country P&L workbook
+    // (Indonesia + China + Malaysia, GT + MT). Only FY2024 is populated; earlier
+    // years are intentionally left blank until their actuals are compiled.
+    const NABATI_BASELINE = {
+      "2019": {}, "2020": {}, "2021": {}, "2022": {}, "2023": {},
+      "2024": { netSales: 2422.0, cogs: 1344.7, gp1: 1077.4, sm1: 122.9, sm2: 275.6, sm3: 454.9, sm4: 105.0, smTotal: 958.3, gp2: 121.4, ga1: 75.7, ga2: 36.3, ga3: 10.5, gaTotal: 101.6, ebt: 17.8 }
+    };
+    // Region colours for the company-model chips: dot = bright, accent = deep
+    // (used as the active-chip fill so the white label stays legible both themes).
     const NABATI_REGION = {
-      "SEA": { key: "sea", hex: "#34d399" },
-      "Greater China": { key: "china", hex: "#fbbf24" },
-      "Global": { key: "global", hex: "#60a5fa" }
+      "SEA": { key: "sea", dot: "#10b981", accent: "#047857" },
+      "Greater China": { key: "china", dot: "#f59e0b", accent: "#b45309" },
+      "Global": { key: "global", dot: "#3b82f6", accent: "#1d4ed8" }
     };
     // 34 peers mapped to the normalized SM1-SM4 / GA1-GA3 format, as % of Net Sales.
     // Source: three audited-filing workbooks (SEA + Greater China detailed; globals condensed).
@@ -1997,13 +2014,14 @@
       { key: "ebt", sub: true, pctProfit: true }
     ];
 
-    // Nabati baseline as % of Net Sales (only disclosed lines).
-    function nabatiBaselinePct() {
-      const ns = NABATI_BASELINE.netSales, out = {};
+    // Nabati baseline as % of Net Sales for a given year (blank years -> all null).
+    function nabatiBaselinePct(year) {
+      const base = NABATI_BASELINE[year] || {};
+      const ns = base.netSales, out = {};
       NABATI_LINES.forEach(l => {
         if (!l.key) return;
-        const v = NABATI_BASELINE[l.key];
-        out[l.key] = (v == null) ? null : (l.key === "netSales" ? 100 : v / ns * 100);
+        const v = base[l.key];
+        out[l.key] = (ns == null || v == null) ? null : (l.key === "netSales" ? 100 : v / ns * 100);
       });
       return out;
     }
@@ -2020,7 +2038,7 @@
       let company = NABATI_COMPANIES.find(c => c.t === state.nabatiCompany) || NABATI_COMPANIES[0];
       state.nabatiCompany = company.t;
 
-      // Nabati baseline year dropdown (spotlights the matching company-year column).
+      // Nabati baseline year dropdown (chooses which Nabati P&L year is the reference).
       yrSel.innerHTML = NABATI_YEARS.map(y =>
         `<option value="${y}" ${y === state.nabatiBaseYear ? "selected" : ""}>FY${y}</option>`).join("");
 
@@ -2032,50 +2050,61 @@
         const chips = members.map(c => {
           const active = c.t === company.t;
           return `<button type="button" role="radio" aria-checked="${active}" title="${c.full} (${c.t})"` +
-            ` onclick="setNabatiCompany('${c.t}')" class="np-chip${active ? " is-active" : ""}" style="--np-accent:${rc.hex}">` +
+            ` onclick="setNabatiCompany('${c.t}')" class="np-chip${active ? " is-active" : ""}" style="--np-dot:${rc.dot};--np-accent:${rc.accent}">` +
             `<span class="np-dot"></span>${c.disp}<span class="np-cur">${c.cur}</span></button>`;
         }).join("");
         return `<div class="np-chip-group"><span class="np-chip-region">${t("np.r." + rc.key)}</span>${chips}</div>`;
       }).join("");
 
       const baseYear = state.nabatiBaseYear;
-      const basePct = nabatiBaselinePct();
+      const basePct = nabatiBaselinePct(baseYear);
+      const compBaseYd = company.y[baseYear] || null;
       const fmtPct = p => p == null ? "" : p.toFixed(1) + "%";
+      const fmtPp  = d => (d > 0 ? "+" : d < 0 ? "−" : "") + Math.abs(d).toFixed(1) + " pp";
       const fmtRp = v => v == null ? "" : "Rp " + Number(v).toLocaleString("en-US", { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + " bn";
+      // Green when the line is better than Nabati (profit higher / cost lower).
+      const betterCls = (line, p, nb) => {
+        if (nb == null || p == null || line.key === "netSales" || Math.abs(p - nb) < 0.05) return "text-slate-200";
+        const better = line.pctProfit ? p > nb : p < nb;
+        return better ? "text-emerald-400" : "text-rose-400";
+      };
 
       const head = `<thead>
         <tr class="bg-slate-900/95 text-slate-400 border-b border-slate-800">
           <th rowspan="2" class="align-bottom">${t("np.thLine")}</th>
           <th class="num">${t("np.thNabati")}</th>
+          <th rowspan="2" class="num align-bottom text-indigo-300">${t("np.thDelta")}<div class="normal-case font-normal text-[9px] text-slate-500">${company.disp} ${baseYear} &middot; pp</div></th>
           <th class="num" colspan="6">${company.full} &middot; ${company.cur} &middot; % Net Sales</th>
         </tr>
         <tr class="bg-slate-900/95 text-slate-500 border-b border-slate-800">
-          <th class="num normal-case font-normal text-[9px]">% NS &middot; Rp bn</th>
+          <th class="num normal-case font-normal text-[9px]">% NS &middot; Rp bn &middot; FY${baseYear}</th>
           ${NABATI_YEARS.map(y => `<th class="num font-mono ${y === baseYear ? "np-focus text-indigo-300" : ""}">${y}</th>`).join("")}
         </tr>
       </thead>`;
 
       const body = "<tbody>" + NABATI_LINES.map(line => {
-        if (line.group) return `<tr class="np-group"><td colspan="8" class="text-slate-400">${t("np.g." + line.group)}</td></tr>`;
+        if (line.group) return `<tr class="np-group"><td colspan="9" class="text-slate-400">${t("np.g." + line.group)}</td></tr>`;
         const nb = basePct[line.key];
         const nbHtml = nb == null
           ? `<td class="num np-cell text-slate-600"></td>`
-          : `<td class="num np-cell text-slate-200">${fmtPct(nb)}<div class="np-sub2 text-slate-500">${fmtRp(NABATI_BASELINE[line.key])}</div></td>`;
+          : `<td class="num np-cell text-slate-200">${fmtPct(nb)}<div class="np-sub2 text-slate-500">${fmtRp(NABATI_BASELINE[baseYear][line.key])}</div></td>`;
+        // Δ vs Nabati at the selected baseline year.
+        const cp = compBaseYd ? compBaseYd[line.key] : undefined;
+        let deltaHtml = `<td class="num np-cell np-delta text-slate-600"></td>`;
+        if (nb != null && cp != null && line.key !== "netSales") {
+          const d = cp - nb;
+          deltaHtml = `<td class="num np-cell np-delta ${betterCls(line, cp, nb)}">${fmtPp(d)}</td>`;
+        }
         const yearCells = NABATI_YEARS.map(y => {
           const focusCls = y === baseYear ? " np-focus" : "";
           const yd = company.y[y];
           const p = yd ? yd[line.key] : undefined;
           if (p == null) return `<td class="num np-cell text-slate-600${focusCls}"></td>`;
-          let cls = "text-slate-200";
-          if (nb != null && line.key !== "netSales" && Math.abs(p - nb) >= 0.05) {
-            const better = line.pctProfit ? p > nb : p < nb;
-            cls = better ? "text-emerald-400" : "text-rose-400";
-          }
-          return `<td class="num np-cell${focusCls}"><span class="${cls}">${fmtPct(p)}</span></td>`;
+          return `<td class="num np-cell${focusCls}"><span class="${betterCls(line, p, nb)}">${fmtPct(p)}</span></td>`;
         }).join("");
         return `<tr class="${line.sub ? "np-sub bg-slate-900/40" : ""}">
           <td class="${line.sub ? "text-white" : "text-slate-300"}">${t("np.l." + line.key)}</td>
-          ${nbHtml}${yearCells}</tr>`;
+          ${nbHtml}${deltaHtml}${yearCells}</tr>`;
       }).join("") + "</tbody>";
 
       tableEl.innerHTML = head + body;
