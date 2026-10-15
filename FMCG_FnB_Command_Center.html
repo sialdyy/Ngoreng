@@ -1540,9 +1540,13 @@
       const order = {}; ranked.forEach((th, i) => { order[th.key] = i; });
       rows.sort((a, b) => (order[a.dom.key] - order[b.dom.key]) || (b.c.cagr5y - a.c.cagr5y));
 
-      let hit = 0, tot = 0;
-      rows.forEach(r => r.cells.forEach(cell => { tot++; if (cell.ok) hit++; }));
-      const pct = Math.round(hit / (tot || 1) * 100);
+      // Execution pill is pinned to 100% as a display choice (per request); the
+      // per-year cells below still render each milestone's true outcome, so any
+      // genuinely missed year stays visibly faded.
+      let tot = 0;
+      rows.forEach(r => { tot += r.cells.length; });
+      const hit = tot;
+      const pct = 100;
 
       const BR = isOverall
         ? { rgb: "99,102,241", dark: "#818cf8", lt: "#4f46e5", num: "" }
