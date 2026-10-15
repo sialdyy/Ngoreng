@@ -196,7 +196,8 @@
 
     /* Nabati P&L Benchmark table (compact so it fits full width without horizontal scroll) */
     #nabatiTable { width: 100%; }
-    #nabatiTable th, #nabatiTable td { padding: 4px 6px; border-bottom: 1px solid rgba(51,65,85,.4); white-space: nowrap; }
+    #nabatiTable th, #nabatiTable td { padding: 4px 6px; border-bottom: 1px solid rgba(51,65,85,.4); border-right: 1px solid rgba(51,65,85,.35); white-space: nowrap; }
+    #nabatiTable th:last-child, #nabatiTable td:last-child { border-right: 0; }
     #nabatiTable th { font-size: 9px; text-transform: uppercase; letter-spacing: .02em; font-weight: 700; }
     /* Header rows (1 & 2) centered, middle-aligned */
     #nabatiTable thead th { text-align: center !important; vertical-align: middle !important; }
@@ -216,7 +217,7 @@
     /* Δ vs Nabati: dedicated comparison column, amber-tinted so it reads as "the comparison" */
     #nabatiTable .np-delta { font-weight: 700; background: rgba(245,158,11,.10); border-left: 2px solid rgba(245,158,11,.55); }
     #nabatiTable th.np-delta { color: #fbbf24; }
-    :root.light #nabatiTable th, :root.light #nabatiTable td { border-bottom-color: #e2e8f0; }
+    :root.light #nabatiTable th, :root.light #nabatiTable td { border-bottom-color: #e2e8f0; border-right-color: #e2e8f0; }
     :root.light #nabatiTable .np-focus { background: rgba(99,102,241,.08); }
     :root.light #nabatiTable .np-delta { background: rgba(217,119,6,.10); border-left-color: rgba(217,119,6,.5); }
     :root.light #nabatiTable th.np-delta { color: #b45309; }
