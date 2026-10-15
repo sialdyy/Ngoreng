@@ -194,20 +194,23 @@
     .bs-themefill { height: 100%; display: flex; align-items: center; gap: 5px; padding: 0 9px; border-radius: 7px; min-width: 0; }
     .bs-matrix-scroll { overflow-x: auto; }
 
-    /* Nabati P&L Benchmark table */
-    #nabatiTable th, #nabatiTable td { padding: 8px 11px; border-bottom: 1px solid rgba(51,65,85,.4); white-space: nowrap; }
-    #nabatiTable th { font-size: 10px; text-transform: uppercase; letter-spacing: .03em; font-weight: 700; }
+    /* Nabati P&L Benchmark table (compact so it fits full width without horizontal scroll) */
+    #nabatiTable { width: 100%; }
+    #nabatiTable th, #nabatiTable td { padding: 4px 6px; border-bottom: 1px solid rgba(51,65,85,.4); white-space: nowrap; }
+    #nabatiTable th { font-size: 9px; text-transform: uppercase; letter-spacing: .02em; font-weight: 700; }
+    /* Line column may wrap so long labels don't force extra width */
+    #nabatiTable th:first-child, #nabatiTable td:first-child { white-space: normal; padding-left: 10px; }
     #nabatiTable td.num, #nabatiTable th.num { text-align: right; font-family: 'JetBrains Mono', monospace; }
     #nabatiTable tbody tr:last-child td { border-bottom: 0; }
     #nabatiTable tr.np-sub td { font-weight: 800; }
-    #nabatiTable tr.np-group td { font-size: 10px; text-transform: uppercase; letter-spacing: .04em; font-weight: 700; padding-top: 10px; padding-bottom: 5px; border-bottom: 0; }
+    #nabatiTable tr.np-group td { font-size: 9px; text-transform: uppercase; letter-spacing: .04em; font-weight: 700; padding-top: 9px; padding-bottom: 4px; border-bottom: 0; }
     #nabatiTable td.np-cell { line-height: 1.15; }
     #nabatiTable td.np-cell .np-pct { font-size: 9px; opacity: .72; }
     #nabatiTable td.np-cell .np-sub2 { font-size: 9px; font-weight: 500; margin-top: 1px; }
     #nabatiTable .np-focus { background: rgba(99,102,241,.1); }
     /* Dual cell: nominal amount on the left, % on the right (inner flex keeps the td a table-cell) */
-    #nabatiTable td.np-dual .np-dualwrap { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
-    #nabatiTable td.np-dual .np-amt { font-size: 9px; font-weight: 500; opacity: .6; letter-spacing: -.01em; }
+    #nabatiTable td.np-dual .np-dualwrap { display: flex; justify-content: space-between; align-items: baseline; gap: 5px; }
+    #nabatiTable td.np-dual .np-amt { font-size: 8px; font-weight: 500; opacity: .6; letter-spacing: -.02em; }
     /* Δ vs Nabati: dedicated comparison column, amber-tinted so it reads as "the comparison" */
     #nabatiTable .np-delta { font-weight: 700; background: rgba(245,158,11,.10); border-left: 2px solid rgba(245,158,11,.55); }
     #nabatiTable th.np-delta { color: #fbbf24; }
@@ -735,7 +738,7 @@
         <div id="nabatiChips" class="space-y-2.5" role="radiogroup" aria-label="Company (model)"></div>
       </div>
       <div class="overflow-x-auto custom-scrollbar border border-slate-800 rounded-xl">
-        <table class="w-full text-left border-collapse text-xs" id="nabatiTable"></table>
+        <table class="w-full text-left border-collapse text-[11px]" id="nabatiTable"></table>
       </div>
       <div id="nabatiInsight"></div>
       <p class="text-[11px] text-slate-500" data-i18n="np.note">
