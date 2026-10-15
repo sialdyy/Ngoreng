@@ -200,7 +200,10 @@
     #nabatiTable td.num, #nabatiTable th.num { text-align: right; font-family: 'JetBrains Mono', monospace; }
     #nabatiTable tbody tr:last-child td { border-bottom: 0; }
     #nabatiTable tr.np-sub td { font-weight: 800; }
-    #nabatiTable .np-focus { background: rgba(99,102,241,.12); }
+    #nabatiTable tr.np-group td { font-size: 10px; text-transform: uppercase; letter-spacing: .04em; font-weight: 700; padding-top: 10px; padding-bottom: 5px; border-bottom: 0; }
+    #nabatiTable td.np-cell { line-height: 1.15; }
+    #nabatiTable td.np-cell .np-pct { font-size: 9px; opacity: .72; }
+    #nabatiTable .np-focus { background: rgba(99,102,241,.1); }
   </style>
 </head>
 <body class="antialiased selection:bg-indigo-500 selection:text-white min-h-screen flex flex-col">
@@ -646,23 +649,31 @@
       </div>
     </section>
 
-    <!-- SECTION 5: NABATI P&L BENCHMARK (peer margin structure applied to Nabati revenue, FX-neutral) -->
+    <!-- SECTION 5: NABATI BASELINE vs COMPANY — NORMALIZED P&L (SM1–SM4 / GA1–GA3) -->
     <section class="glass-card rounded-2xl p-6 space-y-4">
-      <div class="flex flex-col xl:flex-row xl:items-start justify-between gap-4">
+      <div class="flex flex-col xl:flex-row xl:items-end justify-between gap-4">
         <div>
-          <h2 class="text-lg font-bold text-white" data-i18n="np.title">Nabati P&amp;L Benchmark — Peer Cost Structure Applied to Nabati's Revenue</h2>
+          <h2 class="text-lg font-bold text-white" data-i18n="np.title">Nabati Baseline vs Company — Normalized P&amp;L (SM1–SM4 / GA1–GA3)</h2>
           <p class="text-xs text-slate-400 max-w-4xl mt-0.5" data-i18n="np.sub">
-            Nabati's illustrative baseline P&amp;L re-run on the selected peer's margin structure (% of sales, FX-neutral) for each fiscal year. Revenue stays Nabati's own; only the cost ratios change. Δ compares the chosen baseline year's scenario to Nabati's baseline.
+            Pick a model company to trace its P&amp;L across FY2019–FY2024 against Nabati's baseline, line by line. Each row is compared on % of Net Sales (FX-neutral). Lines not disclosed in the source are intentionally left blank — never assumed zero.
           </p>
         </div>
-        <div class="flex items-center gap-1.5 flex-wrap shrink-0" id="nabatiYearSel"></div>
+        <div class="flex flex-wrap items-end gap-3 shrink-0">
+          <label class="flex flex-col gap-1">
+            <span class="text-[10px] font-mono uppercase text-slate-400" data-i18n="np.company">Company (model)</span>
+            <select id="nabatiCompany" onchange="setNabatiCompany(this.value)" class="bg-slate-900 border border-slate-700 text-xs text-slate-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-indigo-500 min-w-[230px]"></select>
+          </label>
+          <label class="flex flex-col gap-1">
+            <span class="text-[10px] font-mono uppercase text-slate-400" data-i18n="np.baselineYr">Nabati Baseline year</span>
+            <select id="nabatiBaseYear" onchange="setNabatiBaseYear(this.value)" class="bg-slate-900 border border-slate-700 text-xs text-slate-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-indigo-500"></select>
+          </label>
+        </div>
       </div>
-      <div class="flex flex-wrap items-center gap-1.5" id="nabatiChips"></div>
       <div class="overflow-x-auto custom-scrollbar border border-slate-800 rounded-xl">
         <table class="w-full text-left border-collapse text-xs" id="nabatiTable"></table>
       </div>
       <p class="text-[11px] text-slate-500" data-i18n="np.note">
-        Illustrative Nabati baseline (Rp bn) benchmarked against verified peer margins (FY2021–FY2024; FY2019–FY2020 not in source). Peer margins are % of sales — currency-neutral — so Nabati (Rp) and overseas peers compare fairly. Nominal size is not compared.
+        Normalized P&amp;L format (SM1–SM4 / GA1–GA3) per the brief. The 40-company dataset discloses only Net Sales and EBIT margin for FY2019 &amp; FY2024, so other lines and intermediate years stay blank — a template to fill when the detailed breakdown is available. Nabati baseline is illustrative (Rp bn); companies in their own reporting currency, so comparison is on % of Net Sales, not nominal size.
       </p>
     </section>
 
@@ -882,22 +893,45 @@
         "story.w.capacity": "Capacity",
         "story.w.dividend": "Dividend",
         "story.w.margin": "Margin",
-        "np.title": "Nabati P&L Benchmark — Peer Cost Structure Applied to Nabati's Revenue",
-        "np.sub": "Nabati's illustrative baseline P&L re-run on the selected peer's margin structure (% of sales, FX-neutral) for each fiscal year. Revenue stays Nabati's own; only the cost ratios change. Δ compares the chosen baseline year's scenario to Nabati's baseline.",
-        "np.note": "Illustrative Nabati baseline (Rp bn) benchmarked against verified peer margins (FY2021–FY2024; FY2019–FY2020 not in source). Peer margins are % of sales — currency-neutral — so Nabati (Rp) and overseas peers compare fairly. Nominal size is not compared.",
-        "np.baselineYr": "Baseline year",
+        "np.title": "Nabati Baseline vs Company — Normalized P&L (SM1–SM4 / GA1–GA3)",
+        "np.sub": "Pick a model company to trace its P&L across FY2019–FY2024 against Nabati's baseline, line by line. Each row is compared on % of Net Sales (FX-neutral). Lines not disclosed in the source are intentionally left blank — never assumed zero.",
+        "np.note": "Normalized P&L format (SM1–SM4 / GA1–GA3) per the brief. The 40-company dataset discloses only Net Sales and EBIT margin for FY2019 & FY2024, so other lines and intermediate years stay blank — a template to fill when the detailed breakdown is available. Nabati baseline is illustrative (Rp bn); companies in their own reporting currency, so comparison is on % of Net Sales, not nominal size.",
+        "np.company": "Company (model)",
+        "np.baselineYr": "Nabati Baseline year",
         "np.thLine": "Line",
-        "np.thNabati": "Nabati (baseline)",
-        "np.thDelta": "Δ vs baseline",
-        "np.l.revenue": "Revenue",
+        "np.thNabati": "Nabati Baseline",
+        "np.g.rev": "Revenue",
+        "np.g.gp": "Gross Profit",
+        "np.g.sm": "Selling & Marketing (SM1–SM4)",
+        "np.g.ga": "General & Administrative (GA1–GA3)",
+        "np.g.op": "Operating Profit",
+        "np.g.below": "Below Operating",
+        "np.l.grossSales": "Gross Commercial Sales",
+        "np.l.contraRev": "Contra Revenue / Trade Discount",
+        "np.l.netSales": "Reported Net Sales",
         "np.l.cogs": "COGS",
-        "np.l.gp": "Gross profit",
-        "np.l.opex": "Opex",
-        "np.l.ebit": "EBIT (operating profit)",
-        "np.l.fin": "Financing cost",
-        "np.l.ebt": "Earnings before tax",
-        "np.l.tax": "Tax",
-        "np.l.net": "Net profit"
+        "np.l.gp1": "GP1 — Gross Profit",
+        "np.l.sm1": "SM1 — Sales & Marketing Manpower",
+        "np.l.sm2": "SM2 — Distribution & Logistics",
+        "np.l.sm3": "SM3 — Advertising, Promotion & Commercial",
+        "np.l.sm3cr": "SM3-CR — recorded as Contra Revenue",
+        "np.l.sm4": "SM4 — Other Selling / Commercial Infra",
+        "np.l.unallocSelling": "Unallocated Selling",
+        "np.l.totalSM": "Total Selling & Marketing",
+        "np.l.gp2": "GP2 — after Selling & Marketing",
+        "np.l.ga1": "GA1 — Administrative Manpower",
+        "np.l.ga2": "GA2 — Core General Administration",
+        "np.l.ga3": "GA3 — Other / Misc Administration",
+        "np.l.unallocGA": "Unallocated G&A",
+        "np.l.unallocSGA": "Unallocated SG&A",
+        "np.l.ebit": "EBIT — Operating Profit",
+        "np.l.otherOp": "Other Operating / Non-operating",
+        "np.l.finIncome": "Finance Income",
+        "np.l.finCost": "Finance Cost",
+        "np.l.assoc": "Associates / JV",
+        "np.l.ebt": "EBT — Profit Before Tax",
+        "np.l.tax": "Income Tax",
+        "np.l.netIncome": "Net Income"
       },
       id: {
         "meta.title": "Pusat Komando Empiris FMCG F&B Global & APAC (FY2019–FY2026)",
@@ -1059,22 +1093,45 @@
         "story.w.capacity": "Kapasitas",
         "story.w.dividend": "Dividen",
         "story.w.margin": "Margin",
-        "np.title": "Benchmark P&L Nabati — Struktur Biaya Peer Diterapkan ke Pendapatan Nabati",
-        "np.sub": "P&L baseline ilustratif Nabati dihitung ulang memakai struktur margin peer terpilih (% dari penjualan, netral kurs) untuk tiap tahun fiskal. Pendapatan tetap milik Nabati; hanya rasio biaya yang berubah. Δ membandingkan skenario tahun baseline terpilih dengan baseline Nabati.",
-        "np.note": "Baseline ilustratif Nabati (Rp miliar) dibandingkan dengan margin peer terverifikasi (FY2021–FY2024; FY2019–FY2020 tidak ada di sumber). Margin peer adalah % dari penjualan — netral mata uang — sehingga Nabati (Rp) dan peer luar negeri dibandingkan secara adil. Ukuran nominal tidak dibandingkan.",
-        "np.baselineYr": "Tahun baseline",
+        "np.title": "Nabati Baseline vs Company — P&L Ternormalisasi (SM1–SM4 / GA1–GA3)",
+        "np.sub": "Pilih satu company model untuk menelusuri P&L-nya sepanjang FY2019–FY2024 terhadap baseline Nabati, baris per baris. Tiap baris dibandingkan atas dasar % dari Penjualan Bersih (netral kurs). Baris yang tidak di-disclose di sumber sengaja dikosongkan — tidak diasumsikan nol.",
+        "np.note": "Format P&L ternormalisasi (SM1–SM4 / GA1–GA3) sesuai brief. Dataset 40 perusahaan hanya memuat Penjualan Bersih dan margin EBIT untuk FY2019 & FY2024, jadi baris lain dan tahun antara dibiarkan kosong — kerangka yang bisa diisi saat rincian tersedia. Baseline Nabati bersifat ilustratif (Rp miliar); perusahaan memakai mata uang pelaporan masing-masing, jadi perbandingan atas dasar % Penjualan Bersih, bukan ukuran nominal.",
+        "np.company": "Company (model)",
+        "np.baselineYr": "Tahun Nabati Baseline",
         "np.thLine": "Baris",
-        "np.thNabati": "Nabati (baseline)",
-        "np.thDelta": "Δ vs baseline",
-        "np.l.revenue": "Pendapatan",
+        "np.thNabati": "Nabati Baseline",
+        "np.g.rev": "Pendapatan",
+        "np.g.gp": "Laba Kotor",
+        "np.g.sm": "Penjualan & Pemasaran (SM1–SM4)",
+        "np.g.ga": "Umum & Administrasi (GA1–GA3)",
+        "np.g.op": "Laba Operasi",
+        "np.g.below": "Di Bawah Operasi",
+        "np.l.grossSales": "Penjualan Komersial Bruto",
+        "np.l.contraRev": "Contra Revenue / Diskon Dagang",
+        "np.l.netSales": "Penjualan Bersih",
         "np.l.cogs": "HPP (COGS)",
-        "np.l.gp": "Laba kotor",
-        "np.l.opex": "Beban operasi",
-        "np.l.ebit": "EBIT (laba operasi)",
-        "np.l.fin": "Biaya pendanaan",
-        "np.l.ebt": "Laba sebelum pajak",
-        "np.l.tax": "Pajak",
-        "np.l.net": "Laba bersih"
+        "np.l.gp1": "GP1 — Laba Kotor",
+        "np.l.sm1": "SM1 — SDM Sales & Marketing",
+        "np.l.sm2": "SM2 — Distribusi & Logistik",
+        "np.l.sm3": "SM3 — Iklan, Promosi & Komersial",
+        "np.l.sm3cr": "SM3-CR — dicatat sebagai Contra Revenue",
+        "np.l.sm4": "SM4 — Penjualan Lain / Infra Komersial",
+        "np.l.unallocSelling": "Selling Tak Teralokasi",
+        "np.l.totalSM": "Total Penjualan & Pemasaran",
+        "np.l.gp2": "GP2 — setelah Penjualan & Pemasaran",
+        "np.l.ga1": "GA1 — SDM Administrasi",
+        "np.l.ga2": "GA2 — Administrasi Umum Inti",
+        "np.l.ga3": "GA3 — Administrasi Lain / Misc",
+        "np.l.unallocGA": "G&A Tak Teralokasi",
+        "np.l.unallocSGA": "SG&A Tak Teralokasi",
+        "np.l.ebit": "EBIT — Laba Operasi",
+        "np.l.otherOp": "Operasi Lain / Non-operasi",
+        "np.l.finIncome": "Pendapatan Keuangan",
+        "np.l.finCost": "Biaya Keuangan",
+        "np.l.assoc": "Asosiasi / JV",
+        "np.l.ebt": "EBT — Laba Sebelum Pajak",
+        "np.l.tax": "Pajak Penghasilan",
+        "np.l.netIncome": "Laba Bersih"
       }
     };
 
@@ -1300,8 +1357,8 @@
       scatterColorBy: "cohort",
       scatterBracket: "ALL",
       storyExpanded: false,
-      nabatiPeer: "myor",
-      nabatiYear: "2024",
+      nabatiCompany: 21,
+      nabatiBaseYear: "2024",
       barMetricField: "cagr5y",
       searchQuery: "",
       finBracket: "ALL",
@@ -1894,123 +1951,140 @@
     }
 
     // ============================================================================
-    // NABATI P&L BENCHMARK — apply a peer's margin structure to Nabati's revenue
-    // Nabati baseline is illustrative (Rp bn). A peer's gross & operating margin
-    // (% of sales, FX-neutral) are applied to Nabati's own revenue per fiscal year;
-    // financing % and tax rate stay Nabati's. Imported from the Financial Benchmark
-    // dataset (FY2021–FY2024; FY2019–FY2020 not disclosed there).
+    // NABATI BASELINE vs COMPANY — Normalized P&L (SM1–SM4 / GA1–GA3)
+    // A model company (from the 40-company set) is traced across FY2019–FY2024
+    // against Nabati's illustrative baseline, on the normalized P&L skeleton.
+    // The 40-company data only discloses Net Sales & EBIT (FY2019 & FY2024), so
+    // every other line/year is left blank (never assumed zero). Comparison is on
+    // % of Net Sales (FX-neutral), since companies report in different currencies.
     // ============================================================================
-    const NABATI_BASELINE = { revenue: 4200, cogs: 3085.7, gp: 1114.3, opex: 726.6, ebit: 387.7, fin: 47.5, ebt: 340.2, tax: 82.7, net: 257.5, finPct: 1.131, taxRate: 24.309 };
     const NABATI_YEARS = ["2019", "2020", "2021", "2022", "2023", "2024"];
+    // Nabati illustrative baseline (Rp bn); only disclosed lines carry a value.
+    const NABATI_BASELINE = {
+      netSales: 4200, cogs: 3085.7, gp1: 1114.3, unallocSGA: 726.6,
+      ebit: 387.7, finCost: 47.5, ebt: 340.2, tax: 82.7, netIncome: 257.5
+    };
+    // Full normalized skeleton per the brief (group headers + lines + subtotals).
     const NABATI_LINES = [
-      { key: "revenue", good: "up",   sub: false },
-      { key: "cogs",    good: "down", sub: false },
-      { key: "gp",      good: "up",   sub: true  },
-      { key: "opex",    good: "down", sub: false },
-      { key: "ebit",    good: "up",   sub: true  },
-      { key: "fin",     good: "down", sub: false },
-      { key: "ebt",     good: "up",   sub: true  },
-      { key: "tax",     good: "down", sub: false },
-      { key: "net",     good: "up",   sub: true  }
-    ];
-    const NABATI_PEERS = [
-      {k:"myor",name:"MYOR",color:"#2457D6",region:"Indonesia",y:{"2021":{gm:24.79,om:6.35},"2022":{gm:22.27,om:7.93},"2023":{gm:26.68,om:13.66},"2024":{gm:22.99,om:10.85}}},
-      {k:"good",name:"GOOD",color:"#17865B",region:"Indonesia",y:{"2021":{gm:27.07,om:8.07},"2022":{gm:24.9,om:6.78},"2023":{gm:26.87,om:8.48},"2024":{gm:28.17,om:7.49}}},
-      {k:"sttp",name:"STTP",color:"#B7791F",region:"Indonesia",y:{"2021":{gm:24.22,om:14.71},"2022":{gm:20.32,om:11.3},"2023":{gm:30.53,om:20.58},"2024":{gm:31.41,om:21.23}}},
-      {k:"sklt",name:"SKLT",color:"#8A5CC7",region:"Indonesia",y:{"2021":{gm:27.36,om:7.61},"2022":{gm:26.02,om:5.83},"2023":{gm:25.74,om:5.72},"2024":{gm:24.98,om:6.05}}},
-      {k:"icbp",name:"ICBP",color:"#C23B4A",region:"Indonesia",y:{"2021":{gm:35.71,om:20.69},"2022":{gm:33.63,om:19.5},"2023":{gm:37.0,om:21.79},"2024":{gm:37.04,om:22.48}}},
-      {k:"hupseng",name:"HUPSENG",color:"#3E7CB1",region:"Malaysia",y:{"2021":{gm:27.61,om:11.75},"2022":{gm:24.6,om:10.23},"2023":{gm:30.36,om:15.82},"2024":{gm:31.13,om:17.59}}},
-      {k:"ofi",name:"OFI",color:"#0E9F9A",region:"Malaysia",y:{"2022":{gm:17.87,om:7.06},"2023":{gm:15.12,om:6.05},"2024":{gm:20.65,om:11.82}}},
-      {k:"urc",name:"URC",color:"#D2691E",region:"Philippines",y:{"2021":{gm:28.31,om:10.92},"2022":{gm:25.88,om:10.3},"2023":{gm:27.25,om:10.95},"2024":{gm:27.33,om:10.23}}},
-      {k:"monde",name:"MONDE",color:"#9C6ADE",region:"Philippines",y:{"2021":{gm:36.55,om:13.9},"2022":{gm:30.73,om:10.66},"2023":{gm:30.6,om:13.01},"2024":{gm:34.24,om:15.65}}},
-      {k:"bbc",name:"BIBICA",color:"#5B7A8C",region:"Vietnam",y:{"2021":{gm:29.26,om:1.15},"2022":{gm:29.47,om:3.04},"2023":{gm:33.38,om:5.27},"2024":{gm:34.82,om:5.58}}},
-      {k:"snnp",name:"SNNP",color:"#D9457F",region:"Thailand",y:{"2021":{gm:26.92,om:10.13},"2022":{gm:27.88,om:12.06},"2023":{gm:28.92,om:13.63},"2024":{gm:30.01,om:13.84}}},
-      {k:"0151",name:"WANT WANT",color:"#C0392B",region:"Hong Kong / China",y:{"2022":{gm:44.81,om:22.18},"2023":{gm:43.92,om:19.97},"2024":{gm:46.6,om:22.25}}},
-      {k:"britannia",name:"BRITANNIA",color:"#2E8B57",region:"India",y:{"2021":{gm:39.16,om:15.23},"2022":{gm:37.3,om:14.2},"2023":{gm:40.41,om:16.03},"2024":{gm:42.7,om:17.16}}}
+      { group: "rev" },
+      { key: "grossSales" },
+      { key: "contraRev", cost: true },
+      { key: "netSales", sub: true, pctProfit: true },
+      { group: "gp" },
+      { key: "cogs", cost: true },
+      { key: "gp1", sub: true, pctProfit: true },
+      { group: "sm" },
+      { key: "sm1", cost: true },
+      { key: "sm2", cost: true },
+      { key: "sm3", cost: true },
+      { key: "sm3cr", cost: true },
+      { key: "sm4", cost: true },
+      { key: "unallocSelling", cost: true },
+      { key: "totalSM", sub: true, cost: true },
+      { key: "gp2", sub: true, pctProfit: true },
+      { group: "ga" },
+      { key: "ga1", cost: true },
+      { key: "ga2", cost: true },
+      { key: "ga3", cost: true },
+      { key: "unallocGA", cost: true },
+      { key: "unallocSGA", cost: true },
+      { group: "op" },
+      { key: "ebit", sub: true, pctProfit: true },
+      { group: "below" },
+      { key: "otherOp" },
+      { key: "finIncome" },
+      { key: "finCost", cost: true },
+      { key: "assoc" },
+      { key: "ebt", sub: true, pctProfit: true },
+      { key: "tax", cost: true },
+      { key: "netIncome", sub: true, pctProfit: true }
     ];
 
-    function nabatiScenario(cell) {
-      if (!cell || cell.gm == null || cell.om == null) return null;
-      const rev = NABATI_BASELINE.revenue;
-      const gp = rev * cell.gm / 100;
-      const ebit = rev * cell.om / 100;
-      const fin = rev * NABATI_BASELINE.finPct / 100;
-      const ebt = ebit - fin;
-      const tax = ebt * NABATI_BASELINE.taxRate / 100;
-      return { revenue: rev, gp, cogs: rev - gp, ebit, opex: gp - ebit, fin, ebt, tax, net: ebt - tax };
-    }
-    function nabatiFmt(v) {
-      return v == null ? "&mdash;" : "Rp " + Number(v).toLocaleString("en-US", { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + " bn";
-    }
-
-    window.setNabatiPeer = function(k) {
-      state.nabatiPeer = k;
-      const peer = NABATI_PEERS.find(p => p.k === k);
-      if (peer && !peer.y[state.nabatiYear]) {
-        const avail = NABATI_YEARS.filter(y => peer.y[y]);
-        state.nabatiYear = avail[avail.length - 1] || state.nabatiYear;
+    // Build one company's normalized P&L per year from the 40-company dataset.
+    // Only Net Sales and EBIT are derivable (and only for FY2019 & FY2024).
+    function nabatiCompanyCol(c, y) {
+      const out = {}; NABATI_LINES.forEach(l => { if (l.key) out[l.key] = { v: null, pct: null }; });
+      let rev = null, ebitM = null;
+      if (y === "2019") { rev = c.rev2019; ebitM = c.ebitMargin2019; }
+      else if (y === "2024") { rev = c.rev2024; ebitM = c.ebitMargin2024; }
+      if (rev != null) {
+        out.netSales = { v: rev, pct: 100 };
+        if (ebitM != null) out.ebit = { v: rev * ebitM / 100, pct: ebitM };
       }
-      renderNabatiPnL();
-    };
-    window.setNabatiYear = function(y) {
-      const peer = NABATI_PEERS.find(p => p.k === state.nabatiPeer);
-      if (peer && !peer.y[y]) return;
-      state.nabatiYear = y;
-      renderNabatiPnL();
-    };
+      return out;
+    }
+
+    function nabatiBaselineCol() {
+      const out = {}; const ns = NABATI_BASELINE.netSales;
+      NABATI_LINES.forEach(l => {
+        if (!l.key) return;
+        const v = NABATI_BASELINE[l.key];
+        out[l.key] = (v == null) ? { v: null, pct: null } : { v, pct: l.key === "netSales" ? 100 : v / ns * 100 };
+      });
+      return out;
+    }
+
+    window.setNabatiCompany = function(id) { state.nabatiCompany = Number(id); renderNabatiPnL(); };
+    window.setNabatiBaseYear = function(y) { state.nabatiBaseYear = y; renderNabatiPnL(); };
 
     function renderNabatiPnL() {
-      const chipsEl = document.getElementById("nabatiChips");
-      const yrEl = document.getElementById("nabatiYearSel");
       const tableEl = document.getElementById("nabatiTable");
-      if (!chipsEl || !yrEl || !tableEl) return;
-      const peer = NABATI_PEERS.find(p => p.k === state.nabatiPeer) || NABATI_PEERS[0];
+      const compSel = document.getElementById("nabatiCompany");
+      const yrSel = document.getElementById("nabatiBaseYear");
+      if (!tableEl || !compSel || !yrSel) return;
 
-      // Peer chips
-      chipsEl.innerHTML = NABATI_PEERS.map(p => {
-        const active = p.k === peer.k;
-        return `<button type="button" onclick="setNabatiPeer('${p.k}')" class="px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all border ${active ? "text-white shadow-sm" : "text-slate-300 hover:bg-slate-700/40"}" style="${active ? `background:${p.color};border-color:${p.color}` : `border-color:${p.color}66`}">${p.name}</button>`;
-      }).join("");
+      const company = COMPANIES_DATA.find(c => c.id === Number(state.nabatiCompany)) || COMPANIES_DATA[0];
 
-      // Baseline-year selector
-      yrEl.innerHTML = `<span class="text-[10px] font-mono uppercase text-slate-400 mr-1">${t("np.baselineYr")}</span>` + NABATI_YEARS.map(y => {
-        const has = !!peer.y[y];
-        const active = y === state.nabatiYear;
-        const cls = active ? "bg-indigo-600 text-white" : has ? "bg-slate-800 text-slate-300 hover:bg-slate-700" : "bg-slate-900 text-slate-600 cursor-not-allowed";
-        return `<button type="button" ${has ? "" : "disabled"} onclick="setNabatiYear('${y}')" class="px-2 py-1 rounded text-xs font-mono ${cls}">${y}</button>`;
-      }).join("");
+      // Controls
+      compSel.innerHTML = COMPANIES_DATA.map(c =>
+        `<option value="${c.id}" ${c.id === company.id ? "selected" : ""}>${c.name} (${c.ticker})</option>`).join("");
+      yrSel.innerHTML = NABATI_YEARS.map(y =>
+        `<option value="${y}" ${y === state.nabatiBaseYear ? "selected" : ""}>FY${y}</option>`).join("");
 
-      // Precompute scenarios per year + delta base year
-      const scen = {}; NABATI_YEARS.forEach(y => { scen[y] = nabatiScenario(peer.y[y]); });
-      const focus = scen[state.nabatiYear];
+      const unit = `${company.currency} ${company.unit}`;
+      const baseCol = nabatiBaselineCol();
+      const cols = {}; NABATI_YEARS.forEach(y => { cols[y] = nabatiCompanyCol(company, y); });
 
-      const head = `<thead><tr class="bg-slate-900/95 text-slate-400 border-b border-slate-800">
-        <th>${t("np.thLine")}</th>
-        <th class="num">${t("np.thNabati")}</th>
-        ${NABATI_YEARS.map(y => `<th class="num ${y === state.nabatiYear ? "np-focus text-indigo-300" : ""}" style="color:${y === state.nabatiYear ? "" : peer.color}">${y}</th>`).join("")}
-        <th class="num">${t("np.thDelta")}</th></tr></thead>`;
+      const fmtVal = (v, rp) => v == null ? "" : (rp ? "Rp " : "") + Number(v).toLocaleString("en-US", { minimumFractionDigits: rp ? 1 : 2, maximumFractionDigits: rp ? 1 : 2 });
+      const fmtPct = p => p == null ? "" : p.toFixed(1) + "%";
+
+      const cell = (data, line, rp, compareTo) => {
+        if (!data || data.v == null) return `<td class="num np-cell text-slate-600"></td>`;
+        let pctCls = "text-slate-400";
+        if (compareTo != null && data.pct != null && line.key !== "netSales") {
+          const better = line.pctProfit ? data.pct > compareTo : data.pct < compareTo;
+          if (Math.abs(data.pct - compareTo) >= 0.05) pctCls = better ? "text-emerald-400" : "text-rose-400";
+        }
+        const pctHtml = data.pct == null ? "" : `<div class="np-pct ${compareTo != null ? pctCls : "text-slate-400"}">${fmtPct(data.pct)}</div>`;
+        return `<td class="num np-cell text-slate-200">${fmtVal(data.v, rp)}${pctHtml}</td>`;
+      };
+
+      const compLabel = `${company.name.replace(/^PT\s+/i, "")} &middot; ${unit}`;
+      const head = `<thead>
+        <tr class="bg-slate-900/95 text-slate-400 border-b border-slate-800">
+          <th rowspan="2" class="align-bottom">${t("np.thLine")}</th>
+          <th class="num">${t("np.thNabati")}</th>
+          <th class="num" colspan="6">${compLabel}</th>
+        </tr>
+        <tr class="bg-slate-900/95 text-slate-500 border-b border-slate-800">
+          <th class="num normal-case font-normal text-[9px]">Rp bn &middot; FY${state.nabatiBaseYear}</th>
+          ${NABATI_YEARS.map(y => `<th class="num font-mono ${y === state.nabatiBaseYear ? "np-focus text-indigo-300" : ""}">${y}</th>`).join("")}
+        </tr>
+      </thead>`;
 
       const body = "<tbody>" + NABATI_LINES.map(line => {
-        const base = NABATI_BASELINE[line.key];
-        const yearCells = NABATI_YEARS.map(y => {
-          const v = scen[y] ? scen[y][line.key] : null;
-          return `<td class="num ${y === state.nabatiYear ? "np-focus" : ""} ${scen[y] ? "text-slate-200" : "text-slate-600"}">${nabatiFmt(v)}</td>`;
-        }).join("");
-        let deltaCell = `<td class="num text-slate-600">&mdash;</td>`;
-        if (focus) {
-          const d = focus[line.key] - base;
-          const rounded = Math.round(d * 10) / 10;
-          const isGood = (line.good === "up" && rounded > 0) || (line.good === "down" && rounded < 0);
-          const col = rounded === 0 ? "text-slate-400" : (isGood ? "text-emerald-400" : "text-rose-400");
-          const arrow = rounded > 0 ? "▲ " : rounded < 0 ? "▼ " : "– ";
-          const sign = rounded > 0 ? "+" : rounded < 0 ? "−" : "";
-          const txt = "Rp " + sign + Math.abs(rounded).toLocaleString("en-US", { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + " bn";
-          deltaCell = `<td class="num ${col}">${arrow}${txt}</td>`;
+        if (line.group) {
+          return `<tr class="np-group"><td colspan="8" class="text-slate-400">${t("np.g." + line.group)}</td></tr>`;
         }
+        const nb = baseCol[line.key];
+        const yearCells = NABATI_YEARS.map(y =>
+          cell(cols[y][line.key], line, false, nb && nb.pct != null ? nb.pct : null) +
+          ""
+        ).map((h, i) => h.replace('class="num np-cell', `class="num np-cell ${NABATI_YEARS[i] === state.nabatiBaseYear ? "np-focus" : ""}`)).join("");
         return `<tr class="${line.sub ? "np-sub bg-slate-900/40" : ""}">
           <td class="${line.sub ? "text-white" : "text-slate-300"}">${t("np.l." + line.key)}</td>
-          <td class="num text-slate-200">${nabatiFmt(base)}</td>
-          ${yearCells}${deltaCell}</tr>`;
+          ${cell(nb, line, true, null)}
+          ${yearCells}</tr>`;
       }).join("") + "</tbody>";
 
       tableEl.innerHTML = head + body;
