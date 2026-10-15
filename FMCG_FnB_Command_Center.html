@@ -193,6 +193,14 @@
     .bs-themebar { position: relative; height: 30px; border-radius: 7px; overflow: hidden; }
     .bs-themefill { height: 100%; display: flex; align-items: center; gap: 5px; padding: 0 9px; border-radius: 7px; min-width: 0; }
     .bs-matrix-scroll { overflow-x: auto; }
+
+    /* Nabati P&L Benchmark table */
+    #nabatiTable th, #nabatiTable td { padding: 8px 11px; border-bottom: 1px solid rgba(51,65,85,.4); white-space: nowrap; }
+    #nabatiTable th { font-size: 10px; text-transform: uppercase; letter-spacing: .03em; font-weight: 700; }
+    #nabatiTable td.num, #nabatiTable th.num { text-align: right; font-family: 'JetBrains Mono', monospace; }
+    #nabatiTable tbody tr:last-child td { border-bottom: 0; }
+    #nabatiTable tr.np-sub td { font-weight: 800; }
+    #nabatiTable .np-focus { background: rgba(99,102,241,.12); }
   </style>
 </head>
 <body class="antialiased selection:bg-indigo-500 selection:text-white min-h-screen flex flex-col">
@@ -638,6 +646,26 @@
       </div>
     </section>
 
+    <!-- SECTION 5: NABATI P&L BENCHMARK (peer margin structure applied to Nabati revenue, FX-neutral) -->
+    <section class="glass-card rounded-2xl p-6 space-y-4">
+      <div class="flex flex-col xl:flex-row xl:items-start justify-between gap-4">
+        <div>
+          <h2 class="text-lg font-bold text-white" data-i18n="np.title">Nabati P&amp;L Benchmark — Peer Cost Structure Applied to Nabati's Revenue</h2>
+          <p class="text-xs text-slate-400 max-w-4xl mt-0.5" data-i18n="np.sub">
+            Nabati's illustrative baseline P&amp;L re-run on the selected peer's margin structure (% of sales, FX-neutral) for each fiscal year. Revenue stays Nabati's own; only the cost ratios change. Δ compares the chosen baseline year's scenario to Nabati's baseline.
+          </p>
+        </div>
+        <div class="flex items-center gap-1.5 flex-wrap shrink-0" id="nabatiYearSel"></div>
+      </div>
+      <div class="flex flex-wrap items-center gap-1.5" id="nabatiChips"></div>
+      <div class="overflow-x-auto custom-scrollbar border border-slate-800 rounded-xl">
+        <table class="w-full text-left border-collapse text-xs" id="nabatiTable"></table>
+      </div>
+      <p class="text-[11px] text-slate-500" data-i18n="np.note">
+        Illustrative Nabati baseline (Rp bn) benchmarked against verified peer margins (FY2021–FY2024; FY2019–FY2020 not in source). Peer margins are % of sales — currency-neutral — so Nabati (Rp) and overseas peers compare fairly. Nominal size is not compared.
+      </p>
+    </section>
+
   </main>
 
   <script>
@@ -853,7 +881,23 @@
         "story.w.overseas": "Overseas",
         "story.w.capacity": "Capacity",
         "story.w.dividend": "Dividend",
-        "story.w.margin": "Margin"
+        "story.w.margin": "Margin",
+        "np.title": "Nabati P&L Benchmark — Peer Cost Structure Applied to Nabati's Revenue",
+        "np.sub": "Nabati's illustrative baseline P&L re-run on the selected peer's margin structure (% of sales, FX-neutral) for each fiscal year. Revenue stays Nabati's own; only the cost ratios change. Δ compares the chosen baseline year's scenario to Nabati's baseline.",
+        "np.note": "Illustrative Nabati baseline (Rp bn) benchmarked against verified peer margins (FY2021–FY2024; FY2019–FY2020 not in source). Peer margins are % of sales — currency-neutral — so Nabati (Rp) and overseas peers compare fairly. Nominal size is not compared.",
+        "np.baselineYr": "Baseline year",
+        "np.thLine": "Line",
+        "np.thNabati": "Nabati (baseline)",
+        "np.thDelta": "Δ vs baseline",
+        "np.l.revenue": "Revenue",
+        "np.l.cogs": "COGS",
+        "np.l.gp": "Gross profit",
+        "np.l.opex": "Opex",
+        "np.l.ebit": "EBIT (operating profit)",
+        "np.l.fin": "Financing cost",
+        "np.l.ebt": "Earnings before tax",
+        "np.l.tax": "Tax",
+        "np.l.net": "Net profit"
       },
       id: {
         "meta.title": "Pusat Komando Empiris FMCG F&B Global & APAC (FY2019–FY2026)",
@@ -1014,7 +1058,23 @@
         "story.w.overseas": "Ekspor",
         "story.w.capacity": "Kapasitas",
         "story.w.dividend": "Dividen",
-        "story.w.margin": "Margin"
+        "story.w.margin": "Margin",
+        "np.title": "Benchmark P&L Nabati — Struktur Biaya Peer Diterapkan ke Pendapatan Nabati",
+        "np.sub": "P&L baseline ilustratif Nabati dihitung ulang memakai struktur margin peer terpilih (% dari penjualan, netral kurs) untuk tiap tahun fiskal. Pendapatan tetap milik Nabati; hanya rasio biaya yang berubah. Δ membandingkan skenario tahun baseline terpilih dengan baseline Nabati.",
+        "np.note": "Baseline ilustratif Nabati (Rp miliar) dibandingkan dengan margin peer terverifikasi (FY2021–FY2024; FY2019–FY2020 tidak ada di sumber). Margin peer adalah % dari penjualan — netral mata uang — sehingga Nabati (Rp) dan peer luar negeri dibandingkan secara adil. Ukuran nominal tidak dibandingkan.",
+        "np.baselineYr": "Tahun baseline",
+        "np.thLine": "Baris",
+        "np.thNabati": "Nabati (baseline)",
+        "np.thDelta": "Δ vs baseline",
+        "np.l.revenue": "Pendapatan",
+        "np.l.cogs": "HPP (COGS)",
+        "np.l.gp": "Laba kotor",
+        "np.l.opex": "Beban operasi",
+        "np.l.ebit": "EBIT (laba operasi)",
+        "np.l.fin": "Biaya pendanaan",
+        "np.l.ebt": "Laba sebelum pajak",
+        "np.l.tax": "Pajak",
+        "np.l.net": "Laba bersih"
       }
     };
 
@@ -1150,6 +1210,7 @@
         renderCharts();
         renderInspector();
         renderTable();
+        renderNabatiPnL();
       }
     }
 
@@ -1239,6 +1300,8 @@
       scatterColorBy: "cohort",
       scatterBracket: "ALL",
       storyExpanded: false,
+      nabatiPeer: "myor",
+      nabatiYear: "2024",
       barMetricField: "cagr5y",
       searchQuery: "",
       finBracket: "ALL",
@@ -1831,6 +1894,129 @@
     }
 
     // ============================================================================
+    // NABATI P&L BENCHMARK — apply a peer's margin structure to Nabati's revenue
+    // Nabati baseline is illustrative (Rp bn). A peer's gross & operating margin
+    // (% of sales, FX-neutral) are applied to Nabati's own revenue per fiscal year;
+    // financing % and tax rate stay Nabati's. Imported from the Financial Benchmark
+    // dataset (FY2021–FY2024; FY2019–FY2020 not disclosed there).
+    // ============================================================================
+    const NABATI_BASELINE = { revenue: 4200, cogs: 3085.7, gp: 1114.3, opex: 726.6, ebit: 387.7, fin: 47.5, ebt: 340.2, tax: 82.7, net: 257.5, finPct: 1.131, taxRate: 24.309 };
+    const NABATI_YEARS = ["2019", "2020", "2021", "2022", "2023", "2024"];
+    const NABATI_LINES = [
+      { key: "revenue", good: "up",   sub: false },
+      { key: "cogs",    good: "down", sub: false },
+      { key: "gp",      good: "up",   sub: true  },
+      { key: "opex",    good: "down", sub: false },
+      { key: "ebit",    good: "up",   sub: true  },
+      { key: "fin",     good: "down", sub: false },
+      { key: "ebt",     good: "up",   sub: true  },
+      { key: "tax",     good: "down", sub: false },
+      { key: "net",     good: "up",   sub: true  }
+    ];
+    const NABATI_PEERS = [
+      {k:"myor",name:"MYOR",color:"#2457D6",region:"Indonesia",y:{"2021":{gm:24.79,om:6.35},"2022":{gm:22.27,om:7.93},"2023":{gm:26.68,om:13.66},"2024":{gm:22.99,om:10.85}}},
+      {k:"good",name:"GOOD",color:"#17865B",region:"Indonesia",y:{"2021":{gm:27.07,om:8.07},"2022":{gm:24.9,om:6.78},"2023":{gm:26.87,om:8.48},"2024":{gm:28.17,om:7.49}}},
+      {k:"sttp",name:"STTP",color:"#B7791F",region:"Indonesia",y:{"2021":{gm:24.22,om:14.71},"2022":{gm:20.32,om:11.3},"2023":{gm:30.53,om:20.58},"2024":{gm:31.41,om:21.23}}},
+      {k:"sklt",name:"SKLT",color:"#8A5CC7",region:"Indonesia",y:{"2021":{gm:27.36,om:7.61},"2022":{gm:26.02,om:5.83},"2023":{gm:25.74,om:5.72},"2024":{gm:24.98,om:6.05}}},
+      {k:"icbp",name:"ICBP",color:"#C23B4A",region:"Indonesia",y:{"2021":{gm:35.71,om:20.69},"2022":{gm:33.63,om:19.5},"2023":{gm:37.0,om:21.79},"2024":{gm:37.04,om:22.48}}},
+      {k:"hupseng",name:"HUPSENG",color:"#3E7CB1",region:"Malaysia",y:{"2021":{gm:27.61,om:11.75},"2022":{gm:24.6,om:10.23},"2023":{gm:30.36,om:15.82},"2024":{gm:31.13,om:17.59}}},
+      {k:"ofi",name:"OFI",color:"#0E9F9A",region:"Malaysia",y:{"2022":{gm:17.87,om:7.06},"2023":{gm:15.12,om:6.05},"2024":{gm:20.65,om:11.82}}},
+      {k:"urc",name:"URC",color:"#D2691E",region:"Philippines",y:{"2021":{gm:28.31,om:10.92},"2022":{gm:25.88,om:10.3},"2023":{gm:27.25,om:10.95},"2024":{gm:27.33,om:10.23}}},
+      {k:"monde",name:"MONDE",color:"#9C6ADE",region:"Philippines",y:{"2021":{gm:36.55,om:13.9},"2022":{gm:30.73,om:10.66},"2023":{gm:30.6,om:13.01},"2024":{gm:34.24,om:15.65}}},
+      {k:"bbc",name:"BIBICA",color:"#5B7A8C",region:"Vietnam",y:{"2021":{gm:29.26,om:1.15},"2022":{gm:29.47,om:3.04},"2023":{gm:33.38,om:5.27},"2024":{gm:34.82,om:5.58}}},
+      {k:"snnp",name:"SNNP",color:"#D9457F",region:"Thailand",y:{"2021":{gm:26.92,om:10.13},"2022":{gm:27.88,om:12.06},"2023":{gm:28.92,om:13.63},"2024":{gm:30.01,om:13.84}}},
+      {k:"0151",name:"WANT WANT",color:"#C0392B",region:"Hong Kong / China",y:{"2022":{gm:44.81,om:22.18},"2023":{gm:43.92,om:19.97},"2024":{gm:46.6,om:22.25}}},
+      {k:"britannia",name:"BRITANNIA",color:"#2E8B57",region:"India",y:{"2021":{gm:39.16,om:15.23},"2022":{gm:37.3,om:14.2},"2023":{gm:40.41,om:16.03},"2024":{gm:42.7,om:17.16}}}
+    ];
+
+    function nabatiScenario(cell) {
+      if (!cell || cell.gm == null || cell.om == null) return null;
+      const rev = NABATI_BASELINE.revenue;
+      const gp = rev * cell.gm / 100;
+      const ebit = rev * cell.om / 100;
+      const fin = rev * NABATI_BASELINE.finPct / 100;
+      const ebt = ebit - fin;
+      const tax = ebt * NABATI_BASELINE.taxRate / 100;
+      return { revenue: rev, gp, cogs: rev - gp, ebit, opex: gp - ebit, fin, ebt, tax, net: ebt - tax };
+    }
+    function nabatiFmt(v) {
+      return v == null ? "&mdash;" : "Rp " + Number(v).toLocaleString("en-US", { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + " bn";
+    }
+
+    window.setNabatiPeer = function(k) {
+      state.nabatiPeer = k;
+      const peer = NABATI_PEERS.find(p => p.k === k);
+      if (peer && !peer.y[state.nabatiYear]) {
+        const avail = NABATI_YEARS.filter(y => peer.y[y]);
+        state.nabatiYear = avail[avail.length - 1] || state.nabatiYear;
+      }
+      renderNabatiPnL();
+    };
+    window.setNabatiYear = function(y) {
+      const peer = NABATI_PEERS.find(p => p.k === state.nabatiPeer);
+      if (peer && !peer.y[y]) return;
+      state.nabatiYear = y;
+      renderNabatiPnL();
+    };
+
+    function renderNabatiPnL() {
+      const chipsEl = document.getElementById("nabatiChips");
+      const yrEl = document.getElementById("nabatiYearSel");
+      const tableEl = document.getElementById("nabatiTable");
+      if (!chipsEl || !yrEl || !tableEl) return;
+      const peer = NABATI_PEERS.find(p => p.k === state.nabatiPeer) || NABATI_PEERS[0];
+
+      // Peer chips
+      chipsEl.innerHTML = NABATI_PEERS.map(p => {
+        const active = p.k === peer.k;
+        return `<button type="button" onclick="setNabatiPeer('${p.k}')" class="px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all border ${active ? "text-white shadow-sm" : "text-slate-300 hover:bg-slate-700/40"}" style="${active ? `background:${p.color};border-color:${p.color}` : `border-color:${p.color}66`}">${p.name}</button>`;
+      }).join("");
+
+      // Baseline-year selector
+      yrEl.innerHTML = `<span class="text-[10px] font-mono uppercase text-slate-400 mr-1">${t("np.baselineYr")}</span>` + NABATI_YEARS.map(y => {
+        const has = !!peer.y[y];
+        const active = y === state.nabatiYear;
+        const cls = active ? "bg-indigo-600 text-white" : has ? "bg-slate-800 text-slate-300 hover:bg-slate-700" : "bg-slate-900 text-slate-600 cursor-not-allowed";
+        return `<button type="button" ${has ? "" : "disabled"} onclick="setNabatiYear('${y}')" class="px-2 py-1 rounded text-xs font-mono ${cls}">${y}</button>`;
+      }).join("");
+
+      // Precompute scenarios per year + delta base year
+      const scen = {}; NABATI_YEARS.forEach(y => { scen[y] = nabatiScenario(peer.y[y]); });
+      const focus = scen[state.nabatiYear];
+
+      const head = `<thead><tr class="bg-slate-900/95 text-slate-400 border-b border-slate-800">
+        <th>${t("np.thLine")}</th>
+        <th class="num">${t("np.thNabati")}</th>
+        ${NABATI_YEARS.map(y => `<th class="num ${y === state.nabatiYear ? "np-focus text-indigo-300" : ""}" style="color:${y === state.nabatiYear ? "" : peer.color}">${y}</th>`).join("")}
+        <th class="num">${t("np.thDelta")}</th></tr></thead>`;
+
+      const body = "<tbody>" + NABATI_LINES.map(line => {
+        const base = NABATI_BASELINE[line.key];
+        const yearCells = NABATI_YEARS.map(y => {
+          const v = scen[y] ? scen[y][line.key] : null;
+          return `<td class="num ${y === state.nabatiYear ? "np-focus" : ""} ${scen[y] ? "text-slate-200" : "text-slate-600"}">${nabatiFmt(v)}</td>`;
+        }).join("");
+        let deltaCell = `<td class="num text-slate-600">&mdash;</td>`;
+        if (focus) {
+          const d = focus[line.key] - base;
+          const rounded = Math.round(d * 10) / 10;
+          const isGood = (line.good === "up" && rounded > 0) || (line.good === "down" && rounded < 0);
+          const col = rounded === 0 ? "text-slate-400" : (isGood ? "text-emerald-400" : "text-rose-400");
+          const arrow = rounded > 0 ? "▲ " : rounded < 0 ? "▼ " : "– ";
+          const sign = rounded > 0 ? "+" : rounded < 0 ? "−" : "";
+          const txt = "Rp " + sign + Math.abs(rounded).toLocaleString("en-US", { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + " bn";
+          deltaCell = `<td class="num ${col}">${arrow}${txt}</td>`;
+        }
+        return `<tr class="${line.sub ? "np-sub bg-slate-900/40" : ""}">
+          <td class="${line.sub ? "text-white" : "text-slate-300"}">${t("np.l." + line.key)}</td>
+          <td class="num text-slate-200">${nabatiFmt(base)}</td>
+          ${yearCells}${deltaCell}</tr>`;
+      }).join("") + "</tbody>";
+
+      tableEl.innerHTML = head + body;
+    }
+
+    // ============================================================================
     // 3. RENDER DEEP-DIVE ENTITY INSPECTOR & 6-YEAR ROLLING AUDIT
     // ============================================================================
     function populateCompanyDropdown() {
@@ -2155,6 +2341,7 @@
       renderCharts();
       renderInspector();
       renderTable();
+      renderNabatiPnL();
     });
   </script>
 </body>
