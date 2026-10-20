@@ -823,6 +823,10 @@
   .ksni-pnl tr.pl-sub td{font-weight:800; background:var(--surface-2); border-top:1.5px solid var(--border);}
   /* ---- v6: hypotheses matrices (Ansoff + Priority) ---- */
   .hm-two{display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:16px; margin-top:12px;}
+  .hm-one{margin-top:12px; max-width:560px;}
+  .hy-link{font-size:11.5px; color:var(--muted); line-height:1.5; margin:12px 0 0;} .hy-link b{color:var(--ink); font-weight:800;}
+  .ov-102030slim{font-size:12.5px; line-height:1.6; color:var(--ink-2); margin:12px 0 0;} .ov-102030slim b{color:var(--ink); font-weight:800;}
+  .vd-xref{font-size:11.5px; line-height:1.55; color:var(--muted); margin:12px 0 0; padding-top:10px; border-top:1px dashed var(--border);} .vd-xref b{color:var(--ink-2); font-weight:800;}
   .hm-block{min-width:0;}
   @media (max-width:900px){ .hm-two{grid-template-columns:minmax(0,1fr);} }
   .hm-h{font-size:13px; font-family:"Manrope",sans-serif; font-weight:800; color:var(--ink); margin:0 0 8px;}
@@ -2057,6 +2061,7 @@
     'ns.exEyebrow':'2030 target validation','ns.exTitle':'Is 10:20:30 realistic?',
     'ns.exSub':'Evidence that an FMCG peer can hold a ≥20% pre-tax margin while growing ≥10% a year — tested, not assumed.',
     'ns.exTarget':'2030 goal · ≥10% CAGR + ≥20% EBT',
+    'ns.exSlim':'Of {total} verified issuers, <b>{strong}</b> clear the dual 10:20:30 bar ({names}) and {profit} hold a ≥20% EBT margin. KSNI\u2019s own read is in the verdict above; the full issuer-by-issuer table lives in the <b>Peer Benchmark</b> tab.',
     'ns.exStrong':'Strong dual-target','ns.exProfit':'EBT ≥20% proven','ns.exProfitSub':'latest reported FY','ns.exBelow':'Below 20% EBT','ns.exBelowSub':'latest reported FY','ns.exNA':'Not disclosed',
     'ns.exCaveat':'Earnings-quality review needed: {qr}. A high one-year EBT is not a durable 10/20 combination — check non-operating income, FX gains and growth before copying any benchmark.',
     'ns.vStrong':'Strong dual-target','ns.vPending':'EBT met · growth pending','ns.vProfit':'Profit only','ns.vGrowth':'Growth only','ns.vBelow':'Below 20% EBT','ns.vNA':'Insufficient disclosure','ns.vScope':'Scope review',
@@ -2150,6 +2155,7 @@
     'vd.opexTxt':'Selling expense alone is ~{sm} of net sales ({smv}) — the single largest drag between gross profit and EBT.',
     'vd.gapTxt':'The whole {gap}pp gap to a 20% EBT margin sits below gross profit: the lever is operating-cost efficiency, not raising prices.',
     'vd.note':'Verdict and figures are computed from KSNI’s verified FY2025 group P&L and the peer set’s filed margins. EBT (reported pre-tax), not EBITDA. A single-year base has no revenue CAGR, so the growth half of 20:20 is not yet measurable for KSNI.',
+    'vd.xref':'Where to go deeper on KSNI: full P&L waterfall → <b>Company Analysis</b>; position vs peers → <b>Peer Benchmark</b> (matrix, SWOT); forward what-if → the Scenario panel below.',
     'scn.title':'Scenario what-if','scn.sub':'Drag the sliders to compound KSNI’s verified FY2025 base forward. This is arithmetic illustration, not a forecast — it changes nothing about the actual figures.',
     'scn.growth':'Annual revenue growth','scn.margin':'EBT margin','scn.years':'Horizon (years)',
     'scn.projRev':'Projected revenue (+{y}y)','scn.projEbt':'Projected EBT','scn.mult':'EBT vs base','scn.target':'Target reached',
@@ -2365,6 +2371,7 @@
     'ns.exEyebrow':'Validasi target 2030','ns.exTitle':'Apakah 10:20:30 realistis?',
     'ns.exSub':'Bukti bahwa peer FMCG bisa menjaga margin sebelum pajak ≥20% sambil tumbuh ≥10% per tahun — diuji, bukan diasumsikan.',
     'ns.exTarget':'Target 2030 · CAGR ≥10% + EBT ≥20%',
+    'ns.exSlim':'Dari {total} issuer terverifikasi, <b>{strong}</b> menembus bar ganda 10:20:30 ({names}) dan {profit} punya margin EBT ≥20%. Bacaan KSNI sendiri ada di verdict di atas; tabel lengkap per-issuer ada di tab <b>Peer Benchmark</b>.',
     'ns.exStrong':'Kandidat dual-target kuat','ns.exProfit':'EBT ≥20% terbukti','ns.exProfitSub':'FY terakhir','ns.exBelow':'Di bawah 20% EBT','ns.exBelowSub':'FY terakhir','ns.exNA':'Tidak diungkap',
     'ns.exCaveat':'Perlu uji kualitas laba: {qr}. EBT tinggi satu tahun belum berarti kombinasi 10/20 yang tahan lama — cek pendapatan non-operasional, untung kurs, dan pertumbuhan sebelum meniru benchmark mana pun.',
     'ns.vStrong':'Dual-target kuat','ns.vPending':'EBT tercapai · growth pending','ns.vProfit':'Profit saja','ns.vGrowth':'Growth saja','ns.vBelow':'Di bawah 20% EBT','ns.vNA':'Pengungkapan kurang','ns.vScope':'Perlu review scope',
@@ -2458,6 +2465,7 @@
     'vd.opexTxt':'Beban selling saja ~{sm} dari net sales ({smv}) — penyeret tunggal terbesar antara gross profit dan EBT.',
     'vd.gapTxt':'Seluruh jarak {gap}pp menuju margin EBT 20% ada DI BAWAH gross profit: levernya efisiensi biaya operasi, bukan menaikkan harga.',
     'vd.note':'Verdict dan angka dihitung dari P&L grup KSNI FY2025 terverifikasi dan margin filing peer set. EBT (laba sebelum pajak dilaporkan), bukan EBITDA. Basis satu tahun tak punya CAGR, jadi separuh "growth" dari 20:20 belum terukur untuk KSNI.',
+    'vd.xref':'Mau lebih dalam soal KSNI: waterfall P&L lengkap → <b>Company Analysis</b>; posisi vs peer → <b>Peer Benchmark</b> (matriks, SWOT); what-if ke depan → panel Scenario di bawah.',
     'scn.title':'Scenario what-if','scn.sub':'Geser slider untuk melipatgandakan basis terverifikasi KSNI FY2025 ke depan. Ini ilustrasi aritmetik, bukan proyeksi — tidak mengubah apa pun pada angka aktual.',
     'scn.growth':'Pertumbuhan pendapatan tahunan','scn.margin':'Margin EBT','scn.years':'Horizon (tahun)',
     'scn.projRev':'Proyeksi pendapatan (+{y}th)','scn.projEbt':'Proyeksi EBT','scn.mult':'EBT vs basis','scn.target':'Target tercapai',
@@ -2777,6 +2785,7 @@
     'hy.riskAdj':'Risk-adjusted EBT:',
     'hy.noTest':'to be defined in workshop',
     'hy.honest':'Scoring stays suppressed until impact, feasibility, uncertainty and a quantification source are supplied via reviewed JSON. A heuristic estimate is research triage, never a CEO-approved launch decision.',
+    'hy.ansoffLink':'The Ansoff view of these moves (with the CEO question per quadrant) lives in the <b>Nabati Learning</b> tab.',
     'hy.backlog':'Backlog — {n} unselected ideas',
     'hy.detailTitle':'All {n} hypotheses — detail',
     'hy.ansoffTitle':'Ansoff matrix — where each idea sits',
@@ -2832,6 +2841,7 @@
     'hy.riskAdj':'EBT risk-adjusted:',
     'hy.noTest':'ditetapkan di workshop',
     'hy.honest':'Skor ditahan sampai impact, feasibility, uncertainty dan sumber kuantifikasi diisi via JSON tertinjau. Estimasi heuristik adalah triase riset, bukan keputusan peluncuran yang disetujui CEO.',
+    'hy.ansoffLink':'Tampilan Ansoff dari langkah-langkah ini (dengan pertanyaan CEO per kuadran) ada di tab <b>Nabati Learning</b>.',
     'hy.backlog':'Backlog — {n} ide belum dipilih',
     'hy.detailTitle':'Semua {n} hipotesis — detail',
     'hy.ansoffTitle':'Matriks Ansoff — posisi tiap ide',
@@ -3451,25 +3461,11 @@
     if(!c.length){ host.style.display='none'; return; } host.style.display='';
     var strong=c.filter(function(x){return x.status==='STRONG_DUAL_CANDIDATE';});
     var profit=c.filter(function(x){return x.latest_ebt_margin!=null && x.latest_ebt_margin>=0.20;});
-    var below=c.filter(function(x){return x.latest_ebt_margin!=null && x.latest_ebt_margin<0.20;});
-    var nd=c.filter(function(x){return x.latest_ebt_margin==null;});
-    var tiles=[
-      {l:t('ns.exStrong'), v:strong.length, sub:strong.map(function(x){return x.name.split(' ').slice(-1);}).length?strong.map(function(x){return nsShort(x);}).join(', '):'—', c:'#0E8A54'},
-      {l:t('ns.exProfit'), v:profit.length, sub:t('ns.exProfitSub'), c:'#B7791F'},
-      {l:t('ns.exBelow'), v:below.length, sub:t('ns.exBelowSub'), c:'#C23B4A'},
-      {l:t('ns.exNA'), v:nd.length, sub:(nd.map(function(x){return nsShort(x);}).join(', ')||'—'), c:'#8A94A6'}
-    ];
-    var qr=c.filter(function(x){return x.quality_review_required;}).map(function(x){return nsShort(x);});
     host.innerHTML=
       '<div class="ns-head"><div><div class="ns-eyebrow">'+t('ns.exEyebrow')+'</div>'+
-        '<h2 class="ns-h2">'+t('ns.exTitle')+'</h2>'+
-        '<p class="section-sub" style="margin-top:4px;">'+t('ns.exSub')+'</p></div>'+
+        '<h2 class="ns-h2">'+t('ns.exTitle')+'</h2></div>'+
         '<div class="ns-target">'+t('ns.exTarget')+'</div></div>'+
-      '<div class="ns-tiles">'+tiles.map(function(ti){
-        return '<div class="ns-tile" style="border-top:3px solid '+ti.c+'"><div class="ns-tv" style="color:'+ti.c+'">'+ti.v+'</div><div class="ns-tl">'+ti.l+'</div><div class="ns-ts">'+ti.sub+'</div></div>';
-      }).join('')+'</div>'+
-      nsNabatiStrip()+
-      '<p class="ns-caveat">'+t('ns.exCaveat',{qr:(qr.join(', ')||'—')})+'</p>';
+      '<p class="ov-102030slim">'+t('ns.exSlim',{total:c.length,strong:strong.length,names:(strong.map(function(x){return nsShort(x);}).join(', ')||'—'),profit:profit.length})+'</p>';
   }
   function nnRp(v){ return v==null?'<span class="na">—</span>':('Rp'+v.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})+'T'); }
   function nsNabatiStrip(){
@@ -3552,24 +3548,6 @@
     if(typeof CEO_V5==='undefined' || !Array.isArray(CEO_V5.hypotheses)){ host.style.display='none'; return; } host.style.display='';
     var all=CEO_V5.hypotheses, sel=all.filter(function(h){return h.selected;});
     var scoring=CEO_V5.hypothesis_scoring||{chosen_count_min:3,chosen_count_max:5};
-    // Ansoff quadrant buckets
-    var AX={product_development:[], diversification:[], market_penetration:[], market_development:[]};
-    all.forEach(function(h){ var a=(h.ansoff==='penetration')?'market_penetration':h.ansoff; if(AX[a]) AX[a].push(h); });
-    function cell(key,label,col){ return '<div class="hm-cell" style="--c:'+col+'"><div class="hm-ql">'+label+'</div><div class="hm-chips">'+(AX[key].map(hyChip).join('')||'<span class="hm-empty">—</span>')+'</div></div>'; }
-    var ansoff=
-      '<div class="hm-block"><h3 class="hm-h">'+t('hy.ansoffTitle')+'</h3>'+
-      '<div class="hm-table">'+
-        '<div class="hm-corner"></div>'+
-        '<div class="hm-coltop">'+t('hy.mktExisting')+'</div>'+
-        '<div class="hm-coltop">'+t('hy.mktNew')+'</div>'+
-        '<div class="hm-rowlab">'+t('hy.prodNew')+'</div>'+
-        cell('product_development', t('hy.q.pd'), ANSOFF_COL.product_development)+
-        cell('diversification', t('hy.q.div'), ANSOFF_COL.diversification)+
-        '<div class="hm-rowlab">'+t('hy.prodExisting')+'</div>'+
-        cell('market_penetration', t('hy.q.mp'), ANSOFF_COL.market_penetration)+
-        cell('market_development', t('hy.q.md'), ANSOFF_COL.market_development)+
-      '</div>'+
-      '<div class="hm-axis-x">'+t('hy.axisMarket')+' →</div></div>';
     // Priority matrix (impact x feasibility) — scores not yet supplied → quadrant frame + unscored tray
     var pri=
       '<div class="hm-block"><h3 class="hm-h">'+t('hy.priTitle')+'</h3>'+
@@ -3596,7 +3574,8 @@
         '<h2 class="ns-h2">'+t('hy.title')+'</h2>'+
         '<p class="section-sub" style="margin-top:4px;">'+t('hy.sub',{n:sel.length})+'</p></div>'+
         '<span class="hy-count'+(countOK?' ok':'')+'">'+t('hy.countBadge',{n:sel.length,min:scoring.chosen_count_min,max:scoring.chosen_count_max})+'</span></div>'+
-      '<div class="hm-two">'+ansoff+pri+'</div>'+
+      '<div class="hm-one">'+pri+'</div>'+
+      '<p class="hy-link" data-i18n-html="hy.ansoffLink">The Ansoff view of these moves (with the CEO question per quadrant) lives in the <b>Nabati Learning</b> tab.</p>'+
       '<p class="hy-honest">'+t('hy.honest')+'</p>'+
       '<details class="hy-backlog"><summary>'+t('hy.detailTitle',{n:all.length})+'</summary><div class="hy-list">'+detail+'</div></details>';
   }
@@ -3631,6 +3610,7 @@
         '<div class="vd-pr"><div class="vd-prn">'+c2020.length+'/'+total+'</div><div class="vd-prl">'+t('vd.clears2020')+'</div><div class="vd-prc">'+names(c2020)+'</div></div>'+
       '</div>'+
       '<ul class="vd-lens">'+lens+'</ul>'+
+      '<p class="vd-xref">'+t('vd.xref')+'</p>'+
       '<p class="sw-note">'+t('vd.note')+'</p>';
   }
   /* ---- v6: scenario what-if — compounding arithmetic on the verified FY2025 base; explicitly an illustration, not a forecast ---- */
@@ -5710,7 +5690,7 @@
     savePeers();
     renderPeerCards(); renderAllDependentViews();
   });
-  var DATA_VERSION = 'asia14-global9-2026-10-v7d-extended';
+  var DATA_VERSION = 'asia14-global9-2026-10-v7e-extended';
   function savePeers(){
     try{ localStorage.setItem('nabati-peers-v1', JSON.stringify(PEERS)); localStorage.setItem('nabati-peers-datav', DATA_VERSION); }catch(e){}
     if(peersDocRef){ peersDocRef.set({ peers: PEERS, dataVersion: DATA_VERSION, updatedAt: new Date().toISOString() }).catch(function(){}); }
