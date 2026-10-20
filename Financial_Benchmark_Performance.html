@@ -936,6 +936,9 @@
   .xu-provsrc{font-weight:800; color:var(--ink);}
   .xu-provcaveat{background:var(--surface-2); border:1px solid var(--border); border-radius:8px; padding:8px 10px; padding-left:10px;}
   .xu-provcaveat::before{display:none;}
+  .rc-basis{font-size:9px; font-weight:700; text-transform:uppercase; color:var(--muted); background:var(--surface-2); border:1px solid var(--border); border-radius:4px; padding:0 4px; margin-left:4px;}
+  .rc-flag{font-size:9.5px; font-weight:800; text-transform:uppercase; border-radius:5px; padding:1px 6px; margin-left:4px;}
+  .rc-flag.ok{color:#0E8A54; background:rgba(14,138,84,.12);} .rc-flag.div{color:#B7791F; background:rgba(183,121,31,.14);}
   /* ---- v6: Extended Universe (imported analyst layer) ---- */
   .xu-banner{display:flex; gap:12px; align-items:flex-start; margin-top:16px; border:1px solid #E8590C; border-left:4px solid #E8590C; background:color-mix(in srgb,#E8590C 8%, var(--surface)); border-radius:12px; padding:12px 14px;}
   .xu-bantag{flex:none; font-family:"Manrope",sans-serif; font-weight:800; font-size:9.5px; letter-spacing:.04em; color:#fff; background:#E8590C; border-radius:6px; padding:4px 8px; margin-top:2px;}
@@ -1178,6 +1181,11 @@
           <p class="mp-note" id="ns102030Note" style="margin-top:8px;"></p>
         </div>
       </div>
+    </details>
+
+    <details class="fold" id="pbReconFold">
+      <summary><span data-i18n="rc.title">Cross-check vs the imported analyst layer</span> <span class="fold-hint" id="pbReconHint"></span></summary>
+      <div class="fold-body"><div id="pbReconBody"></div></div>
     </details>
 
     <details class="fold" id="pbDetails">
@@ -1715,7 +1723,8 @@
     'ex.detailSub':'Imported figures for the selected group — analyst basis.','ex.auditBridge':'Audited bridge (as stated in source)','ex.bridgeTitle':'Revenue bridge — what moved the top line','ex.bridgeNote':'Modeled decomposition (price / volume / M&A / FX), not a filed reconciliation.','ex.noBridge':'No modeled revenue bridge supplied for this group.','ex.rolling':'Rolling audit — vision vs outcome',
     'ex.bBase':'2019 base','ex.bPrice':'Price','ex.bVol':'Volume','ex.bMA':'M&A','ex.bFX':'FX','ex.bFinal':'2024 final',
     'ex.dnaTitle':'Nabati DNA — 2027–2031 projection','ex.dnaSub':'Indexed net-revenue path (2026 base = 100) from the imported DNA blueprint.','ex.projBadge':'PROJECTION','ex.dnaLine':'P&L line (indexed)','ex.dnaDelta':'CAGR / note','ex.dnaNote':'This is a forward simulation from the imported DNA model (indexed, not Rupiah), shown as a scenario — not a forecast and not reconciled to actuals. Our verified KSNI base and the adjustable what-if live in the Overview tab.',
-    'ex.drwTitle':'Extended Universe — imported analyst layer','ex.drwSub':'The sixth tab is a reference layer, kept separate from the EBT-verified core. Its figures are not reconciled to primary filings in this session.','ex.drwS1':'41-company universe: revenue 2019→2024, 5-yr & organic CAGR, EBIT/EBITDA margins, audited-bridge narratives, rolling audits.','ex.drwS2':'modeled revenue bridges (price / volume / M&A / FX) for 30 of the 41 groups.','ex.drwS3':'indexed 2027–2031 net-revenue projection (2026 base = 100), shown as a scenario.','ex.drwCaveat':'<b>Basis:</b> EBIT/EBITDA margins and modeled estimates — not the EBT + primary-filing basis of the other five tabs. Treat as an analyst lens, not verified fact.','nav.map':'Opportunity Map','nav.audit':'Data Readiness','nav.sources':'Data & Sources',
+    'ex.drwTitle':'Extended Universe — imported analyst layer','ex.drwSub':'The sixth tab is a reference layer, kept separate from the EBT-verified core. Its figures are not reconciled to primary filings in this session.','ex.drwS1':'41-company universe: revenue 2019→2024, 5-yr & organic CAGR, EBIT/EBITDA margins, audited-bridge narratives, rolling audits.','ex.drwS2':'modeled revenue bridges (price / volume / M&A / FX) for 30 of the 41 groups.','ex.drwS3':'indexed 2027–2031 net-revenue projection (2026 base = 100), shown as a scenario.','ex.drwCaveat':'<b>Basis:</b> EBIT/EBITDA margins and modeled estimates — not the EBT + primary-filing basis of the other five tabs. Treat as an analyst lens, not verified fact.',
+    'rc.title':'Cross-check vs the imported analyst layer','rc.hint':'{n} peers appear in both datasets','rc.sub':'Triangulation only — our verified figures stay the source of truth; this just shows where the imported analyst model agrees or diverges.','rc.ourCagr':'Our CAGR','rc.anCagr':'Analyst CAGR (19–24)','rc.delta':'Δ growth','rc.ourEbt':'Our EBT margin','rc.anEbitda':'Analyst EBITDA','rc.aligned':'aligned','rc.diverges':'diverges','rc.none':'No peers overlap the analyst set.','rc.note':'Growth columns use different windows/methods (ours = latest verified multi-year or YoY; analyst = modeled 2019–24), so treat Δ as triangulation, not error. Margin columns are different metrics — EBT (ours) is structurally below EBITDA (analyst), so the gap is expected and not a discrepancy.','nav.map':'Opportunity Map','nav.audit':'Data Readiness','nav.sources':'Data & Sources',
     'audit.title':'Data Readiness & Gap Audit','audit.sub':'What is ready to analyse now, what is missing, why — and how to get it. No blank is treated as zero.',
     'audit.updated':'Audit updated {d}','audit.rows':'numeric rows','audit.companies':'companies','audit.quarter':'quarterly / H1 obs','audit.sources':'source records','audit.events':'dated events','audit.gapsN':'audited gaps',
     'audit.bucketTitle':'Data by readiness','audit.bucketSub':'Click a bucket to filter the gap register below.',
@@ -1818,7 +1827,8 @@
     'ex.detailSub':'Angka impor untuk grup terpilih — basis analis.','ex.auditBridge':'Audited bridge (sesuai sumber)','ex.bridgeTitle':'Revenue bridge — apa yang menggerakkan top line','ex.bridgeNote':'Dekomposisi model (harga / volume / M&A / kurs), bukan rekonsiliasi filing.','ex.noBridge':'Tidak ada revenue bridge model untuk grup ini.','ex.rolling':'Rolling audit — visi vs hasil',
     'ex.bBase':'Basis 2019','ex.bPrice':'Harga','ex.bVol':'Volume','ex.bMA':'M&A','ex.bFX':'Kurs','ex.bFinal':'Final 2024',
     'ex.dnaTitle':'Nabati DNA — proyeksi 2027–2031','ex.dnaSub':'Jalur net-revenue terindeks (basis 2026 = 100) dari blueprint DNA impor.','ex.projBadge':'PROYEKSI','ex.dnaLine':'Baris P&L (indeks)','ex.dnaDelta':'CAGR / catatan','ex.dnaNote':'Ini simulasi ke depan dari model DNA impor (indeks, bukan Rupiah), ditampilkan sebagai skenario — bukan ramalan dan belum direkonsiliasi ke aktual. Basis KSNI terverifikasi & what-if yang bisa diatur ada di tab Overview.',
-    'ex.drwTitle':'Extended Universe — layer analis impor','ex.drwSub':'Tab keenam adalah lapisan referensi, dipisah dari inti terverifikasi-EBT. Angkanya belum direkonsiliasi ke filing primer di sesi ini.','ex.drwS1':'Universe 41 perusahaan: revenue 2019→2024, CAGR 5-thn & organik, margin EBIT/EBITDA, narasi audited-bridge, rolling audit.','ex.drwS2':'revenue bridge model (harga / volume / M&A / kurs) untuk 30 dari 41 grup.','ex.drwS3':'proyeksi net-revenue terindeks 2027–2031 (basis 2026 = 100), ditampilkan sebagai skenario.','ex.drwCaveat':'<b>Basis:</b> margin EBIT/EBITDA dan estimasi model — bukan basis EBT + filing primer seperti lima tab lain. Perlakukan sebagai lensa analis, bukan fakta terverifikasi.','nav.map':'Peta Peluang','nav.audit':'Kesiapan Data','nav.sources':'Data & Sumber',
+    'ex.drwTitle':'Extended Universe — layer analis impor','ex.drwSub':'Tab keenam adalah lapisan referensi, dipisah dari inti terverifikasi-EBT. Angkanya belum direkonsiliasi ke filing primer di sesi ini.','ex.drwS1':'Universe 41 perusahaan: revenue 2019→2024, CAGR 5-thn & organik, margin EBIT/EBITDA, narasi audited-bridge, rolling audit.','ex.drwS2':'revenue bridge model (harga / volume / M&A / kurs) untuk 30 dari 41 grup.','ex.drwS3':'proyeksi net-revenue terindeks 2027–2031 (basis 2026 = 100), ditampilkan sebagai skenario.','ex.drwCaveat':'<b>Basis:</b> margin EBIT/EBITDA dan estimasi model — bukan basis EBT + filing primer seperti lima tab lain. Perlakukan sebagai lensa analis, bukan fakta terverifikasi.',
+    'rc.title':'Cross-check vs layer analis impor','rc.hint':'{n} peer muncul di kedua dataset','rc.sub':'Hanya triangulasi — angka terverifikasi kita tetap sumber kebenaran; ini sekadar menunjukkan di mana model analis impor setuju atau berbeda.','rc.ourCagr':'CAGR kita','rc.anCagr':'CAGR analis (19–24)','rc.delta':'Δ growth','rc.ourEbt':'Margin EBT kita','rc.anEbitda':'EBITDA analis','rc.aligned':'selaras','rc.diverges':'berbeda','rc.none':'Tidak ada peer yang beririsan dengan set analis.','rc.note':'Kolom growth pakai jendela/metode berbeda (kita = multi-tahun terverifikasi terbaru atau YoY; analis = model 2019–24), jadi perlakukan Δ sebagai triangulasi, bukan error. Kolom margin beda metrik — EBT (kita) secara struktural di bawah EBITDA (analis), jadi selisihnya wajar, bukan ketidaksesuaian.','nav.map':'Peta Peluang','nav.audit':'Kesiapan Data','nav.sources':'Data & Sumber',
     'audit.title':'Kesiapan Data & Audit Gap','audit.sub':'Apa yang siap dianalisis sekarang, apa yang hilang, kenapa — dan cara mendapatkannya. Kosong tidak dianggap nol.',
     'audit.updated':'Audit diperbarui {d}','audit.rows':'baris angka','audit.companies':'perusahaan','audit.quarter':'obs kuartalan / H1','audit.sources':'catatan sumber','audit.events':'peristiwa bertanggal','audit.gapsN':'gap teraudit',
     'audit.bucketTitle':'Data menurut kesiapan','audit.bucketSub':'Klik kategori untuk memfilter daftar gap di bawah.',
@@ -4245,6 +4255,39 @@
     var sel=document.getElementById('pbSwotSelect');
     if(sel) sel.addEventListener('change', function(){ state.pbSwotK=sel.value; renderPbSwot(); });
   }
+  /* ---- v7: reconciliation / triangulation — our verified figures vs the imported analyst layer ---- */
+  // Explicit curated map (NEVER fuzzy): peer key -> exact analyst company name. Monde Nissin is NOT Mondelez, so `monde` is intentionally absent.
+  var XU_RECON_MAP={ myor:'PT Mayora Indah Tbk', good:'PT Garudafood Putra Putri Jaya Tbk', cmry:'PT Cisarua Mountain Dairy Tbk (Cimory)', sttp:'PT Siantar Top Tbk', icbp:'PT Indofood CBP Sukses Makmur Tbk', urc:'Universal Robina Corp.', '0151':'Want Want China Holdings Ltd.' };
+  function xuFind(name){ if(typeof ANALYST_LAYER==='undefined') return null; for(var i=0;i<ANALYST_LAYER.companies.length;i++){ if(ANALYST_LAYER.companies[i].n===name) return ANALYST_LAYER.companies[i]; } return null; }
+  function xuReconRows(){
+    var rows=[]; Object.keys(XU_RECON_MAP).forEach(function(k){ var p=peerOf(k); var a=xuFind(XU_RECON_MAP[k]); if(!p||!a) return;
+      var c=peerCagr(p); rows.push({k:k, name:p.name, ourCagr:c.v, ourBasis:c.basis, anCagr:a.cg, ourEbt:p.ebtm, anEbitda:a.ed}); });
+    return rows;
+  }
+  function renderPbRecon(){
+    var host=document.getElementById('pbReconBody'); if(!host) return;
+    var rows=xuReconRows();
+    var hint=document.getElementById('pbReconHint'); if(hint) hint.textContent=t('rc.hint',{n:rows.length});
+    if(!rows.length){ host.innerHTML='<p class="sw-empty">'+t('rc.none')+'</p>'; return; }
+    var body=rows.map(function(r){
+      var d=(r.ourCagr!=null&&r.anCagr!=null)?(r.ourCagr-r.anCagr):null;
+      var align=(d!=null&&Math.abs(d)<=3);
+      var flag='<span class="rc-flag '+(align?'ok':'div')+'">'+(align?t('rc.aligned'):t('rc.diverges'))+'</span>';
+      return '<tr><td>'+r.name+'</td>'+
+        '<td class="num">'+(r.ourCagr!=null?fmtSigned(r.ourCagr,1)+'% <span class="rc-basis">'+r.ourBasis+'</span>':'N/A')+'</td>'+
+        '<td class="num">'+(r.anCagr!=null?fmtSigned(r.anCagr,1)+'%':'N/A')+'</td>'+
+        '<td class="num">'+(d!=null?(fmtSigned(d,1)+'pp '):'')+flag+'</td>'+
+        '<td class="num">'+fmtPct1(r.ourEbt)+'</td>'+
+        '<td class="num">'+(r.anEbitda!=null?r.anEbitda.toFixed(1)+'%':'N/A')+'</td></tr>';
+    }).join('');
+    host.innerHTML=
+      '<p class="hint" style="margin:12px 0 10px;">'+t('rc.sub')+'</p>'+
+      '<div class="table-wrap"><table class="data-table"><thead><tr>'+
+        '<th>'+t('ns.thCo')+'</th><th class="num">'+t('rc.ourCagr')+'</th><th class="num">'+t('rc.anCagr')+'</th>'+
+        '<th class="num">'+t('rc.delta')+'</th><th class="num">'+t('rc.ourEbt')+'</th><th class="num">'+t('rc.anEbitda')+'</th>'+
+      '</tr></thead><tbody>'+body+'</tbody></table></div>'+
+      '<p class="mp-note" style="margin-top:10px;">'+t('rc.note')+'</p>';
+  }
   function renderCompanyAnalysis(){
     var pickerHost=document.getElementById('caCompanyPicker');
     if(pickerHost){
@@ -4551,6 +4594,7 @@
     renderPbMatrix();
     renderPbClusters();
     renderPbSwot();
+    renderPbRecon();
     (function(){ var h=document.getElementById('pb102030Hint'); if(!h||typeof matrixEntities!=='function') return;
       var ents=matrixEntities().filter(function(e){return e.cagr!=null && e.ebtm!=null && !e.ksni;});
       var cl=ents.filter(function(e){return e.cagr>=10 && e.ebtm>=20;});
@@ -5666,7 +5710,7 @@
     savePeers();
     renderPeerCards(); renderAllDependentViews();
   });
-  var DATA_VERSION = 'asia14-global9-2026-10-v7c-extended';
+  var DATA_VERSION = 'asia14-global9-2026-10-v7d-extended';
   function savePeers(){
     try{ localStorage.setItem('nabati-peers-v1', JSON.stringify(PEERS)); localStorage.setItem('nabati-peers-datav', DATA_VERSION); }catch(e){}
     if(peersDocRef){ peersDocRef.set({ peers: PEERS, dataVersion: DATA_VERSION, updatedAt: new Date().toISOString() }).catch(function(){}); }
