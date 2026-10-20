@@ -860,6 +860,7 @@
   .pbm-svg{display:block; width:100%; min-width:560px; height:auto;}
   .pbm-dot{transition:r .12s ease, filter .12s ease;}
   .pbm-dot:hover{filter:brightness(1.08) drop-shadow(0 0 3px rgba(0,0,0,.25));}
+  .pbm-dot:focus-visible,.xu-dot:focus-visible{outline:3px solid #1f6feb; outline-offset:2px; filter:brightness(1.1);}
   .cl-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-top:12px;}
   @media (max-width:900px){ .cl-grid{grid-template-columns:1fr 1fr;} }
   @media (max-width:520px){ .cl-grid{grid-template-columns:1fr;} }
@@ -927,6 +928,14 @@
   .scn-track{height:12px; background:var(--surface-2); border:1px solid var(--border); border-radius:999px; overflow:hidden;}
   .scn-fill{display:block; height:100%; border-radius:999px; transition:width .18s ease;}
   .scn-bv{font-family:"JetBrains Mono",monospace; font-size:12px; font-weight:700; text-align:right; color:var(--ink);}
+  .ov-targetkey{font-size:12px; line-height:1.55; color:var(--ink-2); background:var(--surface-2); border:1px solid var(--border); border-left:3px solid #0E8A54; border-radius:10px; padding:10px 13px; margin:14px 0 0;}
+  .ov-targetkey b{color:var(--ink); font-weight:800;}
+  .xu-prov{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:8px; font-size:12px; line-height:1.5; color:var(--ink-2);}
+  .xu-prov li{padding-left:12px; position:relative;}
+  .xu-prov li::before{content:""; position:absolute; left:0; top:7px; width:5px; height:5px; border-radius:50%; background:#E8590C;}
+  .xu-provsrc{font-weight:800; color:var(--ink);}
+  .xu-provcaveat{background:var(--surface-2); border:1px solid var(--border); border-radius:8px; padding:8px 10px; padding-left:10px;}
+  .xu-provcaveat::before{display:none;}
   /* ---- v6: Extended Universe (imported analyst layer) ---- */
   .xu-banner{display:flex; gap:12px; align-items:flex-start; margin-top:16px; border:1px solid #E8590C; border-left:4px solid #E8590C; background:color-mix(in srgb,#E8590C 8%, var(--surface)); border-radius:12px; padding:12px 14px;}
   .xu-bantag{flex:none; font-family:"Manrope",sans-serif; font-weight:800; font-size:9.5px; letter-spacing:.04em; color:#fff; background:#E8590C; border-radius:6px; padding:4px 8px; margin-top:2px;}
@@ -1016,6 +1025,8 @@
       </div>
     </div>
     <div class="ov-headline" id="ovHeadline"></div>
+
+    <p class="ov-targetkey" data-i18n-html="ov.targetKey">Reading the targets: <b>10:20:30</b> is the yardstick this dashboard validates against (≥10% revenue CAGR, ≥20% EBT margin, 30-year horizon). <b>20:20</b> is the stricter stretch read. <b>15/15</b> and the <b>DNA 2027–2031</b> figures live only in the imported Extended Universe tab — an analyst lens on an EBITDA basis, not our verified core.</p>
 
     <div class="section card" id="ovVerdict"></div>
     <div class="section card" id="ovScenario"></div>
@@ -1422,6 +1433,17 @@
     <div class="eng-scraper" id="drScraperInfo" hidden></div>
   </div>
 
+  <div class="drawer-section" id="xuProvSec">
+    <h3 data-i18n="ex.drwTitle">Extended Universe — imported analyst layer</h3>
+    <p class="hint" style="margin-bottom:10px;" data-i18n="ex.drwSub">The sixth tab is a reference layer, kept separate from the EBT-verified core. Its figures are not reconciled to primary filings in this session.</p>
+    <ul class="xu-prov">
+      <li><span class="xu-provsrc">15-15 Command Center</span> — <span data-i18n="ex.drwS1">41-company universe: revenue 2019→2024, 5-yr &amp; organic CAGR, EBIT/EBITDA margins, audited-bridge narratives, rolling audits.</span></li>
+      <li><span class="xu-provsrc">UNIFIED_BRIDGE V2.3 (Absolute IDR)</span> — <span data-i18n="ex.drwS2">modeled revenue bridges (price / volume / M&amp;A / FX) for 30 of the 41 groups.</span></li>
+      <li><span class="xu-provsrc">Nabati DNA v3.5</span> — <span data-i18n="ex.drwS3">indexed 2027–2031 net-revenue projection (2026 base = 100), shown as a scenario.</span></li>
+      <li class="xu-provcaveat" data-i18n-html="ex.drwCaveat"><b>Basis:</b> EBIT/EBITDA margins and modeled estimates — not the EBT + primary-filing basis of the other five tabs. Treat as an analyst lens, not verified fact.</li>
+    </ul>
+  </div>
+
   <div class="drawer-section" id="trRegisterSec">
     <h3 data-i18n="tr.title">CEO debrief traceability register</h3>
     <p class="hint" style="margin-bottom:10px;" data-i18n="tr.sub">Every CEO request from the debrief, mapped to where it lives in this dashboard and its honest build status. This is the evidence trail — not a claim that each is finished.</p>
@@ -1692,7 +1714,8 @@
     'ex.rev19':'Revenue 2019','ex.rev24':'Revenue 2024','ex.cagr':'5-yr CAGR','ex.organic':'Organic CAGR','ex.ebit':'EBIT margin 2024','ex.ebitda':'EBITDA margin 2024',
     'ex.detailSub':'Imported figures for the selected group — analyst basis.','ex.auditBridge':'Audited bridge (as stated in source)','ex.bridgeTitle':'Revenue bridge — what moved the top line','ex.bridgeNote':'Modeled decomposition (price / volume / M&A / FX), not a filed reconciliation.','ex.noBridge':'No modeled revenue bridge supplied for this group.','ex.rolling':'Rolling audit — vision vs outcome',
     'ex.bBase':'2019 base','ex.bPrice':'Price','ex.bVol':'Volume','ex.bMA':'M&A','ex.bFX':'FX','ex.bFinal':'2024 final',
-    'ex.dnaTitle':'Nabati DNA — 2027–2031 projection','ex.dnaSub':'Indexed net-revenue path (2026 base = 100) from the imported DNA blueprint.','ex.projBadge':'PROJECTION','ex.dnaLine':'P&L line (indexed)','ex.dnaDelta':'CAGR / note','ex.dnaNote':'This is a forward simulation from the imported DNA model (indexed, not Rupiah), shown as a scenario — not a forecast and not reconciled to actuals. Our verified KSNI base and the adjustable what-if live in the Overview tab.','nav.map':'Opportunity Map','nav.audit':'Data Readiness','nav.sources':'Data & Sources',
+    'ex.dnaTitle':'Nabati DNA — 2027–2031 projection','ex.dnaSub':'Indexed net-revenue path (2026 base = 100) from the imported DNA blueprint.','ex.projBadge':'PROJECTION','ex.dnaLine':'P&L line (indexed)','ex.dnaDelta':'CAGR / note','ex.dnaNote':'This is a forward simulation from the imported DNA model (indexed, not Rupiah), shown as a scenario — not a forecast and not reconciled to actuals. Our verified KSNI base and the adjustable what-if live in the Overview tab.',
+    'ex.drwTitle':'Extended Universe — imported analyst layer','ex.drwSub':'The sixth tab is a reference layer, kept separate from the EBT-verified core. Its figures are not reconciled to primary filings in this session.','ex.drwS1':'41-company universe: revenue 2019→2024, 5-yr & organic CAGR, EBIT/EBITDA margins, audited-bridge narratives, rolling audits.','ex.drwS2':'modeled revenue bridges (price / volume / M&A / FX) for 30 of the 41 groups.','ex.drwS3':'indexed 2027–2031 net-revenue projection (2026 base = 100), shown as a scenario.','ex.drwCaveat':'<b>Basis:</b> EBIT/EBITDA margins and modeled estimates — not the EBT + primary-filing basis of the other five tabs. Treat as an analyst lens, not verified fact.','nav.map':'Opportunity Map','nav.audit':'Data Readiness','nav.sources':'Data & Sources',
     'audit.title':'Data Readiness & Gap Audit','audit.sub':'What is ready to analyse now, what is missing, why — and how to get it. No blank is treated as zero.',
     'audit.updated':'Audit updated {d}','audit.rows':'numeric rows','audit.companies':'companies','audit.quarter':'quarterly / H1 obs','audit.sources':'source records','audit.events':'dated events','audit.gapsN':'audited gaps',
     'audit.bucketTitle':'Data by readiness','audit.bucketSub':'Click a bucket to filter the gap register below.',
@@ -1794,7 +1817,8 @@
     'ex.rev19':'Pendapatan 2019','ex.rev24':'Pendapatan 2024','ex.cagr':'CAGR 5-thn','ex.organic':'CAGR organik','ex.ebit':'Margin EBIT 2024','ex.ebitda':'Margin EBITDA 2024',
     'ex.detailSub':'Angka impor untuk grup terpilih — basis analis.','ex.auditBridge':'Audited bridge (sesuai sumber)','ex.bridgeTitle':'Revenue bridge — apa yang menggerakkan top line','ex.bridgeNote':'Dekomposisi model (harga / volume / M&A / kurs), bukan rekonsiliasi filing.','ex.noBridge':'Tidak ada revenue bridge model untuk grup ini.','ex.rolling':'Rolling audit — visi vs hasil',
     'ex.bBase':'Basis 2019','ex.bPrice':'Harga','ex.bVol':'Volume','ex.bMA':'M&A','ex.bFX':'Kurs','ex.bFinal':'Final 2024',
-    'ex.dnaTitle':'Nabati DNA — proyeksi 2027–2031','ex.dnaSub':'Jalur net-revenue terindeks (basis 2026 = 100) dari blueprint DNA impor.','ex.projBadge':'PROYEKSI','ex.dnaLine':'Baris P&L (indeks)','ex.dnaDelta':'CAGR / catatan','ex.dnaNote':'Ini simulasi ke depan dari model DNA impor (indeks, bukan Rupiah), ditampilkan sebagai skenario — bukan ramalan dan belum direkonsiliasi ke aktual. Basis KSNI terverifikasi & what-if yang bisa diatur ada di tab Overview.','nav.map':'Peta Peluang','nav.audit':'Kesiapan Data','nav.sources':'Data & Sumber',
+    'ex.dnaTitle':'Nabati DNA — proyeksi 2027–2031','ex.dnaSub':'Jalur net-revenue terindeks (basis 2026 = 100) dari blueprint DNA impor.','ex.projBadge':'PROYEKSI','ex.dnaLine':'Baris P&L (indeks)','ex.dnaDelta':'CAGR / catatan','ex.dnaNote':'Ini simulasi ke depan dari model DNA impor (indeks, bukan Rupiah), ditampilkan sebagai skenario — bukan ramalan dan belum direkonsiliasi ke aktual. Basis KSNI terverifikasi & what-if yang bisa diatur ada di tab Overview.',
+    'ex.drwTitle':'Extended Universe — layer analis impor','ex.drwSub':'Tab keenam adalah lapisan referensi, dipisah dari inti terverifikasi-EBT. Angkanya belum direkonsiliasi ke filing primer di sesi ini.','ex.drwS1':'Universe 41 perusahaan: revenue 2019→2024, CAGR 5-thn & organik, margin EBIT/EBITDA, narasi audited-bridge, rolling audit.','ex.drwS2':'revenue bridge model (harga / volume / M&A / kurs) untuk 30 dari 41 grup.','ex.drwS3':'proyeksi net-revenue terindeks 2027–2031 (basis 2026 = 100), ditampilkan sebagai skenario.','ex.drwCaveat':'<b>Basis:</b> margin EBIT/EBITDA dan estimasi model — bukan basis EBT + filing primer seperti lima tab lain. Perlakukan sebagai lensa analis, bukan fakta terverifikasi.','nav.map':'Peta Peluang','nav.audit':'Kesiapan Data','nav.sources':'Data & Sumber',
     'audit.title':'Kesiapan Data & Audit Gap','audit.sub':'Apa yang siap dianalisis sekarang, apa yang hilang, kenapa — dan cara mendapatkannya. Kosong tidak dianggap nol.',
     'audit.updated':'Audit diperbarui {d}','audit.rows':'baris angka','audit.companies':'perusahaan','audit.quarter':'obs kuartalan / H1','audit.sources':'catatan sumber','audit.events':'peristiwa bertanggal','audit.gapsN':'gap teraudit',
     'audit.bucketTitle':'Data menurut kesiapan','audit.bucketSub':'Klik kategori untuk memfilter daftar gap di bawah.',
@@ -1892,7 +1916,8 @@
     'ov.signalSnapshot':'Signal snapshot','ov.signalSnapshotSub':'The most material verified reads this period, one card each.',
     'ov.alertsTitle':'Growth conversion alerts','ov.alertsSub':'Companies where revenue movement did not convert consistently into profit.',
     'ov.watchlistTitle':'Management watchlist','ov.watchlistSub':'Worth a standing check next reporting period.',
-    'ov.coverage':'Coverage: 14 Asia-Pacific FMCG peers across 7 markets (non-IDR peers converted to IDR at illustrative fixed rates, marked ≈FX) plus 9 global reference peers (translated at BIS period-average FX). Margins and growth are the comparable measures — see Data & Sources.','ov.cta':'Open full analysis →',
+    'ov.coverage':'Coverage: 14 Asia-Pacific FMCG peers across 7 markets (non-IDR peers converted to IDR at illustrative fixed rates, marked ≈FX) plus 9 global reference peers (translated at BIS period-average FX). Margins and growth are the comparable measures — see Data & Sources.',
+    'ov.targetKey':'Reading the targets: <b>10:20:30</b> is the yardstick this dashboard validates against (≥10% revenue CAGR, ≥20% EBT margin, 30-year horizon). <b>20:20</b> is the stricter stretch read. <b>15/15</b> and the <b>DNA 2027–2031</b> figures live only in the imported Extended Universe tab — an analyst lens on an EBITDA basis, not our verified core.','ov.cta':'Open full analysis →',
     /* Overview dynamic */
     'ov.eyebrow':'DATASET {period} · {count} VERIFIED PEERS · LATEST {latest}',
     'ov.eyebrowMost':'MOST MATERIAL VERIFIED SIGNAL',
@@ -2203,7 +2228,8 @@
     'ov.signalSnapshot':'Ringkasan sinyal','ov.signalSnapshotSub':'Pembacaan terverifikasi paling material periode ini, satu kartu masing-masing.',
     'ov.alertsTitle':'Peringatan konversi pertumbuhan','ov.alertsSub':'Perusahaan yang pergerakan pendapatannya tidak terkonversi konsisten menjadi laba.',
     'ov.watchlistTitle':'Watchlist manajemen','ov.watchlistSub':'Perlu dipantau rutin pada periode pelaporan berikutnya.',
-    'ov.coverage':'Cakupan: 14 peer FMCG Asia-Pasifik di 7 pasar (peer non-IDR dikonversi ke IDR dengan kurs tetap ilustratif, ditandai ≈FX) plus 9 peer referensi global (dikonversi dengan kurs rata-rata tahunan BIS). Margin dan pertumbuhan adalah ukuran yang sebanding — lihat Data & Sumber.','ov.cta':'Buka analisis lengkap →',
+    'ov.coverage':'Cakupan: 14 peer FMCG Asia-Pasifik di 7 pasar (peer non-IDR dikonversi ke IDR dengan kurs tetap ilustratif, ditandai ≈FX) plus 9 peer referensi global (dikonversi dengan kurs rata-rata tahunan BIS). Margin dan pertumbuhan adalah ukuran yang sebanding — lihat Data & Sumber.',
+    'ov.targetKey':'Membaca target: <b>10:20:30</b> adalah tolok ukur yang divalidasi dashboard ini (CAGR pendapatan ≥10%, margin EBT ≥20%, horizon 30 tahun). <b>20:20</b> adalah pembacaan stretch yang lebih ketat. Angka <b>15/15</b> dan <b>DNA 2027–2031</b> hanya ada di tab Extended Universe impor — lensa analis basis EBITDA, bukan inti terverifikasi kita.','ov.cta':'Buka analisis lengkap →',
     'ov.eyebrow':'DATASET {period} · {count} PEER TERVERIFIKASI · TERBARU {latest}',
     'ov.eyebrowMost':'SINYAL TERVERIFIKASI PALING MATERIAL',
     'ov.headlinePressure':'{name}: pendapatan tumbuh {g}% tapi laba bersih turun {pg}% ({year}) — pertumbuhan tidak terkonversi menjadi laba.',
@@ -3187,7 +3213,8 @@
     g+='<line x1="'+padL+'" y1="'+ty+'" x2="'+(padL+pw)+'" y2="'+ty+'" stroke="#0E8A54" stroke-width="1.5" stroke-dasharray="5 4"/>';
     g+='<text x="'+(padL+pw-4)+'" y="'+(padT+12)+'" text-anchor="end" font-size="10" font-weight="800" fill="#0E8A54" opacity="0.85">'+t('ex.quadStar')+'</text>';
     list.forEach(function(c){ var i=ANALYST_LAYER.companies.indexOf(c); var cx=X(c.cg), cy=Y(c.ed), r=(i===xuState.sel)?7:5;
-      g+='<circle class="xu-dot" data-i="'+i+'" cx="'+cx+'" cy="'+cy+'" r="'+r+'" fill="'+xuColor(c.co)+'" stroke="#fff" stroke-width="1.3"'+(i===xuState.sel?' stroke="#1f6feb" stroke-width="2"':'')+'><title>'+c.n+': CAGR '+c.cg+'%, EBITDA '+c.ed+'%</title></circle>'; });
+      var xuLbl=c.n+': CAGR '+c.cg+'%, EBITDA '+c.ed+'%';
+      g+='<circle class="xu-dot" data-i="'+i+'" tabindex="0" role="button" aria-label="'+xuLbl.replace(/"/g,'&quot;')+'" cx="'+cx+'" cy="'+cy+'" r="'+r+'" fill="'+xuColor(c.co)+'" stroke="#fff" stroke-width="1.3"'+(i===xuState.sel?' stroke="#1f6feb" stroke-width="2"':'')+'><title>'+xuLbl+'</title></circle>'; });
     g+='<text x="'+(padL+pw/2)+'" y="'+(H-1)+'" text-anchor="middle" font-size="10.5" font-weight="700" fill="var(--ink-2)">'+t('ex.xaxis')+'</text>';
     g+='<text transform="translate(12,'+(padT+ph/2)+') rotate(-90)" text-anchor="middle" font-size="10.5" font-weight="700" fill="var(--ink-2)">'+t('ex.yaxis')+'</text>';
     host.innerHTML=
@@ -3197,7 +3224,7 @@
       '<div class="pbm-wrap"><svg viewBox="0 0 '+W+' '+H+'" class="pbm-svg" role="img" aria-label="Extended universe scatter">'+g+'</svg></div>'+
       '<p class="mp-note" style="margin:6px 0 0;">'+t('ex.scatNote')+'</p>';
     host.querySelectorAll('.xu-chip').forEach(function(b){ b.addEventListener('click', function(){ xuState.cohort=b.getAttribute('data-co'); renderXuScatter(); }); });
-    host.querySelectorAll('.xu-dot').forEach(function(d){ d.style.cursor='pointer'; d.addEventListener('click', function(){ xuState.sel=parseInt(d.getAttribute('data-i'),10); renderXuScatter(); renderXuDetail(); document.getElementById('xuDetailSec').scrollIntoView({behavior:'smooth',block:'start'}); }); });
+    host.querySelectorAll('.xu-dot').forEach(function(d){ d.style.cursor='pointer'; var go=function(){ xuState.sel=parseInt(d.getAttribute('data-i'),10); renderXuScatter(); renderXuDetail(); document.getElementById('xuDetailSec').scrollIntoView({behavior:'smooth',block:'start'}); }; d.addEventListener('click', go); d.addEventListener('keydown', function(ev){ if(ev.key==='Enter'||ev.key===' '){ ev.preventDefault(); go(); } }); });
   }
   function xuBridgeSvg(br){
     // horizontal waterfall: base -> +price +vol +ma +fx -> final
@@ -4476,7 +4503,8 @@
     // points
     plot.forEach(function(e){ var cx=X(e.cagr), cy=Y(e.ebtm), r=e.ksni?8:6;
       if(e.ksni){ g+='<circle cx="'+cx+'" cy="'+cy+'" r="'+(r+4)+'" fill="none" stroke="#1f6feb" stroke-width="2" opacity="0.5"/>'; }
-      g+='<circle class="pbm-dot" data-k="'+e.k+'" cx="'+cx+'" cy="'+cy+'" r="'+r+'" fill="'+e.color+'" stroke="#fff" stroke-width="1.5"><title>'+e.name+': CAGR '+e.cagr.toFixed(1)+'% ('+e.basis+'), EBT '+fmtPct1(e.ebtm)+'</title></circle>';
+      var pbmLbl=e.name+': CAGR '+e.cagr.toFixed(1)+'% ('+e.basis+'), EBT '+fmtPct1(e.ebtm);
+      g+='<circle class="pbm-dot" data-k="'+e.k+'" tabindex="0" role="button" aria-label="'+pbmLbl.replace(/"/g,'&quot;')+'" cx="'+cx+'" cy="'+cy+'" r="'+r+'" fill="'+e.color+'" stroke="#fff" stroke-width="1.5"><title>'+pbmLbl+'</title></circle>';
       g+='<text x="'+cx+'" y="'+(cy-r-3)+'" text-anchor="middle" font-size="9.5" font-weight="700" fill="var(--ink)">'+e.name+'</text>';
     });
     // KSNI reference line (verified EBT margin; growth not plotted — single-year group data)
@@ -4497,7 +4525,7 @@
       ksniTxt+
       noplotTxt+
       '<p class="mp-note" style="margin:6px 0 0;">'+t('mx2.note')+'</p>';
-    host.querySelectorAll('.pbm-dot').forEach(function(d){ d.style.cursor='pointer'; d.addEventListener('click', function(){ goToCompany(d.getAttribute('data-k')); }); });
+    host.querySelectorAll('.pbm-dot').forEach(function(d){ d.style.cursor='pointer'; var go=function(){ goToCompany(d.getAttribute('data-k')); }; d.addEventListener('click', go); d.addEventListener('keydown', function(ev){ if(ev.key==='Enter'||ev.key===' '){ ev.preventDefault(); go(); } }); });
   }
   function renderPbClusters(){
     var host=document.getElementById('pbClusterSec'); if(!host) return;
@@ -5638,7 +5666,7 @@
     savePeers();
     renderPeerCards(); renderAllDependentViews();
   });
-  var DATA_VERSION = 'asia14-global9-2026-10-v7b-extended';
+  var DATA_VERSION = 'asia14-global9-2026-10-v7c-extended';
   function savePeers(){
     try{ localStorage.setItem('nabati-peers-v1', JSON.stringify(PEERS)); localStorage.setItem('nabati-peers-datav', DATA_VERSION); }catch(e){}
     if(peersDocRef){ peersDocRef.set({ peers: PEERS, dataVersion: DATA_VERSION, updatedAt: new Date().toISOString() }).catch(function(){}); }
