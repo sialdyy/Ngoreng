@@ -3216,9 +3216,10 @@
   function renderXuDetail(){
     var host=document.getElementById('xuDetailSec'); if(!host) return;
     var c=ANALYST_LAYER.companies[xuState.sel]; if(!c){ host.innerHTML=''; return; }
+    var uu=xuUnit(c.u);
     var stat=[
-      {l:t('ex.rev19'),v:c.r19!=null?fmtNum(c.r19):'N/A'},
-      {l:t('ex.rev24'),v:c.r24!=null?fmtNum(c.r24):'N/A'},
+      {l:t('ex.rev19'),v:c.r19!=null?fmtNum(c.r19)+' '+uu:'N/A'},
+      {l:t('ex.rev24'),v:c.r24!=null?fmtNum(c.r24)+' '+uu:'N/A'},
       {l:t('ex.cagr'),v:c.cg!=null?fmtSigned(c.cg,1)+'%':'N/A',c:(c.cg!=null&&c.cg>=15?'#0E8A54':'#B7791F')},
       {l:t('ex.organic'),v:c.og!=null?fmtSigned(c.og,1)+'%':'N/A'},
       {l:t('ex.ebit'),v:c.eb!=null?c.eb.toFixed(1)+'%':'N/A'},
@@ -3259,6 +3260,7 @@
       '<p class="sw-note">'+t('ex.dnaNote')+'</p>';
   }
   function fmtNum(v){ if(v==null) return 'N/A'; return (Math.abs(v)>=100?Math.round(v):v.toFixed(1)).toLocaleString('en-US'); }
+  function xuUnit(u){ if(!u) return ''; var s=(''+u).trim(); var last=s.slice(-1); return /[A-Za-z]/.test(last)&&s.length>1 ? (s.slice(0,-1)+' '+last) : s; }
 
   function showTab(name, focusFirst){
     if(TABS.indexOf(name)===-1) name='overview';
@@ -5636,7 +5638,7 @@
     savePeers();
     renderPeerCards(); renderAllDependentViews();
   });
-  var DATA_VERSION = 'asia14-global9-2026-10-v7a-extended';
+  var DATA_VERSION = 'asia14-global9-2026-10-v7b-extended';
   function savePeers(){
     try{ localStorage.setItem('nabati-peers-v1', JSON.stringify(PEERS)); localStorage.setItem('nabati-peers-datav', DATA_VERSION); }catch(e){}
     if(peersDocRef){ peersDocRef.set({ peers: PEERS, dataVersion: DATA_VERSION, updatedAt: new Date().toISOString() }).catch(function(){}); }
