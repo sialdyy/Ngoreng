@@ -1036,11 +1036,15 @@
     <p class="ov-targetkey" data-i18n-html="ov.targetKey">Reading the targets: <b>10:20:30</b> is the yardstick this dashboard validates against (≥10% revenue CAGR, ≥20% EBT margin, 30-year horizon). <b>20:20</b> is the stricter stretch read. <b>15/15</b> and the <b>DNA 2027–2031</b> figures live only in the imported Extended Universe tab — an analyst lens on an EBITDA basis, not our verified core.</p>
 
     <div class="section card" id="ovVerdict"></div>
+
+    <details class="fold" id="ovDetailFold">
+      <summary><span data-i18n="fold.ovDetail">Scenario, 10:20:30 &amp; hypotheses</span> <span class="fold-hint" data-i18n="fold.ovDetailHint">the working detail behind the verdict</span></summary>
+      <div class="fold-body">
     <div class="section card" id="ovScenario"></div>
-
     <div class="section card ns-card" id="ov102030"></div>
-
     <div class="section card" id="ovHypo"></div>
+      </div>
+    </details>
 
     <details class="fold">
       <summary><span data-i18n="fold.ovMore">More signals &amp; management watchlist</span> <span class="fold-hint" data-i18n="fold.ovHint">market reads, not decisions</span></summary>
@@ -1160,8 +1164,13 @@
     </div>
 
     <div class="section card" id="pbMatrixSec"></div>
-    <div class="section" id="pbClusterSec"></div>
-    <div class="section card" id="pbSwotSec"></div>
+    <details class="fold" id="pbClusterFold">
+      <summary><span data-i18n="fold.pbCluster">Strategic clusters &amp; SWOT explorer</span> <span class="fold-hint" data-i18n="fold.pbClusterHint">archetypes + per-company SWOT</span></summary>
+      <div class="fold-body">
+        <div class="section" id="pbClusterSec"></div>
+        <div class="section card" id="pbSwotSec"></div>
+      </div>
+    </details>
 
     <details class="fold" id="pb102030Fold">
       <summary><span data-i18n="ns.pbTitle">10:20:30 validation — who proves it?</span> <span class="fold-hint" id="pb102030Hint"></span></summary>
@@ -1260,7 +1269,10 @@
 
     <div class="section card" id="tcLab"></div>
 
-    <div class="section card" id="nlCompare"></div>
+    <details class="fold" id="nlCompareFold">
+      <summary><span data-i18n="fold.nlCompare">KSNI vs competitor &mdash; margin structure</span> <span class="fold-hint" data-i18n="fold.nlCompareHint">pick a rival to compare the P&amp;L shape</span></summary>
+      <div class="fold-body"><div class="section card" id="nlCompare"></div></div>
+    </details>
 
     <details class="fold" id="nlDetails">
       <summary><span data-i18n="fold.nlMore">Learning detail: baseline gap &amp; competitor lessons</span> <span class="fold-hint" data-i18n="fold.nlHint">illustrative baseline, question cards</span></summary>
@@ -1361,12 +1373,17 @@
       </div>
       <div class="map-panel" id="mapPanel"></div>
     </div>
-    <div class="section" id="mapMatrix"></div>
-    <div class="grid grid-2 section" style="align-items:start;">
-      <div class="exec-summary" id="mapExecSummary"></div>
-      <div class="warn-box" id="mapWarnings"></div>
-    </div>
-    <div class="section commodity-strip" id="mapCommodity"></div>
+    <details class="fold" id="mapStratFold">
+      <summary><span data-i18n="fold.mapStrat">Strategy read: priority matrix, executive summary &amp; warnings</span> <span class="fold-hint" data-i18n="fold.mapStratHint">per-market stance &amp; cautions</span></summary>
+      <div class="fold-body">
+        <div class="section" id="mapMatrix"></div>
+        <div class="grid grid-2 section" style="align-items:start;">
+          <div class="exec-summary" id="mapExecSummary"></div>
+          <div class="warn-box" id="mapWarnings"></div>
+        </div>
+        <div class="section commodity-strip" id="mapCommodity"></div>
+      </div>
+    </details>
   </section>
 
   <!-- ============================= EXTENDED UNIVERSE (imported analyst layer) ============================= -->
@@ -1377,8 +1394,13 @@
     </div>
     <div class="xu-banner" id="xuBanner"></div>
     <div class="section card" id="xuScatterSec"></div>
-    <div class="section card" id="xuDetailSec"></div>
-    <div class="section card" id="xuDnaSec"></div>
+    <details class="fold" id="xuDetailFold">
+      <summary><span data-i18n="fold.xuDetail">Per-company detail &amp; Nabati DNA projection</span> <span class="fold-hint" data-i18n="fold.xuDetailHint">click a dot above, or open here</span></summary>
+      <div class="fold-body">
+        <div class="section card" id="xuDetailSec"></div>
+        <div class="section card" id="xuDnaSec"></div>
+      </div>
+    </details>
   </section>
 
 </main>
@@ -2711,10 +2733,15 @@
     'sw.ready':'Valid — {n} selected hypotheses. Review, then Apply:',
     'sw.applied':'Applied. The Overview hypotheses update for this session.',
     'fold.ovMore':'More signals & management watchlist',
+    'fold.ovDetail':'Scenario, 10:20:30 & hypotheses','fold.ovDetailHint':'the working detail behind the verdict',
     'fold.ovHint':'market reads, not decisions',
     'fold.caMore':'Detailed financial analysis',
     'fold.caHint':'quality lens, engine, balance sheet',
     'fold.pbMore':'Full peer table & analysis',
+    'fold.pbCluster':'Strategic clusters & SWOT explorer','fold.pbClusterHint':'archetypes + per-company SWOT',
+    'fold.mapStrat':'Strategy read: priority matrix, executive summary & warnings','fold.mapStratHint':'per-market stance & cautions',
+    'fold.xuDetail':'Per-company detail & Nabati DNA projection','fold.xuDetailHint':'click a dot above, or open here',
+    'fold.nlCompare':'KSNI vs competitor — margin structure','fold.nlCompareHint':'pick a rival to compare the P&L shape',
     'fold.pbHint':'all peers, patterns, global yardstick',
     'fold.nlMore':'Learning detail: baseline gap & competitor lessons',
     'fold.nlHint':''
@@ -2747,10 +2774,15 @@
     'sw.ready':'Valid — {n} hipotesis terpilih. Tinjau, lalu Terapkan:',
     'sw.applied':'Diterapkan. Hipotesis di Overview diperbarui untuk sesi ini.',
     'fold.ovMore':'Sinyal lain & watchlist manajemen',
+    'fold.ovDetail':'Skenario, 10:20:30 & hipotesis','fold.ovDetailHint':'detail kerja di balik verdict',
     'fold.ovHint':'pembacaan pasar, bukan keputusan',
     'fold.caMore':'Analisis keuangan rinci',
     'fold.caHint':'quality lens, mesin ekonomi, neraca',
     'fold.pbMore':'Tabel peer lengkap & analisis',
+    'fold.pbCluster':'Cluster strategis & SWOT explorer','fold.pbClusterHint':'arketipe + SWOT per perusahaan',
+    'fold.mapStrat':'Pembacaan strategi: priority matrix, ringkasan eksekutif & peringatan','fold.mapStratHint':'sikap & kehati-hatian per pasar',
+    'fold.xuDetail':'Detail per perusahaan & proyeksi Nabati DNA','fold.xuDetailHint':'klik titik di atas, atau buka di sini',
+    'fold.nlCompare':'KSNI vs kompetitor — struktur margin','fold.nlCompareHint':'pilih rival untuk bandingkan bentuk P&L',
     'fold.pbHint':'semua peer, pola, pembanding global',
     'fold.nlMore':'Detail pembelajaran: gap baseline & pelajaran kompetitor',
     'fold.nlHint':''
@@ -3122,7 +3154,7 @@
       '<div class="pbm-wrap"><svg viewBox="0 0 '+W+' '+H+'" class="pbm-svg" role="img" aria-label="Extended universe scatter">'+g+'</svg></div>'+
       '<p class="mp-note" style="margin:6px 0 0;">'+t('ex.scatNote')+'</p>';
     host.querySelectorAll('.xu-chip').forEach(function(b){ b.addEventListener('click', function(){ xuState.cohort=b.getAttribute('data-co'); renderXuScatter(); }); });
-    host.querySelectorAll('.xu-dot').forEach(function(d){ d.style.cursor='pointer'; var go=function(){ xuState.sel=parseInt(d.getAttribute('data-i'),10); renderXuScatter(); renderXuDetail(); document.getElementById('xuDetailSec').scrollIntoView({behavior:'smooth',block:'start'}); }; d.addEventListener('click', go); d.addEventListener('keydown', function(ev){ if(ev.key==='Enter'||ev.key===' '){ ev.preventDefault(); go(); } }); });
+    host.querySelectorAll('.xu-dot').forEach(function(d){ d.style.cursor='pointer'; var go=function(){ xuState.sel=parseInt(d.getAttribute('data-i'),10); renderXuScatter(); renderXuDetail(); var fo=document.getElementById('xuDetailFold'); if(fo) fo.open=true; document.getElementById('xuDetailSec').scrollIntoView({behavior:'smooth',block:'start'}); }; d.addEventListener('click', go); d.addEventListener('keydown', function(ev){ if(ev.key==='Enter'||ev.key===' '){ ev.preventDefault(); go(); } }); });
   }
   function xuBridgeSvg(br){
     // horizontal waterfall: base -> +price +vol +ma +fx -> final
@@ -5547,7 +5579,7 @@
     savePeers();
     renderPeerCards(); renderAllDependentViews();
   });
-  var DATA_VERSION = 'asia14-global9-2026-10-v7g-extended';
+  var DATA_VERSION = 'asia14-global9-2026-10-v7h-lean';
   function savePeers(){
     try{ localStorage.setItem('nabati-peers-v1', JSON.stringify(PEERS)); localStorage.setItem('nabati-peers-datav', DATA_VERSION); }catch(e){}
     if(peersDocRef){ peersDocRef.set({ peers: PEERS, dataVersion: DATA_VERSION, updatedAt: new Date().toISOString() }).catch(function(){}); }
