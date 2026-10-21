@@ -2831,6 +2831,12 @@
     {k:'britannia', name:'BRITANNIA', color:'#2E8B57', ccy:'INR', region:'India', sales:33.982, growth:6.98, gm:40.16, om:16.07, nm:12.18, profitGrowth:1.82, ebt:5.561, ebtm:16.36, sellingExpense:null, gaExpense:null, cash:0.252, receivables:0.852, inventory:2.368, payables:3.329, totalAssets:16.793, totalLiabilities:8.469, equity:8.324, totalDebt:2.368, operatingCF:4.732, investingCF:0.126, financingCF:-5.232, capex:-0.712, fcf:4.02}
   ];
   var PEER_HISTORY = {
+    cmry: [
+      {year:'FY2021', sales:4.096, gp:1.973, gm:48.17, sellingExpense:null, gaExpense:null, opexAbs:0.966, opexR:23.58, ebit:1.007, ebitm:24.58, ebt:1.016, ebtm:24.81, np:null, nm:null, growth:null, profitGrowth:null, fcf:null, operatingCF:null},
+      {year:'FY2022', sales:6.378, gp:2.668, gm:41.84, sellingExpense:null, gaExpense:null, opexAbs:1.412, opexR:22.14, ebit:1.256, ebitm:19.68, ebt:1.343, ebtm:21.05, np:null, nm:null, growth:55.71, profitGrowth:32.18, fcf:null, operatingCF:null},
+      {year:'FY2023', sales:7.773, gp:3.233, gm:41.59, sellingExpense:1.624, gaExpense:0.194, opexAbs:1.805, opexR:23.22, ebit:1.428, ebitm:18.37, ebt:1.561, ebtm:20.08, np:null, nm:null, growth:21.87, profitGrowth:16.23, fcf:null, operatingCF:null},
+      {year:'FY2024', sales:9.026, gp:4.083, gm:45.24, sellingExpense:2.202, gaExpense:0.208, opexAbs:2.412, opexR:26.72, ebit:1.671, ebitm:18.51, ebt:1.905, ebtm:21.10, np:null, nm:null, growth:16.12, profitGrowth:22.04, fcf:null, operatingCF:null}
+    ],
     myor: [
       {year:'FY2021', sales:27.905, gp:6.916, gm:24.79, sellingExpense:null, gaExpense:null, opexAbs:5.144, opexR:18.43, ebit:1.772, ebitm:6.35, ebt:1.55, ebtm:5.55, np:1.187, nm:4.25, growth:null, profitGrowth:null, fcf:0.065, operatingCF:1.042},
       {year:'FY2022', sales:30.669, gp:6.831, gm:22.27, sellingExpense:null, gaExpense:null, opexAbs:4.398, opexR:14.34, ebit:2.433, ebitm:7.93, ebt:2.506, ebtm:8.17, np:1.942, nm:6.33, growth:9.91, profitGrowth:63.68, fcf:0.11, operatingCF:1.62},
@@ -5578,7 +5584,7 @@
     savePeers();
     renderPeerCards(); renderAllDependentViews();
   });
-  var DATA_VERSION = 'asia14-global9-2026-10-v7i-lean';
+  var DATA_VERSION = 'asia14-global9-2026-10-v7j-lean';
   function savePeers(){
     try{ localStorage.setItem('nabati-peers-v1', JSON.stringify(PEERS)); localStorage.setItem('nabati-peers-datav', DATA_VERSION); }catch(e){}
     if(peersDocRef){ peersDocRef.set({ peers: PEERS, dataVersion: DATA_VERSION, updatedAt: new Date().toISOString() }).catch(function(){}); }
