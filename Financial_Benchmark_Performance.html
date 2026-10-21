@@ -1038,11 +1038,10 @@
     <div class="section card" id="ovVerdict"></div>
 
     <details class="fold" id="ovDetailFold">
-      <summary><span data-i18n="fold.ovDetail">Scenario, 10:20:30 &amp; hypotheses</span> <span class="fold-hint" data-i18n="fold.ovDetailHint">the working detail behind the verdict</span></summary>
+      <summary><span data-i18n="fold.ovDetail">Hypotheses &amp; priority matrix</span> <span class="fold-hint" data-i18n="fold.ovDetailHint">the 3–5 moves behind the verdict</span></summary>
       <div class="fold-body">
-    <div class="section card" id="ovScenario"></div>
-    <div class="section card ns-card" id="ov102030"></div>
     <div class="section card" id="ovHypo"></div>
+    <p class="hy-link" data-i18n-html="ov.whatifLink">Forward what-if (adjustable Nabati/KSNI projection) lives in the <b>Nabati Learning</b> tab, so there is one place to model scenarios.</p>
       </div>
     </details>
 
@@ -1165,15 +1164,14 @@
 
     <div class="section card" id="pbMatrixSec"></div>
     <details class="fold" id="pbClusterFold">
-      <summary><span data-i18n="fold.pbCluster">Strategic clusters &amp; SWOT explorer</span> <span class="fold-hint" data-i18n="fold.pbClusterHint">archetypes + per-company SWOT</span></summary>
+      <summary><span data-i18n="fold.pbCluster">SWOT explorer</span> <span class="fold-hint" data-i18n="fold.pbClusterHint">per-company SWOT, pick from the list</span></summary>
       <div class="fold-body">
-        <div class="section" id="pbClusterSec"></div>
         <div class="section card" id="pbSwotSec"></div>
       </div>
     </details>
 
     <details class="fold" id="pb102030Fold">
-      <summary><span data-i18n="ns.pbTitle">10:20:30 validation — who proves it?</span> <span class="fold-hint" id="pb102030Hint"></span></summary>
+      <summary><span data-i18n="fold.pb102030">Issuer-by-issuer table behind the matrix (10:20:30)</span> <span class="fold-hint" id="pb102030Hint"></span></summary>
       <div class="fold-body">
         <div class="section card ns-sec" id="pb102030Sec">
           <div class="section-head">
@@ -2136,7 +2134,7 @@
     'vd.opexTxt':'Selling expense alone is ~{sm} of net sales ({smv}) — the single largest drag between gross profit and EBT.',
     'vd.gapTxt':'The whole {gap}pp gap to a 20% EBT margin sits below gross profit: the lever is operating-cost efficiency, not raising prices.',
     'vd.note':'Verdict and figures are computed from KSNI’s verified FY2025 group P&L and the peer set’s filed margins. EBT (reported pre-tax), not EBITDA. A single-year base has no revenue CAGR, so the growth half of 20:20 is not yet measurable for KSNI.',
-    'vd.xref':'Where to go deeper on KSNI: full P&L waterfall → <b>Company Analysis</b>; position vs peers → <b>Peer Benchmark</b> (matrix, SWOT); forward what-if → the Scenario panel below.',
+    'vd.xref':'Where to go deeper on KSNI: full P&L waterfall → <b>Company Analysis</b>; position vs peers → <b>Peer Benchmark</b> (matrix, SWOT); forward what-if → Nabati Learning.',
     'scn.title':'Scenario what-if','scn.sub':'Drag the sliders to compound KSNI’s verified FY2025 base forward. This is arithmetic illustration, not a forecast — it changes nothing about the actual figures.',
     'scn.growth':'Annual revenue growth','scn.margin':'EBT margin','scn.years':'Horizon (years)',
     'scn.projRev':'Projected revenue (+{y}y)','scn.projEbt':'Projected EBT','scn.mult':'EBT vs base','scn.target':'Target reached',
@@ -2435,7 +2433,7 @@
     'vd.opexTxt':'Beban selling saja ~{sm} dari net sales ({smv}) — penyeret tunggal terbesar antara gross profit dan EBT.',
     'vd.gapTxt':'Seluruh jarak {gap}pp menuju margin EBT 20% ada DI BAWAH gross profit: levernya efisiensi biaya operasi, bukan menaikkan harga.',
     'vd.note':'Verdict dan angka dihitung dari P&L grup KSNI FY2025 terverifikasi dan margin filing peer set. EBT (laba sebelum pajak dilaporkan), bukan EBITDA. Basis satu tahun tak punya CAGR, jadi separuh "growth" dari 20:20 belum terukur untuk KSNI.',
-    'vd.xref':'Mau lebih dalam soal KSNI: waterfall P&L lengkap → <b>Company Analysis</b>; posisi vs peer → <b>Peer Benchmark</b> (matriks, SWOT); what-if ke depan → panel Scenario di bawah.',
+    'vd.xref':'Mau lebih dalam soal KSNI: waterfall P&L lengkap → <b>Company Analysis</b>; posisi vs peer → <b>Peer Benchmark</b> (matriks, SWOT); what-if ke depan → Nabati Learning.',
     'scn.title':'Scenario what-if','scn.sub':'Geser slider untuk melipatgandakan basis terverifikasi KSNI FY2025 ke depan. Ini ilustrasi aritmetik, bukan proyeksi — tidak mengubah apa pun pada angka aktual.',
     'scn.growth':'Pertumbuhan pendapatan tahunan','scn.margin':'Margin EBT','scn.years':'Horizon (tahun)',
     'scn.projRev':'Proyeksi pendapatan (+{y}th)','scn.projEbt':'Proyeksi EBT','scn.mult':'EBT vs basis','scn.target':'Target tercapai',
@@ -2733,12 +2731,14 @@
     'sw.ready':'Valid — {n} selected hypotheses. Review, then Apply:',
     'sw.applied':'Applied. The Overview hypotheses update for this session.',
     'fold.ovMore':'More signals & management watchlist',
-    'fold.ovDetail':'Scenario, 10:20:30 & hypotheses','fold.ovDetailHint':'the working detail behind the verdict',
+    'fold.ovDetail':'Hypotheses & priority matrix','fold.ovDetailHint':'the 3–5 moves behind the verdict',
+    'ov.whatifLink':'Forward what-if (adjustable Nabati/KSNI projection) lives in the <b>Nabati Learning</b> tab, so there is one place to model scenarios.',
     'fold.ovHint':'market reads, not decisions',
     'fold.caMore':'Detailed financial analysis',
     'fold.caHint':'quality lens, engine, balance sheet',
     'fold.pbMore':'Full peer table & analysis',
-    'fold.pbCluster':'Strategic clusters & SWOT explorer','fold.pbClusterHint':'archetypes + per-company SWOT',
+    'fold.pbCluster':'SWOT explorer','fold.pbClusterHint':'per-company SWOT, pick from the list',
+    'fold.pb102030':'Issuer-by-issuer table behind the matrix (10:20:30)',
     'fold.mapStrat':'Strategy read: priority matrix, executive summary & warnings','fold.mapStratHint':'per-market stance & cautions',
     'fold.xuDetail':'Per-company detail & Nabati DNA projection','fold.xuDetailHint':'click a dot above, or open here',
     'fold.nlCompare':'KSNI vs competitor — margin structure','fold.nlCompareHint':'pick a rival to compare the P&L shape',
@@ -2774,12 +2774,14 @@
     'sw.ready':'Valid — {n} hipotesis terpilih. Tinjau, lalu Terapkan:',
     'sw.applied':'Diterapkan. Hipotesis di Overview diperbarui untuk sesi ini.',
     'fold.ovMore':'Sinyal lain & watchlist manajemen',
-    'fold.ovDetail':'Skenario, 10:20:30 & hipotesis','fold.ovDetailHint':'detail kerja di balik verdict',
+    'fold.ovDetail':'Hipotesis & priority matrix','fold.ovDetailHint':'3–5 langkah di balik verdict',
+    'ov.whatifLink':'What-if ke depan (proyeksi Nabati/KSNI yang bisa diatur) ada di tab <b>Nabati Learning</b>, jadi skenario dimodelkan di satu tempat saja.',
     'fold.ovHint':'pembacaan pasar, bukan keputusan',
     'fold.caMore':'Analisis keuangan rinci',
     'fold.caHint':'quality lens, mesin ekonomi, neraca',
     'fold.pbMore':'Tabel peer lengkap & analisis',
-    'fold.pbCluster':'Cluster strategis & SWOT explorer','fold.pbClusterHint':'arketipe + SWOT per perusahaan',
+    'fold.pbCluster':'SWOT explorer','fold.pbClusterHint':'SWOT per perusahaan, pilih dari daftar',
+    'fold.pb102030':'Tabel per-issuer di balik matriks (10:20:30)',
     'fold.mapStrat':'Pembacaan strategi: priority matrix, ringkasan eksekutif & peringatan','fold.mapStratHint':'sikap & kehati-hatian per pasar',
     'fold.xuDetail':'Detail per perusahaan & proyeksi Nabati DNA','fold.xuDetailHint':'klik titik di atas, atau buka di sini',
     'fold.nlCompare':'KSNI vs kompetitor — struktur margin','fold.nlCompareHint':'pilih rival untuk bandingkan bentuk P&L',
@@ -3540,9 +3542,7 @@
     ['G','M','Y'].forEach(function(ax){ var el=document.getElementById('scn'+ax); if(el) el.addEventListener('input', function(){ scenState[ax.toLowerCase()]=parseFloat(el.value); renderScenario(); }); });
   }
   function renderOverview(){
-    render102030Exec();
     renderKsniVerdict();
-    renderScenario();
     renderHypotheses();
     var eyebrow=document.getElementById('ovEyebrow');
     if(eyebrow) eyebrow.textContent = t('ov.eyebrow',{period:periodLabel(),count:peerCount(),latest:latestYear()});
@@ -4461,7 +4461,6 @@
   function renderPeerBenchmark(){
     render102030Validation();
     renderPbMatrix();
-    renderPbClusters();
     renderPbSwot();
     renderPbRecon();
     (function(){ var h=document.getElementById('pb102030Hint'); if(!h||typeof matrixEntities!=='function') return;
@@ -5579,7 +5578,7 @@
     savePeers();
     renderPeerCards(); renderAllDependentViews();
   });
-  var DATA_VERSION = 'asia14-global9-2026-10-v7h-lean';
+  var DATA_VERSION = 'asia14-global9-2026-10-v7i-lean';
   function savePeers(){
     try{ localStorage.setItem('nabati-peers-v1', JSON.stringify(PEERS)); localStorage.setItem('nabati-peers-datav', DATA_VERSION); }catch(e){}
     if(peersDocRef){ peersDocRef.set({ peers: PEERS, dataVersion: DATA_VERSION, updatedAt: new Date().toISOString() }).catch(function(){}); }
